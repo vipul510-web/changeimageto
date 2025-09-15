@@ -279,7 +279,7 @@ form.addEventListener('submit', async (e) => {
     logDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
     logDetails.contrast = document.getElementById('contrast-slider')?.value || 100;
   } else {
-    logDetails.category = categoryInput.value;
+    logDetails.category = categoryInput?.value || 'unknown';
     logDetails.target_color = targetColor;
     logDetails.action_type = targetColor ? 'change_background' : 'remove_background';
   }
@@ -300,10 +300,22 @@ form.addEventListener('submit', async (e) => {
     if (window.location.pathname === '/change-color-of-image.html') {
       endpoint = '/api/change-color';
       // Always use 'hue' as color_type since we're doing comprehensive color adjustment
-      const hueShift = document.getElementById('hue-slider')?.value || 0;
-      const saturation = document.getElementById('saturation-slider')?.value || 100;
-      const brightness = document.getElementById('brightness-slider')?.value || 100;
-      const contrast = document.getElementById('contrast-slider')?.value || 100;
+      const hueSlider = document.getElementById('hue-slider');
+      const saturationSlider = document.getElementById('saturation-slider');
+      const brightnessSlider = document.getElementById('brightness-slider');
+      const contrastSlider = document.getElementById('contrast-slider');
+      
+      console.log('Slider elements found:', {
+        hueSlider: !!hueSlider,
+        saturationSlider: !!saturationSlider,
+        brightnessSlider: !!brightnessSlider,
+        contrastSlider: !!contrastSlider
+      });
+      
+      const hueShift = hueSlider?.value || 0;
+      const saturation = saturationSlider?.value || 100;
+      const brightness = brightnessSlider?.value || 100;
+      const contrast = contrastSlider?.value || 100;
       
       console.log('Color change values:', { hueShift, saturation, brightness, contrast });
       
@@ -319,7 +331,7 @@ form.addEventListener('submit', async (e) => {
       }
     } else {
       // Background removal or background change
-      body.append('category', categoryInput.value);
+      body.append('category', categoryInput?.value || 'product');
       var hidden = document.getElementById('bg-color');
       if(hidden) body.append('bg_color', hidden.value);
       var pageColor = document.body.getAttribute('data-target-color');
@@ -345,7 +357,7 @@ form.addEventListener('submit', async (e) => {
     // Log download link creation
     logUserAction('download_link_created', {
       page_type: pageType,
-      category: categoryInput.value,
+      category: categoryInput?.value || 'unknown',
       target_color: targetColor,
       action_type: targetColor ? 'change_background' : 'remove_background',
       filename: downloadLink.download
@@ -369,7 +381,7 @@ form.addEventListener('submit', async (e) => {
       successLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
       successLogDetails.contrast = document.getElementById('contrast-slider')?.value || 100;
     } else {
-      successLogDetails.category = categoryInput.value;
+      successLogDetails.category = categoryInput?.value || 'unknown';
       successLogDetails.target_color = targetColor;
       successLogDetails.action_type = targetColor ? 'change_background' : 'remove_background';
     }
@@ -407,7 +419,7 @@ form.addEventListener('submit', async (e) => {
       errorLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
       errorLogDetails.contrast = document.getElementById('contrast-slider')?.value || 100;
     } else {
-      errorLogDetails.category = categoryInput.value;
+      errorLogDetails.category = categoryInput?.value || 'unknown';
       errorLogDetails.target_color = targetColor;
       errorLogDetails.action_type = targetColor ? 'change_background' : 'remove_background';
     }
