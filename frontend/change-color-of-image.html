@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Color of Image Online for Free | ChangeImageTo.com</title>
+    <meta name="description" content="Change color of image online for free. Upload any image and change its colors instantly. No login required, no watermark, completely free.">
+    <meta name="keywords" content="change color of image online, change image color free, image color changer, photo color editor, online color change tool">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/change-color-of-image.html">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Change Color of Image Online for Free">
+    <meta property="og:description" content="Change color of image online for free. Upload any image and change its colors instantly. No login required, no watermark, completely free.">
+    <meta property="og:url" content="https://www.changeimageto.com/change-color-of-image.html">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Change Color of Image Online for Free">
+    <meta name="twitter:description" content="Change color of image online for free. Upload any image and change its colors instantly. No login required, no watermark, completely free.">
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Change Color of Image Online (Free)</h1>
+            <p class="subtitle">Upload a photo and change its colors instantly. Free, no login, no watermark.</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div id="dropzone" class="dropzone">
+                        <div class="dropzone-content">
+                            <div class="upload-icon">📁</div>
+                            <p>Drag & drop your image here or <span class="click-here">click to browse</span></p>
+                            <p class="file-info">Supports JPG, PNG, WebP (Max 10MB)</p>
+                        </div>
+                        <input type="file" id="file-input" accept="image/*" hidden>
+                    </div>
+                    
+                    <div class="category-selection">
+                        <h3>Select Color Change Type:</h3>
+                        <div class="cat-buttons">
+                            <button type="button" class="cat-btn active" data-cat="hue">Hue Shift</button>
+                            <button type="button" class="cat-btn" data-cat="saturation">Saturation</button>
+                            <button type="button" class="cat-btn" data-cat="brightness">Brightness</button>
+                            <button type="button" class="cat-btn" data-cat="grayscale">Grayscale</button>
+                        </div>
+                        <input type="hidden" id="category" value="hue">
+                    </div>
+
+                    <div class="color-controls" id="color-controls">
+                        <h3>Color Adjustment:</h3>
+                        <div class="control-group">
+                            <label for="hue-slider">Hue Shift: <span id="hue-value">0</span>°</label>
+                            <input type="range" id="hue-slider" min="-180" max="180" value="0" class="slider">
+                        </div>
+                        <div class="control-group">
+                            <label for="saturation-slider">Saturation: <span id="saturation-value">100</span>%</label>
+                            <input type="range" id="saturation-slider" min="0" max="200" value="100" class="slider">
+                        </div>
+                        <div class="control-group">
+                            <label for="brightness-slider">Brightness: <span id="brightness-value">100</span>%</label>
+                            <input type="range" id="brightness-slider" min="0" max="200" value="100" class="slider">
+                        </div>
+                        <div class="control-group">
+                            <label for="contrast-slider">Contrast: <span id="contrast-value">100</span>%</label>
+                            <input type="range" id="contrast-slider" min="0" max="200" value="100" class="slider">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="process-btn" class="process-btn" disabled>Change Image Color</button>
+                </form>
+            </section>
+
+            <section id="preview-section" class="preview-section" hidden>
+                <div class="preview-container">
+                    <div class="preview-item">
+                        <h3>Original</h3>
+                        <div class="image-container">
+                            <img id="original-img" alt="Original image">
+                        </div>
+                    </div>
+                    <div class="preview-item">
+                        <h3>Color Changed</h3>
+                        <div class="image-container">
+                            <div id="process-prompt" class="process-prompt">Press "Change Image Color" to process.</div>
+                            <div id="result-wrapper" hidden>
+                                <img id="result-img" alt="Color changed image">
+                                <div class="result-actions">
+                                    <a id="download-link" class="download-btn" download>Download</a>
+                                    <button id="reset-btn" class="reset-btn">Try Another</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="info-section">
+                <h2>How to Change Color of Image Online (Free and Fast)</h2>
+                <div class="info-content">
+                    <p>Our free online image color changer allows you to modify the colors in your photos instantly. You can:</p>
+                    <ul>
+                        <li><strong>Hue Shift:</strong> Change the overall color tone of your image (make red objects blue, etc.)</li>
+                        <li><strong>Saturation:</strong> Make colors more vibrant or more muted</li>
+                        <li><strong>Brightness:</strong> Adjust the overall lightness of your image</li>
+                        <li><strong>Grayscale:</strong> Convert your image to black and white</li>
+                        <li><strong>Contrast:</strong> Enhance or reduce the contrast between colors</li>
+                    </ul>
+                    <p>Simply upload your image, choose your color adjustment type, use the sliders to fine-tune the effect, and download your modified image. No registration required!</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="footer-links">
+                <h3>More Free Image Tools:</h3>
+                <ul>
+                    <li><a href="index.html">Remove Background from Image</a></li>
+                    <li><a href="change-image-background.html">Change Image Background</a></li>
+                    <li><a href="change-image-background-to-white.html">Change Background to White</a></li>
+                    <li><a href="change-image-background-to-blue.html">Change Background to Blue</a></li>
+                    <li><a href="change-image-background-to-black.html">Change Background to Black</a></li>
+                    <li><a href="change-image-background-to-yellow.html">Change Background to Yellow</a></li>
+                    <li><a href="change-image-background-to-orange.html">Change Background to Orange</a></li>
+                </ul>
+            </div>
+            <p class="footer-text">© 2025 ChangeImageTo.com - Free Online Image Tools</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

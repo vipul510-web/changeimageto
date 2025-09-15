@@ -50,21 +50,79 @@ function getPageType() {
     if (path === '/' || path === '/index.html') return 'remove_background';
     if (path.includes('change-image-background-to-')) return 'color_specific';
     if (path === '/change-image-background.html') return 'color_palette';
+    if (path === '/change-color-of-image.html') return 'color_change';
     return 'unknown';
 }
 
 function updateCtaText(){
   const isColorPage = !!document.body.getAttribute('data-target-color') || !!document.getElementById('color-palette');
-  processBtn.textContent = isColorPage ? 'Change image background' : 'Remove Background';
-  processBtn.setAttribute('aria-label', processBtn.textContent);
+  const isColorChangePage = window.location.pathname === '/change-color-of-image.html';
+  
+  if (isColorChangePage) {
+    processBtn.textContent = 'Change Image Color';
+    processBtn.setAttribute('aria-label', 'Change Image Color');
+  } else if (isColorPage) {
+    processBtn.textContent = 'Change image background';
+    processBtn.setAttribute('aria-label', 'Change image background');
+  } else {
+    processBtn.textContent = 'Remove Background';
+    processBtn.setAttribute('aria-label', 'Remove Background');
+  }
 }
 function updatePromptText(){
   const prompt = document.getElementById('process-prompt');
   if(!prompt) return;
   const isColorPage = !!document.body.getAttribute('data-target-color') || !!document.getElementById('color-palette');
-  prompt.textContent = isColorPage ? 'Press “Change image background” to process.' : 'Press “Remove Background” to process.';
+  const isColorChangePage = window.location.pathname === '/change-color-of-image.html';
+  
+  if (isColorChangePage) {
+    prompt.textContent = 'Press "Change Image Color" to process.';
+  } else if (isColorPage) {
+    prompt.textContent = 'Press "Change image background" to process.';
+  } else {
+    prompt.textContent = 'Press "Remove Background" to process.';
+  }
 }
 updateCtaText();
+
+// Color change page specific functionality
+if (window.location.pathname === '/change-color-of-image.html') {
+    // Initialize sliders
+    const hueSlider = document.getElementById('hue-slider');
+    const saturationSlider = document.getElementById('saturation-slider');
+    const brightnessSlider = document.getElementById('brightness-slider');
+    const contrastSlider = document.getElementById('contrast-slider');
+    
+    const hueValue = document.getElementById('hue-value');
+    const saturationValue = document.getElementById('saturation-value');
+    const brightnessValue = document.getElementById('brightness-value');
+    const contrastValue = document.getElementById('contrast-value');
+    
+    // Update slider values
+    if (hueSlider && hueValue) {
+        hueSlider.addEventListener('input', () => {
+            hueValue.textContent = hueSlider.value;
+        });
+    }
+    
+    if (saturationSlider && saturationValue) {
+        saturationSlider.addEventListener('input', () => {
+            saturationValue.textContent = saturationSlider.value;
+        });
+    }
+    
+    if (brightnessSlider && brightnessValue) {
+        brightnessSlider.addEventListener('input', () => {
+            brightnessValue.textContent = brightnessSlider.value;
+        });
+    }
+    
+    if (contrastSlider && contrastValue) {
+        contrastSlider.addEventListener('input', () => {
+            contrastValue.textContent = contrastSlider.value;
+        });
+    }
+}
 
 function enableProcess(enabled){
   processBtn.disabled = !enabled;
@@ -127,26 +185,53 @@ form.addEventListener('submit', async (e) => {
   // Log processing start
   const pageType = getPageType();
   const targetColor = document.body.getAttribute('data-target-color') || document.getElementById('bg-color')?.value;
-  logUserAction('processing_started', {
+  
+  let logDetails = {
     page_type: pageType,
-    category: categoryInput.value,
-    target_color: targetColor,
-    action_type: targetColor ? 'change_background' : 'remove_background',
     filename: currentFile.name,
     file_size: currentFile.size
-  });
+  };
+  
+  if (pageType === 'color_change') {
+    logDetails.action_type = 'change_image_color';
+    logDetails.color_type = categoryInput.value;
+    logDetails.hue_shift = document.getElementById('hue-slider')?.value || 0;
+    logDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
+    logDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
+    logDetails.contrast = document.getElementById('contrast-slider')?.value || 100;
+  } else {
+    logDetails.category = categoryInput.value;
+    logDetails.target_color = targetColor;
+    logDetails.action_type = targetColor ? 'change_background' : 'remove_background';
+  }
+  
+  logUserAction('processing_started', logDetails);
 
   try{
     const body = new FormData();
     body.append('file', currentFile);
-    body.append('category', categoryInput.value);
-    var hidden = document.getElementById('bg-color');
-    if(hidden) body.append('bg_color', hidden.value);
-    var pageColor = document.body.getAttribute('data-target-color');
-    if(pageColor) body.append('bg_color', pageColor);
-
+    
     const apiBase = window.API_BASE || (window.location.hostname === '127.0.0.1' && window.location.port === '8080' ? 'http://127.0.0.1:8000' : 'https://changeimageto.onrender.com');
-    const res = await fetch(apiBase + '/api/remove-bg', { method: 'POST', body });
+    let endpoint = '/api/remove-bg';
+    
+    // Check if this is a color change page
+    if (window.location.pathname === '/change-color-of-image.html') {
+      endpoint = '/api/change-color';
+      body.append('color_type', categoryInput.value);
+      body.append('hue_shift', document.getElementById('hue-slider')?.value || 0);
+      body.append('saturation', document.getElementById('saturation-slider')?.value || 100);
+      body.append('brightness', document.getElementById('brightness-slider')?.value || 100);
+      body.append('contrast', document.getElementById('contrast-slider')?.value || 100);
+    } else {
+      // Background removal or background change
+      body.append('category', categoryInput.value);
+      var hidden = document.getElementById('bg-color');
+      if(hidden) body.append('bg_color', hidden.value);
+      var pageColor = document.body.getAttribute('data-target-color');
+      if(pageColor) body.append('bg_color', pageColor);
+    }
+
+    const res = await fetch(apiBase + endpoint, { method: 'POST', body });
     if(!res.ok){
       const err = await res.text();
       throw new Error(err || 'Failed to process image');
@@ -170,14 +255,26 @@ form.addEventListener('submit', async (e) => {
     if(prompt) prompt.hidden = true;
     
     // Log successful processing
-    logUserAction('processing_completed', {
+    let successLogDetails = {
       page_type: pageType,
-      category: categoryInput.value,
-      target_color: targetColor,
-      action_type: targetColor ? 'change_background' : 'remove_background',
       output_size: blob.size,
       processing_successful: true
-    });
+    };
+    
+    if (pageType === 'color_change') {
+      successLogDetails.action_type = 'change_image_color';
+      successLogDetails.color_type = categoryInput.value;
+      successLogDetails.hue_shift = document.getElementById('hue-slider')?.value || 0;
+      successLogDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
+      successLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
+      successLogDetails.contrast = document.getElementById('contrast-slider')?.value || 100;
+    } else {
+      successLogDetails.category = categoryInput.value;
+      successLogDetails.target_color = targetColor;
+      successLogDetails.action_type = targetColor ? 'change_background' : 'remove_background';
+    }
+    
+    logUserAction('processing_completed', successLogDetails);
     
     // make checkerboard solid and edge-to-edge on landing page
     (function(){
@@ -196,14 +293,26 @@ form.addEventListener('submit', async (e) => {
     if(resultWrap) resultWrap.hidden = false;
   }catch(err){
     // Log processing error
-    logUserAction('processing_error', {
+    let errorLogDetails = {
       page_type: pageType,
-      category: categoryInput.value,
-      target_color: targetColor,
-      action_type: targetColor ? 'change_background' : 'remove_background',
       error_message: err.message || err,
       processing_successful: false
-    });
+    };
+    
+    if (pageType === 'color_change') {
+      errorLogDetails.action_type = 'change_image_color';
+      errorLogDetails.color_type = categoryInput.value;
+      errorLogDetails.hue_shift = document.getElementById('hue-slider')?.value || 0;
+      errorLogDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
+      errorLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
+      errorLogDetails.contrast = document.getElementById('contrast-slider')?.value || 100;
+    } else {
+      errorLogDetails.category = categoryInput.value;
+      errorLogDetails.target_color = targetColor;
+      errorLogDetails.action_type = targetColor ? 'change_background' : 'remove_background';
+    }
+    
+    logUserAction('processing_error', errorLogDetails);
     
     alert('Error: ' + (err.message || err));
   }finally{

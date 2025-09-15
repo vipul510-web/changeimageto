@@ -1,13 +1,14 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps
 import io
 import logging
 import json
 import os
 from datetime import datetime
 from typing import Optional
+import numpy as np
 
 from rembg import remove, new_session
 
@@ -184,6 +185,153 @@ async def remove_bg(
             "action_type": "change_background" if bg_color else "remove_background"
         })
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+
+
+@app.post("/api/change-color")
+async def change_color(
+    request: Request,
+    file: UploadFile = File(...),
+    color_type: str = Form("hue"),
+    hue_shift: float = Form(0),
+    saturation: float = Form(100),
+    brightness: float = Form(100),
+    contrast: float = Form(100),
+):
+    """Change colors in an image"""
+    # Log the request start
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    log_user_action("color_change_request_started", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "color_type": color_type,
+        "hue_shift": hue_shift,
+        "saturation": saturation,
+        "brightness": brightness,
+        "contrast": contrast
+    })
+
+    if not file.content_type or not file.content_type.startswith("image/"):
+        log_user_action("error", {
+            "error_type": "invalid_file_type_color_change",
+            "content_type": file.content_type,
+            "filename": file.filename
+        })
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    try:
+        contents = await file.read()
+        file_size = len(contents)
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        
+        # Log successful file processing
+        log_user_action("color_change_file_processed", {
+            "filename": file.filename,
+            "file_size_bytes": file_size,
+            "file_size_mb": round(file_size / (1024 * 1024), 2),
+            "image_dimensions": f"{image.width}x{image.height}",
+            "color_type": color_type
+        })
+        
+    except Exception as e:
+        log_user_action("error", {
+            "error_type": "color_change_file_processing",
+            "error_message": str(e),
+            "filename": file.filename,
+            "file_size": len(contents) if 'contents' in locals() else 0
+        })
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    try:
+        # Log processing start
+        log_user_action("color_change_processing_started", {
+            "color_type": color_type,
+            "hue_shift": hue_shift,
+            "saturation": saturation,
+            "brightness": brightness,
+            "contrast": contrast
+        })
+        
+        # Apply color changes based on type
+        result = apply_color_changes(image, color_type, hue_shift, saturation, brightness, contrast)
+        
+        output_io = io.BytesIO()
+        result.save(output_io, format="PNG")
+        output_bytes = output_io.getvalue()
+        
+        # Log successful processing
+        log_user_action("color_change_processing_completed", {
+            "color_type": color_type,
+            "hue_shift": hue_shift,
+            "saturation": saturation,
+            "brightness": brightness,
+            "contrast": contrast,
+            "output_size_bytes": len(output_bytes),
+            "output_size_mb": round(len(output_bytes) / (1024 * 1024), 2),
+            "processing_successful": True
+        })
+        
+        return Response(content=output_bytes, media_type="image/png")
+        
+    except Exception as e:
+        log_user_action("error", {
+            "error_type": "color_change_processing_error",
+            "error_message": str(e),
+            "color_type": color_type,
+            "hue_shift": hue_shift,
+            "saturation": saturation,
+            "brightness": brightness,
+            "contrast": contrast
+        })
+        raise HTTPException(status_code=500, detail=f"Color change processing error: {str(e)}")
+
+
+def apply_color_changes(image: Image.Image, color_type: str, hue_shift: float, saturation: float, brightness: float, contrast: float) -> Image.Image:
+    """Apply color changes to an image"""
+    result = image.copy()
+    
+    if color_type == "grayscale":
+        # Convert to grayscale
+        result = ImageOps.grayscale(result)
+        result = result.convert("RGB")
+    else:
+        # Apply HSV adjustments
+        if hue_shift != 0:
+            result = apply_hue_shift(result, hue_shift)
+        
+        # Apply saturation
+        if saturation != 100:
+            enhancer = ImageEnhance.Color(result)
+            result = enhancer.enhance(saturation / 100)
+        
+        # Apply brightness
+        if brightness != 100:
+            enhancer = ImageEnhance.Brightness(result)
+            result = enhancer.enhance(brightness / 100)
+        
+        # Apply contrast
+        if contrast != 100:
+            enhancer = ImageEnhance.Contrast(result)
+            result = enhancer.enhance(contrast / 100)
+    
+    return result
+
+
+def apply_hue_shift(image: Image.Image, hue_shift: float) -> Image.Image:
+    """Apply hue shift to an image"""
+    # Convert to HSV
+    hsv = image.convert("HSV")
+    hsv_array = np.array(hsv)
+    
+    # Shift hue
+    hsv_array[:, :, 0] = (hsv_array[:, :, 0] + hue_shift) % 360
+    
+    # Convert back to RGB
+    result = Image.fromarray(hsv_array, "HSV").convert("RGB")
+    return result
 
 
 @app.post("/api/analytics")
