@@ -83,3 +83,8 @@ async def remove_bg(
 @app.get("/")
 async def healthcheck():
     return {"status": "ok"}
+
+
+@app.head("/")
+async def head_root():
+    return Response(status_code=200)
