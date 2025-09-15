@@ -293,6 +293,9 @@ form.addEventListener('submit', async (e) => {
     const apiBase = window.API_BASE || (window.location.hostname === '127.0.0.1' && window.location.port === '8080' ? 'http://127.0.0.1:8000' : 'https://changeimageto.onrender.com');
     let endpoint = '/api/remove-bg';
     
+    console.log('API Base:', apiBase);
+    console.log('Current location:', window.location.hostname, window.location.port);
+    
     // Check if this is a color change page
     if (window.location.pathname === '/change-color-of-image.html') {
       endpoint = '/api/change-color';
@@ -309,6 +312,11 @@ form.addEventListener('submit', async (e) => {
       body.append('saturation', saturation);
       body.append('brightness', brightness);
       body.append('contrast', contrast);
+      
+      console.log('FormData contents:');
+      for (let [key, value] of body.entries()) {
+        console.log(key, ':', value);
+      }
     } else {
       // Background removal or background change
       body.append('category', categoryInput.value);
@@ -321,16 +329,18 @@ form.addEventListener('submit', async (e) => {
         console.log('Making API call to:', apiBase + endpoint);
         const res = await fetch(apiBase + endpoint, { method: 'POST', body });
         console.log('API response status:', res.status);
+        console.log('API response headers:', res.headers);
         if(!res.ok){
           const err = await res.text();
           console.error('API error:', err);
           throw new Error(err || 'Failed to process image');
         }
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    resultImg.src = objectUrl;
-    downloadLink.href = objectUrl;
-    downloadLink.download = `bg-removed-${Date.now()}.png`;
+        const blob = await res.blob();
+        console.log('Response blob size:', blob.size, 'bytes');
+        const objectUrl = URL.createObjectURL(blob);
+        resultImg.src = objectUrl;
+        downloadLink.href = objectUrl;
+        downloadLink.download = `bg-removed-${Date.now()}.png`;
     
     // Log download link creation
     logUserAction('download_link_created', {
