@@ -12,6 +12,47 @@ const resetBtn = document.getElementById('reset-btn');
 
 let currentFile = null;
 
+// Analytics logging functions
+function logUserAction(action, details = {}) {
+    const logEntry = {
+        timestamp: new Date().toISOString(),
+        action: action,
+        page: window.location.pathname,
+        userAgent: navigator.userAgent,
+        details: details
+    };
+    
+    // Send to backend analytics endpoint (if available)
+    fetch('/api/analytics', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(logEntry)
+    }).catch(() => {
+        // Silently fail if analytics endpoint is not available
+        console.log('Analytics logged:', logEntry);
+    });
+}
+
+// Log page visit on load
+document.addEventListener('DOMContentLoaded', function() {
+    const pageType = getPageType();
+    logUserAction('page_visit', {
+        page_type: pageType,
+        url: window.location.href,
+        referrer: document.referrer || 'direct'
+    });
+});
+
+function getPageType() {
+    const path = window.location.pathname;
+    if (path === '/' || path === '/index.html') return 'remove_background';
+    if (path.includes('change-image-background-to-')) return 'color_specific';
+    if (path === '/change-image-background.html') return 'color_palette';
+    return 'unknown';
+}
+
 function updateCtaText(){
   const isColorPage = !!document.body.getAttribute('data-target-color') || !!document.getElementById('color-palette');
   processBtn.textContent = isColorPage ? 'Change image background' : 'Remove Background';
@@ -40,6 +81,14 @@ function setOriginalPreview(file){
     if(prompt) prompt.hidden = false; updatePromptText();
     const resultWrap = document.getElementById('result-wrapper');
     if(resultWrap) resultWrap.hidden = true;
+    
+    // Log file upload
+    logUserAction('file_uploaded', {
+      filename: file.name,
+      file_size: file.size,
+      file_type: file.type,
+      page_type: getPageType()
+    });
   };
   reader.readAsDataURL(file);
 }
@@ -75,6 +124,18 @@ form.addEventListener('submit', async (e) => {
   enableProcess(false);
   processBtn.textContent = 'Processing…';
 
+  // Log processing start
+  const pageType = getPageType();
+  const targetColor = document.body.getAttribute('data-target-color') || document.getElementById('bg-color')?.value;
+  logUserAction('processing_started', {
+    page_type: pageType,
+    category: categoryInput.value,
+    target_color: targetColor,
+    action_type: targetColor ? 'change_background' : 'remove_background',
+    filename: currentFile.name,
+    file_size: currentFile.size
+  });
+
   try{
     const body = new FormData();
     body.append('file', currentFile);
@@ -95,8 +156,28 @@ form.addEventListener('submit', async (e) => {
     resultImg.src = objectUrl;
     downloadLink.href = objectUrl;
     downloadLink.download = `bg-removed-${Date.now()}.png`;
+    
+    // Log download link creation
+    logUserAction('download_link_created', {
+      page_type: pageType,
+      category: categoryInput.value,
+      target_color: targetColor,
+      action_type: targetColor ? 'change_background' : 'remove_background',
+      filename: downloadLink.download
+    });
+    
     const prompt = document.getElementById('process-prompt');
     if(prompt) prompt.hidden = true;
+    
+    // Log successful processing
+    logUserAction('processing_completed', {
+      page_type: pageType,
+      category: categoryInput.value,
+      target_color: targetColor,
+      action_type: targetColor ? 'change_background' : 'remove_background',
+      output_size: blob.size,
+      processing_successful: true
+    });
     
     // make checkerboard solid and edge-to-edge on landing page
     (function(){
@@ -114,6 +195,16 @@ form.addEventListener('submit', async (e) => {
     const resultWrap = document.getElementById('result-wrapper');
     if(resultWrap) resultWrap.hidden = false;
   }catch(err){
+    // Log processing error
+    logUserAction('processing_error', {
+      page_type: pageType,
+      category: categoryInput.value,
+      target_color: targetColor,
+      action_type: targetColor ? 'change_background' : 'remove_background',
+      error_message: err.message || err,
+      processing_successful: false
+    });
+    
     alert('Error: ' + (err.message || err));
   }finally{
     updateCtaText();
@@ -122,6 +213,11 @@ form.addEventListener('submit', async (e) => {
 });
 
 resetBtn.addEventListener('click', () => {
+  // Log reset action
+  logUserAction('reset_action', {
+    page_type: getPageType()
+  });
+  
   currentFile = null;
   fileInput.value = '';
   originalImg.src = '';
