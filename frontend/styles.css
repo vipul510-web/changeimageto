@@ -565,7 +565,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
     width: 100% !important;
     height: auto !important;
     max-height: none !important;
-    object-fit: fill !important;
+    object-fit: contain !important;
     display: block !important;
 }
 
@@ -574,7 +574,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
     height: auto !important;
     max-height: none !important;
     min-height: 400px !important;
-    object-fit: fill !important;
+    object-fit: contain !important;
     display: block !important;
 }
 
@@ -588,7 +588,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
     height: auto !important;
     max-height: none !important;
     min-height: 400px !important;
-    object-fit: fill !important;
+    object-fit: contain !important;
     display: block !important;
 }
 
