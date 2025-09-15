@@ -84,7 +84,7 @@ form.addEventListener('submit', async (e) => {
     var pageColor = document.body.getAttribute('data-target-color');
     if(pageColor) body.append('bg_color', pageColor);
 
-    const apiBase = window.API_BASE || (window.location.port === '8080' ? 'http://127.0.0.1:8000' : '');
+    const apiBase = window.API_BASE || (window.location.hostname === '127.0.0.1' && window.location.port === '8080' ? 'http://127.0.0.1:8000' : 'https://changeimageto.onrender.com');
     const res = await fetch(apiBase + '/api/remove-bg', { method: 'POST', body });
     if(!res.ok){
       const err = await res.text();
