@@ -4,4 +4,4 @@ Allow: /
 # Optional: reduce load on free-tier backends
 # Crawl-delay: 1
 
-Sitemap: https://example.com/sitemap.xml
+Sitemap: https://www.changeimageto.com/sitemap.xml
