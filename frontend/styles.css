@@ -19,7 +19,10 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 @media(min-width:900px){.preview-grid{grid-template-columns:1fr 1fr}}
 .checkerboard{background:conic-gradient(#cfd8e3 25%,transparent 0 50%,#cfd8e3 0 75%,transparent 0) 0 0/24px 24px; padding:12px;border-radius:12px}
 .preview img{width:100%;height:auto;border-radius:8px;display:block}
-.actions{margin-top:12px;display:flex;gap:12px}
+.actions{margin-top:12px;display:flex;gap:12px;flex-wrap:wrap}
+.actions .btn{flex:1;min-width:120px}
+.actions a.btn{text-decoration:none;display:inline-block;text-align:center;cursor:pointer}
+.actions a.btn:hover{text-decoration:none}
 .seo{margin-top:40px;color:var(--muted)}
 .footer{border-top:1px solid var(--border);margin-top:40px;color:var(--muted)}
 
