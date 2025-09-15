@@ -555,7 +555,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
     border-radius: 8px;
     overflow: hidden;
     border: 1px solid var(--border);
-    min-height: 300px;
+    min-height: 500px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -564,7 +564,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .image-container img {
     width: 100%;
     height: auto;
-    max-height: 400px;
+    max-height: 600px;
     object-fit: contain;
     display: block;
 }
