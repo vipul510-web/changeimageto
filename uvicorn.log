@@ -1,0 +1,20 @@
+INFO:     Will watch for changes in these directories: ['/Users/vipulagarwal/Documents/remback']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [14766] using WatchFiles
+INFO:     Started server process [14816]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:51078 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51340 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51372 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51888 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51888 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51905 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52011 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52015 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52016 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52204 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52215 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52300 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52335 - "POST /api/remove-bg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52337 - "POST /api/remove-bg HTTP/1.1" 200 OK
