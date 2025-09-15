@@ -87,101 +87,111 @@ updateCtaText();
 
 // Color change page specific functionality
 if (window.location.pathname === '/change-color-of-image.html') {
-    // Initialize sliders
-    const hueSlider = document.getElementById('hue-slider');
-    const saturationSlider = document.getElementById('saturation-slider');
-    const brightnessSlider = document.getElementById('brightness-slider');
-    const contrastSlider = document.getElementById('contrast-slider');
-    
-    const hueValue = document.getElementById('hue-value');
-    const saturationValue = document.getElementById('saturation-value');
-    const brightnessValue = document.getElementById('brightness-value');
-    const contrastValue = document.getElementById('contrast-value');
-    
-    // Update slider values
-    if (hueSlider && hueValue) {
-        hueSlider.addEventListener('input', () => {
-            hueValue.textContent = hueSlider.value;
-        });
-    }
-    
-    if (saturationSlider && saturationValue) {
-        saturationSlider.addEventListener('input', () => {
-            saturationValue.textContent = saturationSlider.value;
-        });
-    }
-    
-    if (brightnessSlider && brightnessValue) {
-        brightnessSlider.addEventListener('input', () => {
-            brightnessValue.textContent = brightnessSlider.value;
-        });
-    }
-    
-    if (contrastSlider && contrastValue) {
-        contrastSlider.addEventListener('input', () => {
-            contrastValue.textContent = contrastSlider.value;
-        });
-    }
-    
-    // Preset buttons functionality
-    const presetButtons = document.querySelectorAll('.preset-btn');
-    presetButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const preset = btn.dataset.preset;
-            applyPreset(preset);
-            
-            // Update active state
-            presetButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
-    
-    function applyPreset(preset) {
-        switch(preset) {
-            case 'vibrant':
-                hueSlider.value = 0;
-                saturationSlider.value = 150;
-                brightnessSlider.value = 110;
-                contrastSlider.value = 120;
-                break;
-            case 'muted':
-                hueSlider.value = 0;
-                saturationSlider.value = 50;
-                brightnessSlider.value = 90;
-                contrastSlider.value = 80;
-                break;
-            case 'warm':
-                hueSlider.value = 30;
-                saturationSlider.value = 120;
-                brightnessSlider.value = 110;
-                contrastSlider.value = 110;
-                break;
-            case 'cool':
-                hueSlider.value = -30;
-                saturationSlider.value = 120;
-                brightnessSlider.value = 110;
-                contrastSlider.value = 110;
-                break;
-            case 'grayscale':
-                hueSlider.value = 0;
-                saturationSlider.value = 0;
-                brightnessSlider.value = 100;
-                contrastSlider.value = 120;
-                break;
-            case 'reset':
-                hueSlider.value = 0;
-                saturationSlider.value = 100;
-                brightnessSlider.value = 100;
-                contrastSlider.value = 100;
-                break;
+    // Wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize sliders
+        const hueSlider = document.getElementById('hue-slider');
+        const saturationSlider = document.getElementById('saturation-slider');
+        const brightnessSlider = document.getElementById('brightness-slider');
+        const contrastSlider = document.getElementById('contrast-slider');
+        
+        const hueValue = document.getElementById('hue-value');
+        const saturationValue = document.getElementById('saturation-value');
+        const brightnessValue = document.getElementById('brightness-value');
+        const contrastValue = document.getElementById('contrast-value');
+        
+        console.log('Sliders found:', { hueSlider, saturationSlider, brightnessSlider, contrastSlider });
+        console.log('Value elements found:', { hueValue, saturationValue, brightnessValue, contrastValue });
+        
+        // Update slider values
+        if (hueSlider && hueValue) {
+            hueSlider.addEventListener('input', () => {
+                hueValue.textContent = hueSlider.value + '°';
+                console.log('Hue changed to:', hueSlider.value);
+            });
         }
         
-        // Update display values
-        hueValue.textContent = hueSlider.value;
-        saturationValue.textContent = saturationSlider.value;
-        brightnessValue.textContent = brightnessSlider.value;
-        contrastValue.textContent = contrastSlider.value;
-    }
+        if (saturationSlider && saturationValue) {
+            saturationSlider.addEventListener('input', () => {
+                saturationValue.textContent = saturationSlider.value + '%';
+                console.log('Saturation changed to:', saturationSlider.value);
+            });
+        }
+        
+        if (brightnessSlider && brightnessValue) {
+            brightnessSlider.addEventListener('input', () => {
+                brightnessValue.textContent = brightnessSlider.value + '%';
+                console.log('Brightness changed to:', brightnessSlider.value);
+            });
+        }
+        
+        if (contrastSlider && contrastValue) {
+            contrastSlider.addEventListener('input', () => {
+                contrastValue.textContent = contrastSlider.value + '%';
+                console.log('Contrast changed to:', contrastSlider.value);
+            });
+        }
+    
+        // Preset buttons functionality
+        const presetButtons = document.querySelectorAll('.preset-btn');
+        presetButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.dataset.preset;
+                applyPreset(preset);
+                
+                // Update active state
+                presetButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        
+        function applyPreset(preset) {
+            switch(preset) {
+                case 'vibrant':
+                    hueSlider.value = 0;
+                    saturationSlider.value = 150;
+                    brightnessSlider.value = 110;
+                    contrastSlider.value = 120;
+                    break;
+                case 'muted':
+                    hueSlider.value = 0;
+                    saturationSlider.value = 50;
+                    brightnessSlider.value = 90;
+                    contrastSlider.value = 80;
+                    break;
+                case 'warm':
+                    hueSlider.value = 30;
+                    saturationSlider.value = 120;
+                    brightnessSlider.value = 110;
+                    contrastSlider.value = 110;
+                    break;
+                case 'cool':
+                    hueSlider.value = -30;
+                    saturationSlider.value = 120;
+                    brightnessSlider.value = 110;
+                    contrastSlider.value = 110;
+                    break;
+                case 'grayscale':
+                    hueSlider.value = 0;
+                    saturationSlider.value = 0;
+                    brightnessSlider.value = 100;
+                    contrastSlider.value = 120;
+                    break;
+                case 'reset':
+                    hueSlider.value = 0;
+                    saturationSlider.value = 100;
+                    brightnessSlider.value = 100;
+                    contrastSlider.value = 100;
+                    break;
+            }
+            
+            // Update display values
+            hueValue.textContent = hueSlider.value + '°';
+            saturationValue.textContent = saturationSlider.value + '%';
+            brightnessValue.textContent = brightnessSlider.value + '%';
+            contrastValue.textContent = contrastSlider.value + '%';
+        }
+    });
 }
 
 function enableProcess(enabled){
@@ -287,11 +297,18 @@ form.addEventListener('submit', async (e) => {
     if (window.location.pathname === '/change-color-of-image.html') {
       endpoint = '/api/change-color';
       // Always use 'hue' as color_type since we're doing comprehensive color adjustment
+      const hueShift = document.getElementById('hue-slider')?.value || 0;
+      const saturation = document.getElementById('saturation-slider')?.value || 100;
+      const brightness = document.getElementById('brightness-slider')?.value || 100;
+      const contrast = document.getElementById('contrast-slider')?.value || 100;
+      
+      console.log('Color change values:', { hueShift, saturation, brightness, contrast });
+      
       body.append('color_type', 'hue');
-      body.append('hue_shift', document.getElementById('hue-slider')?.value || 0);
-      body.append('saturation', document.getElementById('saturation-slider')?.value || 100);
-      body.append('brightness', document.getElementById('brightness-slider')?.value || 100);
-      body.append('contrast', document.getElementById('contrast-slider')?.value || 100);
+      body.append('hue_shift', hueShift);
+      body.append('saturation', saturation);
+      body.append('brightness', brightness);
+      body.append('contrast', contrast);
     } else {
       // Background removal or background change
       body.append('category', categoryInput.value);
@@ -301,11 +318,14 @@ form.addEventListener('submit', async (e) => {
       if(pageColor) body.append('bg_color', pageColor);
     }
 
-    const res = await fetch(apiBase + endpoint, { method: 'POST', body });
-    if(!res.ok){
-      const err = await res.text();
-      throw new Error(err || 'Failed to process image');
-    }
+        console.log('Making API call to:', apiBase + endpoint);
+        const res = await fetch(apiBase + endpoint, { method: 'POST', body });
+        console.log('API response status:', res.status);
+        if(!res.ok){
+          const err = await res.text();
+          console.error('API error:', err);
+          throw new Error(err || 'Failed to process image');
+        }
     const blob = await res.blob();
     const objectUrl = URL.createObjectURL(blob);
     resultImg.src = objectUrl;
