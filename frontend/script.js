@@ -364,7 +364,10 @@ form.addEventListener('submit', async (e) => {
     });
     
     const prompt = document.getElementById('process-prompt');
-    if(prompt) prompt.hidden = true;
+    if(prompt) {
+      prompt.hidden = true;
+      prompt.style.display = 'none';
+    }
     
     // Log successful processing
     let successLogDetails = {
