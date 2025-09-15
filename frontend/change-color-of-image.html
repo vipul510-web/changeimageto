@@ -39,75 +39,83 @@
         </header>
 
         <main>
-            <section class="upload-section">
-                <form id="upload-form" enctype="multipart/form-data">
-                    <div id="dropzone" class="dropzone">
-                        <div class="dropzone-content">
-                            <div class="upload-icon">📁</div>
-                            <p>Drag & drop your image here or <span class="click-here">click to browse</span></p>
-                            <p class="file-info">Supports JPG, PNG, WebP (Max 10MB)</p>
+            <div class="three-column-layout">
+                <!-- Column 1: Controls -->
+                <div class="controls-column">
+                    <form id="upload-form" enctype="multipart/form-data">
+                        <div id="dropzone" class="dropzone">
+                            <div class="dropzone-content">
+                                <div class="upload-icon">📁</div>
+                                <p>Drag & drop your image here or <span class="click-here">click to browse</span></p>
+                                <p class="file-info">Supports JPG, PNG, WebP (Max 10MB)</p>
+                            </div>
+                            <input type="file" id="file-input" accept="image/*" hidden>
                         </div>
-                        <input type="file" id="file-input" accept="image/*" hidden>
-                    </div>
-                    
-                    <div class="category-selection">
-                        <h3>Select Color Change Type:</h3>
-                        <div class="cat-buttons">
-                            <button type="button" class="cat-btn active" data-cat="hue">Hue Shift</button>
-                            <button type="button" class="cat-btn" data-cat="saturation">Saturation</button>
-                            <button type="button" class="cat-btn" data-cat="brightness">Brightness</button>
-                            <button type="button" class="cat-btn" data-cat="grayscale">Grayscale</button>
-                        </div>
-                        <input type="hidden" id="category" value="hue">
-                    </div>
 
-                    <div class="color-controls" id="color-controls">
-                        <h3>Color Adjustment:</h3>
-                        <div class="control-group">
-                            <label for="hue-slider">Hue Shift: <span id="hue-value">0</span>°</label>
-                            <input type="range" id="hue-slider" min="-180" max="180" value="0" class="slider">
+                        <div class="color-controls" id="color-controls">
+                            <h3>Color Adjustments:</h3>
+                            <div class="control-group">
+                                <label for="hue-slider">Hue Shift: <span id="hue-value">0</span>°</label>
+                                <input type="range" id="hue-slider" min="-180" max="180" value="0" class="slider">
+                            </div>
+                            <div class="control-group">
+                                <label for="saturation-slider">Saturation: <span id="saturation-value">100</span>%</label>
+                                <input type="range" id="saturation-slider" min="0" max="200" value="100" class="slider">
+                            </div>
+                            <div class="control-group">
+                                <label for="brightness-slider">Brightness: <span id="brightness-value">100</span>%</label>
+                                <input type="range" id="brightness-slider" min="0" max="200" value="100" class="slider">
+                            </div>
+                            <div class="control-group">
+                                <label for="contrast-slider">Contrast: <span id="contrast-value">100</span>%</label>
+                                <input type="range" id="contrast-slider" min="0" max="200" value="100" class="slider">
+                            </div>
+                            
+                            <div class="preset-buttons">
+                                <h4>Quick Presets:</h4>
+                                <button type="button" class="preset-btn" data-preset="vibrant">Vibrant</button>
+                                <button type="button" class="preset-btn" data-preset="muted">Muted</button>
+                                <button type="button" class="preset-btn" data-preset="warm">Warm</button>
+                                <button type="button" class="preset-btn" data-preset="cool">Cool</button>
+                                <button type="button" class="preset-btn" data-preset="grayscale">Grayscale</button>
+                                <button type="button" class="preset-btn" data-preset="reset">Reset</button>
+                            </div>
                         </div>
-                        <div class="control-group">
-                            <label for="saturation-slider">Saturation: <span id="saturation-value">100</span>%</label>
-                            <input type="range" id="saturation-slider" min="0" max="200" value="100" class="slider">
-                        </div>
-                        <div class="control-group">
-                            <label for="brightness-slider">Brightness: <span id="brightness-value">100</span>%</label>
-                            <input type="range" id="brightness-slider" min="0" max="200" value="100" class="slider">
-                        </div>
-                        <div class="control-group">
-                            <label for="contrast-slider">Contrast: <span id="contrast-value">100</span>%</label>
-                            <input type="range" id="contrast-slider" min="0" max="200" value="100" class="slider">
-                        </div>
-                    </div>
 
-                    <button type="submit" id="process-btn" class="process-btn" disabled>Change Image Color</button>
-                </form>
-            </section>
+                        <button type="submit" id="process-btn" class="process-btn" disabled>Change Image Color</button>
+                    </form>
+                </div>
 
-            <section id="preview-section" class="preview-section" hidden>
-                <div class="preview-container">
-                    <div class="preview-item">
-                        <h3>Original</h3>
-                        <div class="image-container">
-                            <img id="original-img" alt="Original image">
+                <!-- Column 2: Original Image -->
+                <div class="image-column">
+                    <h3>Original Image</h3>
+                    <div class="image-container">
+                        <div id="upload-prompt" class="upload-prompt">
+                            <div class="upload-icon-large">📷</div>
+                            <p>Upload an image to get started</p>
                         </div>
+                        <img id="original-img" alt="Original image" style="display: none;">
                     </div>
-                    <div class="preview-item">
-                        <h3>Color Changed</h3>
-                        <div class="image-container">
-                            <div id="process-prompt" class="process-prompt">Press "Change Image Color" to process.</div>
-                            <div id="result-wrapper" hidden>
-                                <img id="result-img" alt="Color changed image">
-                                <div class="result-actions">
-                                    <a id="download-link" class="download-btn" download>Download</a>
-                                    <button id="reset-btn" class="reset-btn">Try Another</button>
-                                </div>
+                </div>
+
+                <!-- Column 3: Processed Image -->
+                <div class="image-column">
+                    <h3>Color Changed</h3>
+                    <div class="image-container">
+                        <div id="process-prompt" class="process-prompt">
+                            <div class="process-icon">⚙️</div>
+                            <p>Press "Change Image Color" to process</p>
+                        </div>
+                        <div id="result-wrapper" hidden>
+                            <img id="result-img" alt="Color changed image">
+                            <div class="result-actions">
+                                <a id="download-link" class="download-btn" download>Download</a>
+                                <button id="reset-btn" class="reset-btn">Try Another</button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
 
             <section class="info-section">
                 <h2>How to Change Color of Image Online (Free and Fast)</h2>

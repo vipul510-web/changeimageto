@@ -122,6 +122,66 @@ if (window.location.pathname === '/change-color-of-image.html') {
             contrastValue.textContent = contrastSlider.value;
         });
     }
+    
+    // Preset buttons functionality
+    const presetButtons = document.querySelectorAll('.preset-btn');
+    presetButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const preset = btn.dataset.preset;
+            applyPreset(preset);
+            
+            // Update active state
+            presetButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+    
+    function applyPreset(preset) {
+        switch(preset) {
+            case 'vibrant':
+                hueSlider.value = 0;
+                saturationSlider.value = 150;
+                brightnessSlider.value = 110;
+                contrastSlider.value = 120;
+                break;
+            case 'muted':
+                hueSlider.value = 0;
+                saturationSlider.value = 50;
+                brightnessSlider.value = 90;
+                contrastSlider.value = 80;
+                break;
+            case 'warm':
+                hueSlider.value = 30;
+                saturationSlider.value = 120;
+                brightnessSlider.value = 110;
+                contrastSlider.value = 110;
+                break;
+            case 'cool':
+                hueSlider.value = -30;
+                saturationSlider.value = 120;
+                brightnessSlider.value = 110;
+                contrastSlider.value = 110;
+                break;
+            case 'grayscale':
+                hueSlider.value = 0;
+                saturationSlider.value = 0;
+                brightnessSlider.value = 100;
+                contrastSlider.value = 120;
+                break;
+            case 'reset':
+                hueSlider.value = 0;
+                saturationSlider.value = 100;
+                brightnessSlider.value = 100;
+                contrastSlider.value = 100;
+                break;
+        }
+        
+        // Update display values
+        hueValue.textContent = hueSlider.value;
+        saturationValue.textContent = saturationSlider.value;
+        brightnessValue.textContent = brightnessSlider.value;
+        contrastValue.textContent = contrastSlider.value;
+    }
 }
 
 function enableProcess(enabled){
@@ -132,11 +192,20 @@ function setOriginalPreview(file){
   const reader = new FileReader();
   reader.onload = () => {
     originalImg.src = reader.result;
-    previewSection.hidden = false;
+    originalImg.style.display = 'block';
+    
+    // Hide upload prompt and show image
+    const uploadPrompt = document.getElementById('upload-prompt');
+    if (uploadPrompt) uploadPrompt.style.display = 'none';
+    
+    // Show the image columns
+    const imageColumns = document.querySelectorAll('.image-column');
+    imageColumns.forEach(col => col.style.display = 'block');
+    
     resultImg.src = '';
     downloadLink.removeAttribute('href');
     const prompt = document.getElementById('process-prompt');
-    if(prompt) prompt.hidden = false; updatePromptText();
+    if(prompt) prompt.style.display = 'block';
     const resultWrap = document.getElementById('result-wrapper');
     if(resultWrap) resultWrap.hidden = true;
     
@@ -194,7 +263,7 @@ form.addEventListener('submit', async (e) => {
   
   if (pageType === 'color_change') {
     logDetails.action_type = 'change_image_color';
-    logDetails.color_type = document.querySelector('.cat-btn.active')?.dataset.cat || 'hue';
+    logDetails.color_type = 'hue';
     logDetails.hue_shift = document.getElementById('hue-slider')?.value || 0;
     logDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
     logDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
@@ -217,9 +286,8 @@ form.addEventListener('submit', async (e) => {
     // Check if this is a color change page
     if (window.location.pathname === '/change-color-of-image.html') {
       endpoint = '/api/change-color';
-      // Get the active color type button value
-      const activeColorType = document.querySelector('.cat-btn.active')?.dataset.cat || 'hue';
-      body.append('color_type', activeColorType);
+      // Always use 'hue' as color_type since we're doing comprehensive color adjustment
+      body.append('color_type', 'hue');
       body.append('hue_shift', document.getElementById('hue-slider')?.value || 0);
       body.append('saturation', document.getElementById('saturation-slider')?.value || 100);
       body.append('brightness', document.getElementById('brightness-slider')?.value || 100);
@@ -265,7 +333,7 @@ form.addEventListener('submit', async (e) => {
     
     if (pageType === 'color_change') {
       successLogDetails.action_type = 'change_image_color';
-      successLogDetails.color_type = document.querySelector('.cat-btn.active')?.dataset.cat || 'hue';
+      successLogDetails.color_type = 'hue';
       successLogDetails.hue_shift = document.getElementById('hue-slider')?.value || 0;
       successLogDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
       successLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
@@ -303,7 +371,7 @@ form.addEventListener('submit', async (e) => {
     
     if (pageType === 'color_change') {
       errorLogDetails.action_type = 'change_image_color';
-      errorLogDetails.color_type = document.querySelector('.cat-btn.active')?.dataset.cat || 'hue';
+      errorLogDetails.color_type = 'hue';
       errorLogDetails.hue_shift = document.getElementById('hue-slider')?.value || 0;
       errorLogDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
       errorLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
@@ -332,10 +400,22 @@ resetBtn.addEventListener('click', () => {
   currentFile = null;
   fileInput.value = '';
   originalImg.src = '';
+  originalImg.style.display = 'none';
   resultImg.src = '';
-  previewSection.hidden = true;
+  
+  // Show upload prompt
+  const uploadPrompt = document.getElementById('upload-prompt');
+  if (uploadPrompt) uploadPrompt.style.display = 'block';
+  
+  // Hide image columns initially
+  const imageColumns = document.querySelectorAll('.image-column');
+  imageColumns.forEach(col => col.style.display = 'none');
+  
   const prompt = document.getElementById('process-prompt');
-  if(prompt) prompt.hidden = true;
+  if(prompt) prompt.style.display = 'none';
+  const resultWrap = document.getElementById('result-wrapper');
+  if(resultWrap) resultWrap.hidden = true;
+  
   enableProcess(false);
   updateCtaText();
   updatePromptText();
