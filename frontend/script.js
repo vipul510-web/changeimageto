@@ -194,7 +194,7 @@ form.addEventListener('submit', async (e) => {
   
   if (pageType === 'color_change') {
     logDetails.action_type = 'change_image_color';
-    logDetails.color_type = categoryInput.value;
+    logDetails.color_type = document.querySelector('.cat-btn.active')?.dataset.cat || 'hue';
     logDetails.hue_shift = document.getElementById('hue-slider')?.value || 0;
     logDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
     logDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
@@ -217,7 +217,9 @@ form.addEventListener('submit', async (e) => {
     // Check if this is a color change page
     if (window.location.pathname === '/change-color-of-image.html') {
       endpoint = '/api/change-color';
-      body.append('color_type', categoryInput.value);
+      // Get the active color type button value
+      const activeColorType = document.querySelector('.cat-btn.active')?.dataset.cat || 'hue';
+      body.append('color_type', activeColorType);
       body.append('hue_shift', document.getElementById('hue-slider')?.value || 0);
       body.append('saturation', document.getElementById('saturation-slider')?.value || 100);
       body.append('brightness', document.getElementById('brightness-slider')?.value || 100);
@@ -263,7 +265,7 @@ form.addEventListener('submit', async (e) => {
     
     if (pageType === 'color_change') {
       successLogDetails.action_type = 'change_image_color';
-      successLogDetails.color_type = categoryInput.value;
+      successLogDetails.color_type = document.querySelector('.cat-btn.active')?.dataset.cat || 'hue';
       successLogDetails.hue_shift = document.getElementById('hue-slider')?.value || 0;
       successLogDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
       successLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
@@ -301,7 +303,7 @@ form.addEventListener('submit', async (e) => {
     
     if (pageType === 'color_change') {
       errorLogDetails.action_type = 'change_image_color';
-      errorLogDetails.color_type = categoryInput.value;
+      errorLogDetails.color_type = document.querySelector('.cat-btn.active')?.dataset.cat || 'hue';
       errorLogDetails.hue_shift = document.getElementById('hue-slider')?.value || 0;
       errorLogDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
       errorLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
