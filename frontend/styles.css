@@ -15,6 +15,56 @@ select{background:var(--card);color:var(--fg);border:1px solid var(--border);pad
 .uploader input{position:absolute;inset:0;opacity:0;cursor:pointer;display:block;width:100%;height:100%}
 .uploader-instructions{display:flex;flex-direction:column;align-items:center;color:var(--muted)}
 .uploader.drag{border-color:var(--accent);background:#101826}
+
+/* Dropzone styling for color change page */
+.dropzone {
+    position: relative;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: var(--card);
+    margin-bottom: 20px;
+    transition: all 0.2s ease;
+}
+
+.dropzone:hover {
+    border-color: var(--accent);
+    background: #101826;
+}
+
+.dropzone.drag {
+    border-color: var(--accent);
+    background: #101826;
+}
+
+.dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--muted);
+    text-align: center;
+}
+
+.upload-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.click-here {
+    color: var(--accent);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.file-info {
+    font-size: 12px;
+    margin-top: 8px;
+    opacity: 0.8;
+}
 button, .btn{background:var(--accent);color:#001633;border:none;padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
 .btn.secondary{background:transparent;color:var(--fg);border:1px solid var(--border)}
 button[disabled]{opacity:.5;cursor:not-allowed}
@@ -22,6 +72,8 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .preview-grid{display:grid;grid-template-columns:1fr;gap:16px}
 @media(min-width:900px){.preview-grid{grid-template-columns:1fr 1fr}}
 .checkerboard{background:conic-gradient(#cfd8e3 25%,transparent 0 50%,#cfd8e3 0 75%,transparent 0) 0 0/24px 24px; padding:12px;border-radius:12px}
+/* Remove padding for color-specific pages after processing */
+body[data-target-color] .checkerboard.processed{padding:0 !important}
 .preview img{width:100%;height:auto;border-radius:8px;display:block}
 .actions{margin-top:12px;display:flex;gap:12px;flex-wrap:wrap}
 .actions .btn{flex:1;min-width:120px}
@@ -214,12 +266,33 @@ button[disabled]{opacity:.5;cursor:not-allowed}
     padding: 8px 12px;
     font-size: 14px;
     border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.download-btn {
+    background: var(--accent);
+    color: #001633;
+    border: none;
+}
+
+.download-btn:hover {
+    background: #4f46e5;
+    color: white;
+    text-decoration: none;
 }
 
 .reset-btn {
     background: transparent;
     color: var(--fg);
     border: 1px solid var(--border);
+}
+
+.reset-btn:hover {
+    background: var(--card);
+    border-color: var(--accent);
 }
 
 /* Homepage Hero Features */
@@ -649,6 +722,31 @@ button[disabled]{opacity:.5;cursor:not-allowed}
     background: var(--accent);
     color: #001633;
     border-color: var(--accent);
+}
+
+/* Process button styling for color change page */
+.process-btn {
+    background: var(--accent);
+    color: #001633;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.process-btn:hover {
+    background: #4f46e5;
+    color: white;
+}
+
+.process-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Responsive adjustments */

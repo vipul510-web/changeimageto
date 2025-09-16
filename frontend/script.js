@@ -454,14 +454,31 @@ if (form) form.addEventListener('submit', async (e) => {
     // make checkerboard solid and edge-to-edge on landing page
     (function(){
       var palette = document.getElementById('color-palette');
-      if(!palette) return;
+      var pageColor = document.body.getAttribute('data-target-color');
       var checker = document.querySelector('.checkerboard');
+      
       if(checker){
-        var hidden = document.getElementById('bg-color');
-        var hex = hidden ? hidden.value : '#ffffff';
+        var hex = '#ffffff'; // default
+        
+        if(palette) {
+          // General background page with color palette
+          var hidden = document.getElementById('bg-color');
+          hex = hidden ? hidden.value : '#ffffff';
+        } else if(pageColor) {
+          // Color-specific page
+          hex = pageColor;
+        }
+        
         checker.style.background = hex;
         checker.style.padding = '0px';
         checker.style.borderRadius = '12px';
+        
+        // Add processed class for CSS specificity
+        checker.classList.add('processed');
+        
+        // Force the styles to be applied
+        checker.style.setProperty('padding', '0px', 'important');
+        checker.style.setProperty('background', hex, 'important');
       }
     })();
     const resultWrap = document.getElementById('result-wrapper');
@@ -670,16 +687,7 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
 
 
 // If on a color page, make the preview background solid and edge-to-edge
-(function(){
-  var pageColor = document.body.getAttribute('data-target-color');
-  if(!pageColor) return;
-  var checker = document.querySelector('.checkerboard');
-  if(checker){
-    checker.style.background = pageColor;
-    checker.style.padding = '0px';
-    checker.style.borderRadius = '12px';
-  }
-})();
+// This will be applied after processing is complete
 
 
 // On color pages, align prompt text with CTA label
