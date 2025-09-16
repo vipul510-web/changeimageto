@@ -183,6 +183,16 @@ async def remove_bg(
             )
         if result.mode != "RGBA":
             result = result.convert("RGBA")
+
+        # Auto-trim fully transparent padding around the subject to remove extra borders
+        try:
+            alpha_channel = result.split()[-1]
+            bbox = alpha_channel.getbbox()
+            if bbox and bbox != (0, 0, result.width, result.height):
+                result = result.crop(bbox)
+        except Exception:
+            # If trimming fails, continue with original
+            pass
             
         # Optional solid background color compositing
         if bg_color:
