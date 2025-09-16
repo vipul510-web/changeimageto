@@ -185,13 +185,14 @@ async def remove_bg(
         if result.mode != "RGBA":
             result = result.convert("RGBA")
 
-        # For transparent exports, trim fully transparent padding and keep trimmed size
-        trim_bbox = None
+        # Always trim transparent padding first
         try:
             alpha_channel = result.split()[-1]
             trim_bbox = alpha_channel.getbbox()
+            if trim_bbox and trim_bbox != (0, 0, result.width, result.height):
+                result = result.crop(trim_bbox)
         except Exception:
-            trim_bbox = None
+            pass
             
         # Optional solid background color compositing
         if bg_color:
@@ -210,17 +211,11 @@ async def remove_bg(
             r = int(col[0:2], 16); g = int(col[2:4], 16); b = int(col[4:6], 16)
             # Ensure output keeps the original input dimensions
             canvas = Image.new('RGBA', original_size, (r, g, b, 255))
-            # If trimming found a bbox, paste centered within original canvas without changing size
-            to_composite = result
-            if result.size != original_size:
-                # Keep subject scale from processed image; center within original canvas
-                offset_x = (original_size[0] - result.width) // 2
-                offset_y = (original_size[1] - result.height) // 2
-                canvas.paste(result, (max(0, offset_x), max(0, offset_y)), mask=result.split()[-1])
-                result = canvas
-            else:
-                canvas.alpha_composite(result)
-                result = canvas
+            # Center the trimmed subject on the original-sized canvas
+            offset_x = (original_size[0] - result.width) // 2
+            offset_y = (original_size[1] - result.height) // 2
+            canvas.paste(result, (offset_x, offset_y), mask=result.split()[-1])
+            result = canvas
             
         output_io = io.BytesIO()
         result.save(output_io, format="PNG")
