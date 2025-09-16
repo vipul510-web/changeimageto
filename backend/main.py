@@ -77,6 +77,19 @@ def get_session_for_category(category: str):
     return _sessions_cache[model_name]
 
 
+@app.on_event("startup")
+async def warm_models_on_startup():
+    """Kick off model session initialization in the background so the server
+    can bind to the port immediately and avoid Render's port scan timeout.
+    """
+    try:
+        # Run in threads to avoid blocking the event loop
+        asyncio.create_task(asyncio.to_thread(get_session_for_category, "product"))
+        asyncio.create_task(asyncio.to_thread(get_session_for_category, "portrait"))
+        logger.info("Background model warmup tasks started")
+    except Exception as e:
+        logger.warning(f"Failed to start background warmup: {e}")
+
 @app.post("/api/remove-bg")
 async def remove_bg(
     request: Request,
