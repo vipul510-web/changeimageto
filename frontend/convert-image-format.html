@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Convert Image Format Online (PNG, JPG, WEBP) | Keep Transparency</title>
+    <meta name="description" content="Convert images between PNG, JPG, and WEBP online. Option to keep transparent background. Fast, free, and no login.">
+    <meta name="keywords" content="convert image format, png to jpg, jpg to png, webp converter, keep transparency, online image converter">
+    <link rel="canonical" href="https://www.changeimageto.com/convert-image-format.html" />
+
+    <meta property="og:title" content="Convert Image Format Online (PNG, JPG, WEBP)" />
+    <meta property="og:description" content="Convert images online and keep transparency when supported. Free and fast." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.changeimageto.com/convert-image-format.html" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=20250916-1" />
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
+      <h1>Convert Image Format Online</h1>
+      <p>Convert PNG, JPG, or WEBP with an option to keep transparency. Free, no login.</p>
+    </header>
+
+    <main class="container main">
+      <form id="convert-form">
+        <div class="controls" style="flex-wrap:wrap">
+          <div class="uploader" id="convert-dropzone">
+            <input type="file" id="convert-file" accept="image/*" />
+            <div class="uploader-instructions">
+              <strong>Drop image here</strong>
+              <span>or click to browse</span>
+            </div>
+          </div>
+
+          <label>Convert to</label>
+          <select id="target-format">
+            <option value="png">PNG (supports transparency)</option>
+            <option value="jpg">JPG</option>
+            <option value="webp">WEBP (supports transparency)</option>
+          </select>
+
+          <label style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="keep-transparent" /> Keep transparent background (if supported)
+          </label>
+
+          <label>Quality</label>
+          <select id="quality">
+            <option value="90" selected>High (90)</option>
+            <option value="80">Medium (80)</option>
+            <option value="70">Smaller (70)</option>
+          </select>
+
+          <button id="convert-btn" type="submit" disabled>Convert Image</button>
+        </div>
+      </form>
+
+      <section class="preview" id="convert-preview" hidden>
+        <div class="preview-grid">
+          <div>
+            <h3>Original</h3>
+            <img id="convert-original" alt="Original preview" />
+          </div>
+          <div>
+            <h3>Converted</h3>
+            <p id="convert-prompt" class="prompt">Press "Convert Image" to process.</p>
+            <div id="convert-result-wrapper" hidden>
+              <div class="checkerboard" style="padding:0">
+                <img id="convert-result" alt="Converted result" />
+              </div>
+              <div class="actions">
+                <a id="convert-download" download class="btn">Download</a>
+                <button id="convert-reset" class="btn secondary" type="button">Convert Another</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="seo">
+        <h2>How to convert image formats online (PNG, JPG, WEBP)</h2>
+        <p>Use our free image converter to switch between popular formats. Keep transparency when you choose PNG or WEBP. JPG does not support transparency, so we place your image on a white background for best results.</p>
+        <h3>Why this tool?</h3>
+        <ul>
+          <li><strong>Free</strong>: No login, no watermark.</li>
+          <li><strong>Transparency</strong>: Preserve transparent background with PNG/WEBP.</li>
+          <li><strong>Quality</strong>: Adjustable quality for lossy formats.</li>
+          <li><strong>Privacy</strong>: Images are processed temporarily and not stored.</li>
+        </ul>
+        <h3>FAQ</h3>
+        <details>
+          <summary>Which formats support transparent backgrounds?</summary>
+          <p>PNG and WEBP support transparency. JPG does not support transparency.</p>
+        </details>
+      </section>
+    </main>
+
+    <nav class="seo-links">
+      <a href="/remove-background-from-image.html">Remove Background from Image</a>
+      <a href="/change-color-of-image.html">Change color of image online</a>
+      <a href="/change-image-background.html">Change image background</a>
+      <a href="/convert-image-format.html">Convert image format</a>
+      <a href="/change-image-background-to-white.html">Change image background to White</a>
+      <a href="/change-image-background-to-blue.html">Change image background to Blue</a>
+      <a href="/change-image-background-to-black.html">Change image background to Black</a>
+      <a href="/change-image-background-to-yellow.html">Change image background to Yellow</a>
+      <a href="/change-image-background-to-orange.html">Change image background to Orange</a>
+    </nav>
+
+    <footer class="container footer">
+      <p>
+        Built for speed and quality. <a href="#" rel="nofollow">Contact</a>
+      </p>
+    </footer>
+
+    <script src="./script.js?v=20250916-1"></script>
+  </body>
+</html>
+

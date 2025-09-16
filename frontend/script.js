@@ -3,7 +3,7 @@ const fileInput = document.getElementById('file-input');
 const processBtn = document.getElementById('process-btn');
 const categoryInput = document.getElementById('category');
 const catBtns = document.querySelectorAll('.cat-btn');
-catBtns.forEach(btn=>{btn.addEventListener('click',()=>{catBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');categoryInput.value=btn.dataset.cat;});});
+catBtns.forEach(btn=>{btn.addEventListener('click',()=>{catBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active'); if(categoryInput){ categoryInput.value=btn.dataset.cat; }});});
 const previewSection = document.getElementById('preview-section');
 const originalImg = document.getElementById('original-img');
 const resultImg = document.getElementById('result-img');
@@ -51,10 +51,12 @@ function getPageType() {
     if (path.includes('change-image-background-to-')) return 'color_specific';
     if (path === '/change-image-background.html') return 'color_palette';
     if (path === '/change-color-of-image.html') return 'color_change';
+    if (path === '/convert-image-format.html') return 'convert_format';
     return 'unknown';
 }
 
 function updateCtaText(){
+  if(!processBtn) return;
   const isColorPage = !!document.body.getAttribute('data-target-color') || !!document.getElementById('color-palette');
   const isColorChangePage = window.location.pathname === '/change-color-of-image.html';
   
@@ -195,7 +197,7 @@ if (window.location.pathname === '/change-color-of-image.html') {
 }
 
 function enableProcess(enabled){
-  processBtn.disabled = !enabled;
+  if(processBtn) processBtn.disabled = !enabled;
 }
 
 function setOriginalPreview(file){
@@ -230,32 +232,36 @@ function setOriginalPreview(file){
   reader.readAsDataURL(file);
 }
 
-dropzone.addEventListener('click', () => fileInput.click());
-dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
-dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
-dropzone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropzone.classList.remove('drag');
-  if(e.dataTransfer.files && e.dataTransfer.files[0]){
-    currentFile = e.dataTransfer.files[0];
-    setOriginalPreview(currentFile);
-    enableProcess(true);
-  }
-});
+if (dropzone && fileInput) {
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if(e.dataTransfer.files && e.dataTransfer.files[0]){
+      currentFile = e.dataTransfer.files[0];
+      setOriginalPreview(currentFile);
+      enableProcess(true);
+    }
+  });
+}
 
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if(file){
-    currentFile = file;
-    setOriginalPreview(currentFile);
-    enableProcess(true);
-  }
-});
+if (fileInput) {
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file){
+      currentFile = file;
+      setOriginalPreview(currentFile);
+      enableProcess(true);
+    }
+  });
+}
 
 const form = document.getElementById('upload-form');
 // If on a color page, rename CTA
 (function(){ const color = document.body.getAttribute('data-target-color'); if(color){ updateCtaText(); processBtn.setAttribute('aria-label','Change image background'); } })();
-form.addEventListener('submit', async (e) => {
+if (form) form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if(!currentFile) return;
   enableProcess(false);
@@ -290,7 +296,8 @@ form.addEventListener('submit', async (e) => {
     const body = new FormData();
     body.append('file', currentFile);
     
-    const apiBase = window.API_BASE || (window.location.hostname === '127.0.0.1' && window.location.port === '8080' ? 'http://127.0.0.1:8000' : 'https://changeimageto.onrender.com');
+    const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+    const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://changeimageto.onrender.com');
     let endpoint = '/api/remove-bg';
     
     console.log('API Base:', apiBase);
@@ -436,7 +443,72 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-resetBtn.addEventListener('click', () => {
+// ------------------------------
+// Convert format page integration
+// ------------------------------
+if (window.location.pathname === '/convert-image-format.html') {
+  document.addEventListener('DOMContentLoaded', function(){
+    const dz = document.getElementById('convert-dropzone');
+    const input = document.getElementById('convert-file');
+    const btn = document.getElementById('convert-btn');
+    const orig = document.getElementById('convert-original');
+    const resImg = document.getElementById('convert-result');
+    const resWrap = document.getElementById('convert-result-wrapper');
+    const prompt = document.getElementById('convert-prompt');
+    const preview = document.getElementById('convert-preview');
+    const downloadA = document.getElementById('convert-download');
+    const resetC = document.getElementById('convert-reset');
+    const target = document.getElementById('target-format');
+    const keepT = document.getElementById('keep-transparent');
+    const quality = document.getElementById('quality');
+
+    let file = null;
+    function setPreview(f){
+      const r = new FileReader();
+      r.onload = ()=>{ orig.src = r.result; preview.hidden = false; btn.disabled = false; };
+      r.readAsDataURL(f);
+    }
+    dz.addEventListener('click', ()=> input.click());
+    dz.addEventListener('dragover', e=>{e.preventDefault(); dz.classList.add('drag');});
+    dz.addEventListener('dragleave', ()=> dz.classList.remove('drag'));
+    dz.addEventListener('drop', e=>{e.preventDefault(); dz.classList.remove('drag'); if(e.dataTransfer.files[0]){ file = e.dataTransfer.files[0]; setPreview(file);} });
+    input.addEventListener('change', e=>{ if(e.target.files[0]){ file = e.target.files[0]; setPreview(file);} });
+
+    document.getElementById('convert-form').addEventListener('submit', async function(e){
+      e.preventDefault(); if(!file) return; btn.disabled = true; btn.textContent = 'Converting…';
+      const body = new FormData();
+      body.append('file', file);
+      body.append('target_format', target.value);
+      body.append('transparent', keepT.checked ? 'true' : 'false');
+      body.append('quality', quality.value);
+      const apiBase = window.API_BASE || (window.location.hostname === '127.0.0.1' && window.location.port === '8080' ? 'http://127.0.0.1:8000' : 'https://changeimageto.onrender.com');
+      try {
+        const res = await fetch(apiBase + '/api/convert-format', { method: 'POST', body });
+        if(!res.ok){ throw new Error(await res.text()); }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        resImg.src = url;
+        resWrap.hidden = false;
+        prompt.style.display = 'none';
+        const ext = target.value === 'jpg' ? 'jpg' : target.value;
+        downloadA.href = url;
+        downloadA.download = `converted-${Date.now()}.${ext}`;
+        logUserAction('convert_completed', { target_format: target.value, transparent: keepT.checked, size: blob.size });
+      } catch (err) {
+        alert('Error: ' + (err.message || err));
+        logUserAction('convert_error', { message: err.message || String(err) });
+      } finally {
+        btn.disabled = false; btn.textContent = 'Convert Image';
+      }
+    });
+
+    resetC.addEventListener('click', function(){
+      file = null; input.value = ''; orig.src = ''; resImg.src = ''; preview.hidden = true; resWrap.hidden = true; prompt.style.display = 'block'; btn.disabled = true;
+    });
+  });
+}
+
+if (resetBtn) resetBtn.addEventListener('click', () => {
   // Log reset action
   logUserAction('reset_action', {
     page_type: getPageType()

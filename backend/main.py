@@ -354,3 +354,101 @@ async def healthcheck():
 @app.head("/")
 async def head_root():
     return Response(status_code=200)
+
+
+# ----------------------------
+# Image format conversion API
+# ----------------------------
+@app.post("/api/convert-format")
+async def convert_format(
+    request: Request,
+    file: UploadFile = File(...),
+    target_format: str = Form("png"),
+    transparent: bool = Form(False),
+    quality: Optional[int] = Form(90),
+):
+    """Convert an uploaded image to a different format.
+    - target_format: png | jpg | jpeg | webp
+    - transparent: keep/force transparency if supported by target format (PNG/WEBP)
+    - quality: 1-100 for lossy formats
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+
+    target = (target_format or "png").lower()
+    if target == "jpeg":
+        target = "jpg"
+    if target not in {"png", "jpg", "webp"}:
+        raise HTTPException(status_code=400, detail="Unsupported target_format. Use png, jpg, or webp")
+
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    log_user_action("convert_request_started", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "target_format": target,
+        "transparent": transparent,
+        "width": getattr(image, 'width', None),
+        "height": getattr(image, 'height', None),
+    })
+
+    # Decide mode based on transparency setting and target
+    supports_alpha = target in {"png", "webp"}
+    keep_alpha = bool(transparent and supports_alpha)
+
+    try:
+        if keep_alpha:
+            converted = image.convert("RGBA")
+            # Auto-trim fully transparent padding
+            try:
+                alpha = converted.split()[-1]
+                bbox = alpha.getbbox()
+                if bbox and bbox != (0, 0, converted.width, converted.height):
+                    converted = converted.crop(bbox)
+            except Exception:
+                pass
+        else:
+            # Flatten onto opaque white background for formats w/o alpha or when transparency is false
+            if image.mode in ("RGBA", "LA"):
+                background = Image.new("RGB", image.size, (255, 255, 255))
+                background.paste(image, mask=image.split()[-1])
+                converted = background
+            else:
+                converted = image.convert("RGB")
+
+        params = {}
+        if target == "jpg":
+            params.update({"quality": max(1, min(int(quality or 90), 100)), "optimize": True})
+            save_format = "JPEG"
+        elif target == "webp":
+            params.update({"quality": max(1, min(int(quality or 90), 100))})
+            save_format = "WEBP"
+        else:
+            save_format = "PNG"
+
+        buf = io.BytesIO()
+        converted.save(buf, format=save_format, **params)
+        out = buf.getvalue()
+
+        log_user_action("convert_completed", {
+            "target_format": target,
+            "transparent": keep_alpha,
+            "output_size_bytes": len(out),
+        })
+
+        media = {
+            "png": "image/png",
+            "jpg": "image/jpeg",
+            "webp": "image/webp",
+        }[target]
+        return Response(content=out, media_type=media)
+
+    except Exception as e:
+        log_user_action("convert_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Conversion error: {str(e)}")
