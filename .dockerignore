@@ -1,0 +1,48 @@
+# Ignore files not needed in Docker image
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend files (not needed for backend)
+frontend/
+*.html
+*.css
+*.js
+*.png
+
+# Test files
+test_*.png
+test_*.jpg
+
+# Logs
+*.log
+app.log
+uvicorn.log
+
+# OS files
+.DS_Store
+Thumbs.db
