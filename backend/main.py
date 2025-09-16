@@ -378,8 +378,9 @@ async def convert_format(
     target = (target_format or "png").lower()
     if target == "jpeg":
         target = "jpg"
-    if target not in {"png", "jpg", "webp"}:
-        raise HTTPException(status_code=400, detail="Unsupported target_format. Use png, jpg, or webp")
+    supported_targets = {"png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "ppm", "pgm"}
+    if target not in supported_targets:
+        raise HTTPException(status_code=400, detail=f"Unsupported target_format. Use one of: {sorted(supported_targets)}")
 
     try:
         contents = await file.read()
@@ -399,7 +400,7 @@ async def convert_format(
     })
 
     # Decide mode based on transparency setting and target
-    supports_alpha = target in {"png", "webp"}
+    supports_alpha = target in {"png", "webp", "tiff", "ico", "gif"}
     keep_alpha = bool(transparent and supports_alpha)
 
     try:
@@ -429,6 +430,50 @@ async def convert_format(
         elif target == "webp":
             params.update({"quality": max(1, min(int(quality or 90), 100))})
             save_format = "WEBP"
+        elif target == "bmp":
+            save_format = "BMP"
+        elif target == "gif":
+            # Convert to palette-based; keep single frame
+            if keep_alpha:
+                # GIF transparency via palette index
+                converted = converted.convert("RGBA")
+                palette_image = converted.convert("P", palette=Image.ADAPTIVE, colors=255)
+                # Pick a transparent color index
+                alpha = converted.split()[-1]
+                mask = Image.eval(alpha, lambda a: 255 if a <= 1 else 0)
+                palette_image.info['transparency'] = 255  # last index
+                palette_image.paste(255, None, mask)
+                converted = palette_image
+            else:
+                converted = converted.convert("P", palette=Image.ADAPTIVE, colors=256)
+            params.update({"optimize": True, "save_all": False})
+            save_format = "GIF"
+        elif target == "tiff":
+            params.update({"compression": "tiff_lzw"})
+            save_format = "TIFF"
+        elif target == "ico":
+            # ICO must be 256x256. Use cover-fit: fill the square with center-crop (no padding)
+            size = 256
+            img_rgba = converted.convert("RGBA")
+            # scale so the shortest side is 256 (cover)
+            min_side = min(img_rgba.width, img_rgba.height)
+            scale = size / float(min_side)
+            resized = img_rgba.resize((max(1, int(round(img_rgba.width * scale))),
+                                       max(1, int(round(img_rgba.height * scale)))), Image.LANCZOS)
+            # center crop to 256x256
+            left = (resized.width - size) // 2
+            top = (resized.height - size) // 2
+            converted = resized.crop((left, top, left + size, top + size))
+            save_format = "ICO"
+            params.update({"sizes": [(256, 256)]})
+        elif target in {"ppm", "pgm"}:
+            # Ensure correct mode and explicit binary save
+            if target == "ppm":
+                converted = converted.convert("RGB")
+            else:
+                converted = converted.convert("L")
+            save_format = "PPM"
+            params.update({"bits": 8})
         else:
             save_format = "PNG"
 
@@ -446,6 +491,12 @@ async def convert_format(
             "png": "image/png",
             "jpg": "image/jpeg",
             "webp": "image/webp",
+            "bmp": "image/bmp",
+            "gif": "image/gif",
+            "tiff": "image/tiff",
+            "ico": "image/x-icon",
+            "ppm": "image/x-portable-pixmap",
+            "pgm": "image/x-portable-graymap",
         }[target]
         return Response(content=out, media_type=media)
 

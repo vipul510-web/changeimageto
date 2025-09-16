@@ -1,3 +1,5 @@
+console.log('script.js: init');
+try {
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('file-input');
 const processBtn = document.getElementById('process-btn');
@@ -22,21 +24,21 @@ function logUserAction(action, details = {}) {
         details: details
     };
     
-    // Send to backend analytics endpoint (if available)
-    fetch('/api/analytics', {
+    // Send to backend analytics endpoint (local dev uses 8000)
+    const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+    const analyticsBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://changeimageto.onrender.com');
+    fetch(analyticsBase + '/api/analytics', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(logEntry)
-    }).catch(() => {
-        // Silently fail if analytics endpoint is not available
-        console.log('Analytics logged:', logEntry);
-    });
+    }).catch(() => { /* ignore analytics failures */ });
 }
 
 // Log page visit on load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('script.js: DOMContentLoaded');
     const pageType = getPageType();
     logUserAction('page_visit', {
         page_type: pageType,
@@ -205,6 +207,9 @@ function setOriginalPreview(file){
   reader.onload = () => {
     originalImg.src = reader.result;
     originalImg.style.display = 'block';
+    if (previewSection) {
+      previewSection.hidden = false;
+    }
     
     // Hide upload prompt and show image
     const uploadPrompt = document.getElementById('upload-prompt');
@@ -232,14 +237,24 @@ function setOriginalPreview(file){
   reader.readAsDataURL(file);
 }
 
-if (dropzone && fileInput) {
-  dropzone.addEventListener('click', () => fileInput.click());
+if (dropzone) {
+  dropzone.addEventListener('click', () => { 
+    const fi = document.getElementById('file-input');
+    console.log('dropzone click', !!fi);
+    if (fi) {
+      if (typeof fi.showPicker === 'function') {
+        try { fi.showPicker(); return; } catch(_) {}
+      }
+      fi.click();
+    }
+  });
   dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropzone.classList.remove('drag');
     if(e.dataTransfer.files && e.dataTransfer.files[0]){
+      console.log('drop event got file');
       currentFile = e.dataTransfer.files[0];
       setOriginalPreview(currentFile);
       enableProcess(true);
@@ -247,8 +262,18 @@ if (dropzone && fileInput) {
   });
 }
 
+// Fallback: delegate click anywhere inside the uploader to open the file chooser
+document.addEventListener('click', (e) => {
+  const dz = e.target.closest && e.target.closest('#dropzone');
+  if (dz && fileInput) {
+    e.preventDefault();
+    fileInput.click();
+  }
+});
+
 if (fileInput) {
   fileInput.addEventListener('change', (e) => {
+    console.log('fileInput change fired');
     const file = e.target.files[0];
     if(file){
       currentFile = file;
@@ -257,6 +282,17 @@ if (fileInput) {
     }
   });
 }
+
+// Defensive: also listen for change events bubbled from any #file-input that might be re-rendered
+document.addEventListener('change', (e) => {
+  const target = e.target;
+  if (target && target.id === 'file-input' && target.files && target.files[0]) {
+    console.log('file-input delegated change');
+    currentFile = target.files[0];
+    setOriginalPreview(currentFile);
+    enableProcess(true);
+  }
+});
 
 const form = document.getElementById('upload-form');
 // If on a color page, rename CTA
@@ -341,6 +377,9 @@ if (form) form.addEventListener('submit', async (e) => {
       body.append('category', categoryInput?.value || 'product');
       var hidden = document.getElementById('bg-color');
       if(hidden) body.append('bg_color', hidden.value);
+      // If a swatch is active, prefer that color
+      var activeSwatch = document.querySelector('#color-palette .swatch.active');
+      if(activeSwatch){ body.append('bg_color', activeSwatch.getAttribute('data-color')); }
       var pageColor = document.body.getAttribute('data-target-color');
       if(pageColor) body.append('bg_color', pageColor);
     }
@@ -360,6 +399,20 @@ if (form) form.addEventListener('submit', async (e) => {
         resultImg.src = objectUrl;
         downloadLink.href = objectUrl;
         downloadLink.download = `bg-removed-${Date.now()}.png`;
+        try {
+          // Convert blob to DataURL so it persists across navigation (Blob URLs are per-document)
+          const fr = new FileReader();
+          fr.onload = () => {
+            try {
+              sessionStorage.setItem('preloadImageDataURL', fr.result);
+              sessionStorage.setItem('preloadImageName', downloadLink.download || `image-${Date.now()}.png`);
+              sessionStorage.removeItem('preloadImageURL');
+            } catch(_) {}
+          };
+          fr.readAsDataURL(blob);
+          var toConv = document.getElementById('to-converter');
+          if (toConv) toConv.style.display = 'inline-block';
+        } catch(_){}
     
     // Log download link creation
     logUserAction('download_link_created', {
@@ -461,6 +514,7 @@ if (window.location.pathname === '/convert-image-format.html') {
     const target = document.getElementById('target-format');
     const keepT = document.getElementById('keep-transparent');
     const quality = document.getElementById('quality');
+    const openA = document.getElementById('convert-open');
 
     let file = null;
     function setPreview(f){
@@ -486,13 +540,32 @@ if (window.location.pathname === '/convert-image-format.html') {
         const res = await fetch(apiBase + '/api/convert-format', { method: 'POST', body });
         if(!res.ok){ throw new Error(await res.text()); }
         const blob = await res.blob();
+        // For formats browsers can't preview (ICO, PPM, PGM, TIFF), skip inline preview and just enable download
+        const ct = res.headers.get('content-type') || '';
+        const nonPreview = ['image/x-icon','image/tiff','image/x-portable-pixmap','image/x-portable-graymap'];
         const url = URL.createObjectURL(blob);
-        resImg.src = url;
-        resWrap.hidden = false;
-        prompt.style.display = 'none';
         const ext = target.value === 'jpg' ? 'jpg' : target.value;
         downloadA.href = url;
         downloadA.download = `converted-${Date.now()}.${ext}`;
+        resWrap.hidden = false;
+        prompt.style.display = 'none';
+        if (!nonPreview.includes(ct)) {
+          resImg.style.display = 'block';
+          resImg.src = url;
+        } else {
+          // Hide unsupported preview types to avoid broken tiny icon
+          resImg.removeAttribute('src');
+          resImg.style.display = 'none';
+          // Optionally show a text note
+          if (!document.getElementById('convert-note')) {
+            const note = document.createElement('p');
+            note.id = 'convert-note';
+            note.className = 'prompt';
+            note.textContent = 'Preview not supported in browser for this format. Use Download to view the file.';
+            resWrap.parentElement.insertBefore(note, resWrap.nextSibling);
+          }
+        }
+        if (openA){ openA.href = url; openA.target = '_blank'; openA.style.display = 'inline-block'; }
         logUserAction('convert_completed', { target_format: target.value, transparent: keepT.checked, size: blob.size });
       } catch (err) {
         alert('Error: ' + (err.message || err));
@@ -504,7 +577,20 @@ if (window.location.pathname === '/convert-image-format.html') {
 
     resetC.addEventListener('click', function(){
       file = null; input.value = ''; orig.src = ''; resImg.src = ''; preview.hidden = true; resWrap.hidden = true; prompt.style.display = 'block'; btn.disabled = true;
+      if (openA){ openA.removeAttribute('href'); openA.style.display = 'none'; }
     });
+
+    // Auto preload from sessionStorage
+    try {
+      const preloadDataURL = sessionStorage.getItem('preloadImageDataURL');
+      const preloadName = sessionStorage.getItem('preloadImageName') || 'image.png';
+      if (preloadDataURL) {
+        fetch(preloadDataURL).then(r=>r.blob()).then(b=>{
+          const f = new File([b], preloadName, { type: b.type || 'image/png' });
+          file = f; setPreview(file);
+        }).catch(()=>{});
+      }
+    } catch(_){ }
   });
 }
 
@@ -537,6 +623,10 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
   updateCtaText();
   updatePromptText();
 });
+
+} catch (e) {
+  console.error('script.js init error:', e);
+}
 
 
 // Color-page composition: if body has data-target-color, render solid background
@@ -602,25 +692,50 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
 
 
 // Landing page color selection behavior
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
+  var palette = document.getElementById('color-palette');
+  var hidden = document.getElementById('bg-color');
+  if(!palette || !hidden){ console.log('palette or hidden not found'); return; }
+  // Set CTA and prompt
+  updateCtaText(); if(processBtn) processBtn.setAttribute('aria-label','Change image background');
+  updatePromptText();
+  function setColor(hex){ hidden.value = hex; }
+  // Fresh, simple event delegation for palette clicks
+  palette.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.swatch');
+    if(!btn || !palette.contains(btn)) return;
+    e.preventDefault();
+    palette.querySelectorAll('.swatch').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    setColor(btn.getAttribute('data-color'));
+    var custom = document.getElementById('custom-color');
+    if(custom) custom.value = hidden.value;
+    console.log('bg_color set', hidden.value);
+  });
+  // Initialize first swatch as active if none selected
+  var first = palette.querySelector('.swatch');
+  if(first && !palette.querySelector('.swatch.active')){
+    first.classList.add('active');
+    setColor(first.getAttribute('data-color'));
+  }
+  var custom = document.getElementById('custom-color');
+  if(custom){ custom.addEventListener('input', function(){ setColor(custom.value); }); }
+});
+
+// Extra defensive: global delegate to ensure swatch selection always works, even if previous binding missed
+document.addEventListener('click', function(e){
   var palette = document.getElementById('color-palette');
   var hidden = document.getElementById('bg-color');
   if(!palette || !hidden) return;
-  // Set CTA and prompt
-  updateCtaText(); processBtn.setAttribute('aria-label','Change image background');
-  var prompt = document.getElementById('process-prompt');
-  updatePromptText();
-  function setColor(hex){ hidden.value = hex; }
-  palette.querySelectorAll('.swatch').forEach(function(btn, i){
-    btn.addEventListener('click', function(){
-      palette.querySelectorAll('.swatch').forEach(function(b){ b.classList.remove('active'); });
-      btn.classList.add('active');
-      setColor(btn.getAttribute('data-color'));
-      var custom = document.getElementById('custom-color');
-      if(custom) custom.value = hidden.value;
-    });
-    if(i===0) btn.classList.add('active');
-  });
-  var custom = document.getElementById('custom-color');
-  if(custom){ custom.addEventListener('input', function(){ setColor(custom.value); }); }
-})();
+  var sw = e.target.closest && e.target.closest('.swatch');
+  if(sw && palette.contains(sw)){
+    e.preventDefault();
+    palette.querySelectorAll('.swatch').forEach(function(b){ b.classList.remove('active'); b.style.outline='none'; });
+    sw.classList.add('active');
+    sw.style.outline = '2px solid var(--accent)';
+    hidden.value = sw.getAttribute('data-color');
+    var custom = document.getElementById('custom-color');
+    if(custom) custom.value = hidden.value;
+    console.log('global delegate set bg_color', hidden.value);
+  }
+});
