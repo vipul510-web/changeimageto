@@ -196,6 +196,11 @@ async def remove_bg(
             
         # Optional solid background color compositing
         if bg_color:
+            log_user_action("bg_color_debug", {
+                "bg_color_raw": bg_color,
+                "bg_color_type": type(bg_color).__name__,
+                "bg_color_repr": repr(bg_color)
+            })
             col = bg_color.strip()
             if col.startswith('#'):
                 col = col[1:]
