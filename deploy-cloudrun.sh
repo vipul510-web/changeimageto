@@ -5,7 +5,7 @@
 
 set -e
 
-PROJECT_ID="your-project-id"  # Replace with your GCP project ID
+PROJECT_ID="vipul510"  # Your GCP project ID
 SERVICE_NAME="bgremover-backend"
 REGION="us-central1"
 
