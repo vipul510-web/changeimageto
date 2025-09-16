@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageEnhance, ImageOps
 import io
 import logging
+import asyncio
 import json
 import os
 from datetime import datetime
@@ -25,6 +26,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Limit heavy CPU tasks to protect memory/CPU. Override via env MAX_CONCURRENCY
+PROCESS_SEM = asyncio.Semaphore(int(os.getenv("MAX_CONCURRENCY", "2")))
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,6 +43,20 @@ MODEL_NAME_FOR_CATEGORY = {
 }
 
 _sessions_cache = {}
+def downscale_image_if_needed(image: Image.Image, max_side: int = int(os.getenv("MAX_IMAGE_SIDE", "3000"))) -> Image.Image:
+    """Downscale very large images to reduce memory/CPU load while preserving aspect ratio."""
+    try:
+        w, h = image.width, image.height
+        longest = max(w, h)
+        if longest <= max_side:
+            return image
+        scale = max_side / float(longest)
+        new_w = max(1, int(round(w * scale)))
+        new_h = max(1, int(round(h * scale)))
+        return image.resize((new_w, new_h), Image.LANCZOS)
+    except Exception:
+        # In case of any issues, return original
+        return image
 
 def log_user_action(action: str, details: dict):
     """Log user actions with timestamp and details"""
@@ -136,8 +154,20 @@ async def remove_bg(
             "bg_color": bg_color,
             "action_type": "change_background" if bg_color else "remove_background"
         })
-        
-        result = remove(image, session=session, alpha_matting=True, alpha_matting_foreground_threshold=240, alpha_matting_background_threshold=10, alpha_matting_erode_size=10, post_process_mask=True)
+
+        # Downscale to protect memory
+        image = downscale_image_if_needed(image)
+
+        async with PROCESS_SEM:
+            result = remove(
+                image,
+                session=session,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_size=10,
+                post_process_mask=True,
+            )
         if result.mode != "RGBA":
             result = result.convert("RGBA")
             
@@ -255,8 +285,11 @@ async def change_color(
             "contrast": contrast
         })
         
-        # Apply color changes based on type
-        result = apply_color_changes(image, color_type, hue_shift, saturation, brightness, contrast)
+        # Downscale first to reduce memory, then apply color changes
+        image = downscale_image_if_needed(image)
+        async with PROCESS_SEM:
+            # Apply color changes based on type
+            result = apply_color_changes(image, color_type, hue_shift, saturation, brightness, contrast)
         
         output_io = io.BytesIO()
         result.save(output_io, format="PNG")
@@ -404,6 +437,8 @@ async def convert_format(
     keep_alpha = bool(transparent and supports_alpha)
 
     try:
+        # Downscale before conversion to control memory
+        image = downscale_image_if_needed(image)
         if keep_alpha:
             converted = image.convert("RGBA")
             # Auto-trim fully transparent padding
@@ -477,9 +512,10 @@ async def convert_format(
         else:
             save_format = "PNG"
 
-        buf = io.BytesIO()
-        converted.save(buf, format=save_format, **params)
-        out = buf.getvalue()
+        async with PROCESS_SEM:
+            buf = io.BytesIO()
+            converted.save(buf, format=save_format, **params)
+            out = buf.getvalue()
 
         log_user_action("convert_completed", {
             "target_format": target,
