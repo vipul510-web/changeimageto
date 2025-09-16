@@ -10,7 +10,7 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
-staticSites:
-  - name: bgremover-frontend
+  - type: static_site
+    name: bgremover-frontend
     rootDir: frontend
     publishPath: .
