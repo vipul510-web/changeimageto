@@ -38,12 +38,12 @@ app.add_middleware(
 )
 
 MODEL_NAME_FOR_CATEGORY = {
-    "product": "u2net",
-    "portrait": "u2net_human_seg",
+    "product": os.getenv("DEFAULT_MODEL", "u2netp"),
+    "portrait": os.getenv("DEFAULT_MODEL", "u2net_human_seg"),
 }
 
 _sessions_cache = {}
-def downscale_image_if_needed(image: Image.Image, max_side: int = int(os.getenv("MAX_IMAGE_SIDE", "3000"))) -> Image.Image:
+def downscale_image_if_needed(image: Image.Image, max_side: int = int(os.getenv("MAX_IMAGE_SIDE", "1600"))) -> Image.Image:
     """Downscale very large images to reduce memory/CPU load while preserving aspect ratio."""
     try:
         w, h = image.width, image.height
