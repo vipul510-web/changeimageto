@@ -140,6 +140,7 @@ async def remove_bg(
         contents = await file.read()
         file_size = len(contents)
         image = Image.open(io.BytesIO(contents)).convert("RGBA")
+        original_size = (image.width, image.height)
         
         # Log successful file processing
         log_user_action("file_processed", {
@@ -168,7 +169,7 @@ async def remove_bg(
             "action_type": "change_background" if bg_color else "remove_background"
         })
 
-        # Downscale to protect memory
+        # Downscale to protect memory for processing, but remember original_size for output
         image = downscale_image_if_needed(image)
 
         async with PROCESS_SEM:
@@ -184,15 +185,13 @@ async def remove_bg(
         if result.mode != "RGBA":
             result = result.convert("RGBA")
 
-        # Auto-trim fully transparent padding around the subject to remove extra borders
+        # For transparent exports, trim fully transparent padding and keep trimmed size
+        trim_bbox = None
         try:
             alpha_channel = result.split()[-1]
-            bbox = alpha_channel.getbbox()
-            if bbox and bbox != (0, 0, result.width, result.height):
-                result = result.crop(bbox)
+            trim_bbox = alpha_channel.getbbox()
         except Exception:
-            # If trimming fails, continue with original
-            pass
+            trim_bbox = None
             
         # Optional solid background color compositing
         if bg_color:
@@ -209,9 +208,19 @@ async def remove_bg(
                 })
                 raise HTTPException(status_code=400, detail="Invalid bg_color; use hex like #ffffff")
             r = int(col[0:2], 16); g = int(col[2:4], 16); b = int(col[4:6], 16)
-            background = Image.new('RGBA', result.size, (r, g, b, 255))
-            background.alpha_composite(result)
-            result = background.convert('RGBA')
+            # Ensure output keeps the original input dimensions
+            canvas = Image.new('RGBA', original_size, (r, g, b, 255))
+            # If trimming found a bbox, paste centered within original canvas without changing size
+            to_composite = result
+            if result.size != original_size:
+                # Keep subject scale from processed image; center within original canvas
+                offset_x = (original_size[0] - result.width) // 2
+                offset_y = (original_size[1] - result.height) // 2
+                canvas.paste(result, (max(0, offset_x), max(0, offset_y)), mask=result.split()[-1])
+                result = canvas
+            else:
+                canvas.alpha_composite(result)
+                result = canvas
             
         output_io = io.BytesIO()
         result.save(output_io, format="PNG")
