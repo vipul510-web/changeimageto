@@ -5,7 +5,7 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,C
 .header h1{margin:0 0 8px}
 .header p{margin:0;color:var(--muted)}
 .logo-link{display:inline-flex;align-items:center;gap:10px;margin-bottom:10px;text-decoration:none}
-.logo{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,var(--accent),#4f46e5)}
+.logo-img{height:36px;width:auto;display:block}
 .logo-text{color:var(--fg);font-weight:700}
 .main{padding-top:8px}
 .controls{margin:16px 0;display:flex;gap:12px;align-items:center}
