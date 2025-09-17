@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Depends
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageEnhance, ImageOps, ImageFilter
@@ -10,6 +10,19 @@ import os
 from datetime import datetime
 from typing import Optional
 import numpy as np
+import re
+import hashlib
+import requests
+
+try:
+    from google.cloud import storage
+except Exception:
+    storage = None  # optional in local dev
+
+try:
+    from pytrends.request import TrendReq
+except Exception:
+    TrendReq = None
 
 from rembg import remove, new_session
 
@@ -42,6 +55,9 @@ MODEL_NAME_FOR_CATEGORY = {
     "portrait": os.getenv("DEFAULT_MODEL", "u2net_human_seg"),
 }
 
+BLOG_BUCKET = os.getenv("BLOG_BUCKET", "")
+CRON_TOKEN = os.getenv("CRON_TOKEN", "")
+
 _sessions_cache = {}
 def downscale_image_if_needed(image: Image.Image, max_side: int = int(os.getenv("MAX_IMAGE_SIDE", "1600"))) -> Image.Image:
     """Downscale very large images to reduce memory/CPU load while preserving aspect ratio."""
@@ -66,6 +82,137 @@ def log_user_action(action: str, details: dict):
         "details": details
     }
     logger.info(f"USER_ACTION: {json.dumps(log_entry)}")
+
+
+# -----------------
+# Blog helper utils
+# -----------------
+def get_storage_client():
+    if not BLOG_BUCKET:
+        raise RuntimeError("BLOG_BUCKET not configured")
+    if storage is None:
+        raise RuntimeError("google-cloud-storage not installed")
+    return storage.Client()
+
+def normalize_slug(text: str) -> str:
+    text = text.lower().strip()
+    text = re.sub(r"[^a-z0-9\s-]", "", text)
+    text = re.sub(r"\s+", "-", text)
+    text = re.sub(r"-+", "-", text)
+    return text[:120].strip("-") or hashlib.md5(text.encode()).hexdigest()[:12]
+
+def fetch_google_autocomplete(seed: str) -> list:
+    try:
+        url = "https://suggestqueries.google.com/complete/search"
+        resp = requests.get(url, params={"client": "firefox", "q": seed}, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        return [s for s in data[1] if isinstance(s, str)]
+    except Exception:
+        return []
+
+def fetch_trends_related(seed: str) -> list:
+    if TrendReq is None:
+        return []
+    try:
+        pt = TrendReq(hl='en-US', tz=0)
+        pt.build_payload([seed], timeframe='today 12-m')
+        rel = pt.related_queries()
+        out = []
+        for v in rel.values():
+            for kind in ("top", "rising"):
+                df = v.get(kind)
+                if df is not None:
+                    out.extend(df['query'].tolist()[:10])
+        return out
+    except Exception:
+        return []
+
+def pick_keywords(seeds: list, existing_slugs: set) -> list:
+    ideas = []
+    for seed in seeds:
+        ideas.extend(fetch_google_autocomplete(seed))
+        ideas.extend(fetch_trends_related(seed))
+    # de-dup and prefer long-tail 3+ words
+    uniq = []
+    seen = set()
+    for k in ideas:
+        kk = k.strip().lower()
+        if kk and kk not in seen and len(kk.split()) >= 3:
+            slug = normalize_slug(kk)
+            if slug not in existing_slugs:
+                uniq.append((kk, slug))
+                seen.add(kk)
+    return uniq[:5]
+
+def render_article_html(title: str, slug: str, body_sections: list) -> str:
+    # minimal, reuse global CSS and script
+    json_ld = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": title,
+        "datePublished": datetime.utcnow().strftime('%Y-%m-%d'),
+    }
+    sections_html = "\n".join(body_sections)
+    return f"""<!doctype html><html lang=\"en\"><head>
+<meta charset=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>
+<title>{title}</title>
+<meta name=\"description\" content=\"{title} – practical guide and tips.\"/>
+<link rel=\"canonical\" href=\"https://www.changeimageto.com/blog/{slug}.html\"/>
+<script type=\"application/ld+json\">{json.dumps(json_ld)}</script>
+<link rel=\"preload\" as=\"style\" href=\"/styles.css?v=20250916-3\"/><link rel=\"stylesheet\" href=\"/styles.css?v=20250916-3\"/>
+</head><body>
+<header class=\"container header\"><a href=\"/\" class=\"logo-link\"><img src=\"/logo.png\" alt=\"ChangeImageTo\" class=\"logo-img\"/></a><h1>{title}</h1></header>
+<main class=\"container main\">{sections_html}</main>
+<nav class=\"seo-links\"><a href=\"/remove-background-from-image.html\">Remove Background from Image</a><a href=\"/change-color-of-image.html\">Change color of image online</a><a href=\"/change-image-background.html\">Change image background</a><a href=\"/convert-image-format.html\">Convert image format</a><a href=\"/upscale-image.html\">AI Image Upscaler</a><a href=\"/blur-background.html\">Blur Background</a><a href=\"/enhance-image.html\">Enhance Image</a></nav>
+<footer class=\"container footer\"><p>Built for speed and quality.</p></footer>
+<script src=\"/script.js?v=20250916-3\" defer></script>
+</body></html>"""
+
+def build_sections(keyword: str) -> list:
+    k = keyword
+    return [
+        f"<section class=\"seo\"><h2>What is {k}?</h2><p>This article explains {k} in simple terms and shows how to do it online free.</p></section>",
+        f"<section class=\"seo\"><h2>Step-by-step: {k}</h2><ol><li>Open the relevant tool below.</li><li>Upload your image.</li><li>Adjust options.</li><li>Download the result as PNG.</li></ol></section>",
+        "<section class=\"seo\"><h3>Useful tools</h3><ul>"
+        "<li><a href=\"/remove-background-from-image.html\">Remove background</a></li>"
+        "<li><a href=\"/upscale-image.html\">Upscale image</a></li>"
+        "<li><a href=\"/blur-background.html\">Blur background</a></li>"
+        "<li><a href=\"/enhance-image.html\">Enhance image</a></li>"
+        "</ul></section>",
+        f"<section class=\"seo\"><h2>FAQ on {k}</h2><details><summary>Is this free?</summary><p>Yes, no login, no watermark.</p></details></section>",
+    ]
+
+def list_existing_slugs(client) -> set:
+    if not BLOG_BUCKET:
+        return set()
+    try:
+        bucket = client.bucket(BLOG_BUCKET)
+        blobs = list(bucket.list_blobs(prefix="blog/"))
+        slugs = set()
+        for b in blobs:
+            if b.name.endswith('.html'):
+                s = os.path.basename(b.name).replace('.html','')
+                slugs.add(s)
+        return slugs
+    except Exception:
+        return set()
+
+def save_article(client, slug: str, html: str):
+    bucket = client.bucket(BLOG_BUCKET)
+    blob = bucket.blob(f"blog/{slug}.html")
+    blob.cache_control = "public, max-age=86400"
+    blob.upload_from_string(html, content_type="text/html; charset=utf-8")
+    # update index json (append latest)
+    idx = bucket.blob("blog/index.json")
+    try:
+        existing = json.loads(idx.download_as_text())
+    except Exception:
+        existing = {"posts": []}
+    url = f"/blog/{slug}.html"
+    existing["posts"] = ([{"slug": slug, "title": html.split('<title>')[1].split('</title>')[0], "url": url, "date": datetime.utcnow().isoformat()}] 
+                           + [p for p in existing.get("posts", []) if p.get("slug") != slug])[:200]
+    idx.upload_from_string(json.dumps(existing), content_type="application/json")
 
 def get_session_for_category(category: str):
     category = category.lower()
@@ -575,6 +722,65 @@ async def convert_format(
     except Exception as e:
         log_user_action("convert_error", {"message": str(e)})
         raise HTTPException(status_code=500, detail=f"Conversion error: {str(e)}")
+
+
+# ----------------------------
+# Blog endpoints
+# ----------------------------
+@app.post("/api/generate-blog-daily")
+async def generate_blog_daily(token: str):
+    if CRON_TOKEN and token != CRON_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    client = get_storage_client()
+    existing = list_existing_slugs(client)
+    seeds = [
+        "remove background from image",
+        "change image background color",
+        "image upscaler",
+        "blur background in photo",
+        "enhance image quality",
+        "convert image format",
+    ]
+    picks = pick_keywords(seeds, existing)
+    created = []
+    for kw, slug in picks:
+        title = kw.title()
+        html = render_article_html(title, slug, build_sections(kw))
+        save_article(client, slug, html)
+        created.append({"slug": slug, "title": title})
+    return {"created": created}
+
+
+@app.get("/blog")
+async def blog_index():
+    if not BLOG_BUCKET:
+        raise HTTPException(status_code=500, detail="BLOG_BUCKET not configured")
+    client = get_storage_client()
+    bucket = client.bucket(BLOG_BUCKET)
+    idx = bucket.blob("blog/index.json")
+    try:
+        data = json.loads(idx.download_as_text())
+    except Exception:
+        data = {"posts": []}
+    items = data.get("posts", [])
+    # simple HTML list
+    lis = "".join([f"<li><a href='/blog/{p['slug']}.html'>{p['title']}</a> — {p.get('date','')}</li>" for p in items])
+    html = f"""<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Blog</title><link rel='preload' as='style' href='/styles.css?v=20250916-3'/><link rel='stylesheet' href='/styles.css?v=20250916-3'/></head>
+<body><header class='container header'><a href='/' class='logo-link'><img src='/logo.png' class='logo-img' alt='ChangeImageTo'/></a><h1>Blog</h1></header>
+<main class='container main'><ul>{lis}</ul></main><script src='/script.js?v=20250916-3' defer></script></body></html>"""
+    return Response(content=html, media_type="text/html")
+
+
+@app.get("/blog/{slug}.html")
+async def blog_article(slug: str):
+    client = get_storage_client()
+    bucket = client.bucket(BLOG_BUCKET)
+    blob = bucket.blob(f"blog/{slug}.html")
+    if not blob.exists():
+        raise HTTPException(status_code=404, detail="Not found")
+    html = blob.download_as_text()
+    return Response(content=html, media_type="text/html")
 
 
 @app.post("/api/upscale-image")
