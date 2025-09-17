@@ -60,6 +60,13 @@
             <option value="70">Smaller (70)</option>
           </select>
 
+          <div class="preset-buttons" style="display:flex;gap:8px;align-items:center;margin-top:8px">
+            <span style="font-weight:600">Presets:</span>
+            <button type="button" class="preset-btn" data-convert-preset="gimp">GIMP (PNG RGBA)</button>
+            <button type="button" class="preset-btn" data-convert-preset="inkscape-png">Inkscape (PNG Transparent)</button>
+            <button type="button" class="preset-btn" data-convert-preset="inkscape-webp">Inkscape (WEBP Transparent)</button>
+          </div>
+
           <button id="convert-btn" type="submit" disabled>Convert Image</button>
         </div>
       </form>
@@ -90,6 +97,7 @@
       <section class="seo">
         <h2>Convert any image format online (PNG, JPG, WEBP, GIF, TIFF, BMP, ICO, PPM/PGM)</h2>
         <p>Use our free image converter to switch between common and pro formats. We support input files that your browser can upload (PNG, JPG/JPEG, WEBP, BMP, GIF, TIFF, ICO and more) and convert them.</p>
+        <p><strong>GIMP & Inkscape users:</strong> For best results, export to <strong>PNG</strong> or <strong>WEBP</strong> with transparency enabled. Use the presets above to auto-select the right options.</p>
         <h3>Transparency support</h3>
         <ul>
           <li><strong>Supported</strong>: PNG, WEBP, TIFF, ICO, GIF (single frame)</li>

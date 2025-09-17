@@ -698,6 +698,28 @@ if (window.location.pathname === '/convert-image-format.html') {
       if (openA){ openA.removeAttribute('href'); openA.style.display = 'none'; }
     });
 
+    // Preset buttons for GIMP/Inkscape
+    const convertPresets = document.querySelectorAll('[data-convert-preset]');
+    convertPresets.forEach(btn => {
+      btn.addEventListener('click', function(){
+        const preset = btn.getAttribute('data-convert-preset');
+        if (preset === 'gimp') {
+          target.value = 'png';
+          keepT.checked = true;
+          quality.value = '90';
+        } else if (preset === 'inkscape-png') {
+          target.value = 'png';
+          keepT.checked = true;
+          quality.value = '90';
+        } else if (preset === 'inkscape-webp') {
+          target.value = 'webp';
+          keepT.checked = true;
+          quality.value = '90';
+        }
+        logUserAction('convert_preset_selected', { preset, target_format: target.value, transparent: keepT.checked, quality: quality.value });
+      });
+    });
+
     // Auto preload from sessionStorage
     try {
       const preloadDataURL = sessionStorage.getItem('preloadImageDataURL');
