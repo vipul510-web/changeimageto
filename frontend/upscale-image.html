@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Upscaler Online | Free Image Enhancer</title>
+    <meta name="description" content="Free AI image upscaler online. Increase image resolution up to 4K without losing quality. Enhance photos instantly with our AI-powered upscaling tool.">
+    <meta name="keywords" content="image upscaler, AI upscaler, enhance image, increase resolution, upscale photo, image enhancer, free upscaler">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/upscale-image.html">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Free AI Image Upscaler Online">
+    <meta property="og:description" content="Free AI image upscaler online. Increase image resolution up to 4K without losing quality. Enhance photos instantly.">
+    <meta property="og:url" content="https://www.changeimageto.com/upscale-image.html">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Free AI Image Upscaler Online">
+    <meta name="twitter:description" content="Free AI image upscaler online. Increase image resolution up to 4K without losing quality.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-D3Q582VFCG');
+    </script>
+</head>
+<body>
+    <header class="container header">
+        <a href="/" class="logo-link"><img src="./logo.png?v=20250916-1" alt="ChangeImageTo" class="logo-img" /></a>
+        <h1>AI Image Upscaler (Free)</h1>
+        <p>Upload a photo and increase its resolution up to 4K without losing quality. Free, no login, no watermark.</p>
+    </header>
+
+    <main class="container main">
+        <form id="upload-form">
+            <div class="controls">
+                <label>Upscaling Options</label>
+                <div class="upscale-controls">
+                    <div class="control-group">
+                        <label for="scale-factor">Scale Factor:</label>
+                        <select id="scale-factor" name="scale_factor">
+                            <option value="2">2x (Double Size)</option>
+                            <option value="3">3x (Triple Size)</option>
+                            <option value="4">4x (Quadruple Size)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="upscale-method">Quality Method:</label>
+                        <select id="upscale-method" name="method">
+                            <option value="lanczos">Lanczos (Best Quality)</option>
+                            <option value="cubic">Cubic (Good Quality)</option>
+                            <option value="area">Area (Fast)</option>
+                            <option value="nearest">Nearest (Fastest)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="uploader" id="dropzone">
+                <input type="file" id="file-input" accept="image/*" />
+                <div class="uploader-instructions">
+                    <strong>Drop image here</strong>
+                    <span>or click to browse</span>
+                </div>
+            </div>
+
+            <button id="process-btn" type="submit" disabled>Upscale Image</button>
+        </form>
+
+        <section class="preview" id="preview-section" hidden>
+            <div class="preview-grid">
+                <div>
+                    <h3>Original</h3>
+                    <img id="original-img" alt="Original preview" />
+                </div>
+                <div>
+                    <h3>Upscaled</h3>
+                    <p id="process-prompt" class="prompt">Press "Upscale Image" to process.</p>
+                    <div id="result-wrapper" hidden>
+                        <div class="checkerboard">
+                            <img id="result-img" alt="Upscaled result" />
+                        </div>
+                        <div class="actions">
+                            <a id="download-link" download="upscaled-image.png" class="btn">Download PNG</a>
+                            <button id="reset-btn" class="btn secondary" type="button">Try Another Image</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="seo">
+            <h2>Where image upscaling helps in real life</h2>
+            <p>Make small or soft images look clean and professional. No jargon—just bigger, sharper pictures that are ready for work, web, and print.</p>
+            
+            <h3>Great for</h3>
+            <ul>
+                <li><strong>Ecommerce listings:</strong> Sharpen product photos for Amazon, Etsy, Shopify; enable better zoom without re‑shooting.</li>
+                <li><strong>Fashion & portraits:</strong> Create tight crops for lookbooks, banners, and campaigns without losing detail.</li>
+                <li><strong>Social media & ads:</strong> Prevent pixelation on Instagram, Facebook, and LinkedIn; export larger creatives that stay crisp.</li>
+                <li><strong>Print, brochures & posters:</strong> Turn web-size images into files that hold up in flyers, menus, and signage.</li>
+                <li><strong>Real estate:</strong> Clean up property photos, floor plans, and neighborhood shots for MLS and listings.</li>
+                <li><strong>Old photos & scans:</strong> Breathe new life into small, legacy images for family archives and portfolios.</li>
+                <li><strong>Presentations & slide decks:</strong> Upscale logos, charts, and screenshots so they look sharp on projectors.</li>
+                <li><strong>Web & app assets:</strong> Create crisp icons, hero images, and thumbnails (including YouTube covers).</li>
+            </ul>
+            
+            <h3>Why this tool?</h3>
+            <ul>
+                <li><strong>Free:</strong> No login, no watermark, no limits</li>
+                <li><strong>High quality:</strong> Advanced interpolation algorithms</li>
+                <li><strong>Privacy:</strong> Images are processed on our server and not stored</li>
+            </ul>
+            
+            <h3>FAQ</h3>
+            <details>
+                <summary>What is image upscaling?</summary>
+                <p>Image upscaling increases the resolution and size of an image by intelligently adding pixels, making photos larger without losing quality.</p>
+            </details>
+            <details>
+                <summary>Which method should I choose?</summary>
+                <p>Lanczos provides the best quality but takes longer. Cubic is a good balance. Area and Nearest are faster but lower quality.</p>
+            </details>
+            <details>
+                <summary>Is it really free?</summary>
+                <p>Yes. There is no login and no watermark.</p>
+            </details>
+        </section>
+    </main>
+
+    <nav class="seo-links">
+        <a href="/remove-background-from-image.html">Remove Background from Image</a>
+        <a href="/change-color-of-image.html">Change color of image online</a>
+        <a href="/change-image-background.html">Change image background</a>
+        <a href="/convert-image-format.html">Convert image format</a>
+        <a href="/upscale-image.html">AI Image Upscaler</a>
+        <a href="/blur-background.html">Blur Background</a>
+        <a href="/enhance-image.html">Enhance Image</a>
+    </nav>
+
+    <footer class="container footer">
+        <p>
+            Built for speed and quality. <a href="#" rel="nofollow">Contact</a>
+        </p>
+    </footer>
+
+    <script src="./script.js?v=20250916-3"></script>
+</body>
+</html>

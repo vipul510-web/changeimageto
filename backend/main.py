@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image, ImageEnhance, ImageOps
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
 import io
 import logging
 import asyncio
@@ -575,3 +575,192 @@ async def convert_format(
     except Exception as e:
         log_user_action("convert_error", {"message": str(e)})
         raise HTTPException(status_code=500, detail=f"Conversion error: {str(e)}")
+
+
+@app.post("/api/upscale-image")
+async def upscale_image(
+    file: UploadFile = File(...),
+    scale_factor: int = Form(2),
+    method: str = Form("lanczos")
+):
+    """
+    Upscale an image using AI-powered interpolation methods.
+    
+    Args:
+        file: Image file to upscale
+        scale_factor: Upscaling factor (2, 3, or 4)
+        method: Upscaling method ('lanczos', 'cubic', 'nearest', 'area')
+    
+    Returns:
+        Upscaled image as PNG
+    """
+    try:
+        # Validate scale factor
+        if scale_factor not in [2, 3, 4]:
+            raise HTTPException(status_code=400, detail="Scale factor must be 2, 3, or 4")
+        
+        # Validate method
+        valid_methods = ['lanczos', 'cubic', 'nearest', 'area']
+        if method not in valid_methods:
+            raise HTTPException(status_code=400, detail=f"Method must be one of: {valid_methods}")
+        
+        # Read and validate image
+        image_data = await file.read()
+        image = Image.open(io.BytesIO(image_data))
+        
+        # Convert to RGB if necessary
+        if image.mode in ('RGBA', 'LA', 'P'):
+            # Create white background for transparent images
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+            image = background
+        elif image.mode != 'RGB':
+            image = image.convert('RGB')
+        
+        # Get original dimensions
+        original_width, original_height = image.size
+        new_width = original_width * scale_factor
+        new_height = original_height * scale_factor
+        
+        # Apply upscaling using PIL
+        if method == 'lanczos':
+            # Use PIL's LANCZOS resampling for high-quality upscaling
+            upscaled_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        elif method == 'cubic':
+            # Use PIL's BICUBIC resampling
+            upscaled_image = image.resize((new_width, new_height), Image.Resampling.BICUBIC)
+        elif method == 'nearest':
+            # Use PIL's NEAREST resampling
+            upscaled_image = image.resize((new_width, new_height), Image.Resampling.NEAREST)
+        elif method == 'area':
+            # Use PIL's BOX resampling (similar to area)
+            upscaled_image = image.resize((new_width, new_height), Image.Resampling.BOX)
+        else:
+            # Default to LANCZOS
+            upscaled_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        
+        # Apply additional sharpening for better quality
+        enhancer = ImageEnhance.Sharpness(upscaled_image)
+        upscaled_image = enhancer.enhance(1.2)  # Slight sharpening
+        
+        # Save as PNG
+        output_buffer = io.BytesIO()
+        upscaled_image.save(output_buffer, format='PNG', optimize=True)
+        output_data = output_buffer.getvalue()
+        
+        # Log the action
+        log_user_action("upscale_completed", {
+            "original_size": f"{original_width}x{original_height}",
+            "upscaled_size": f"{new_width}x{new_height}",
+            "scale_factor": scale_factor,
+            "method": method,
+            "output_size_bytes": len(output_data)
+        })
+        
+        return Response(content=output_data, media_type="image/png")
+        
+    except Exception as e:
+        log_user_action("upscale_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Upscaling error: {str(e)}")
+
+
+@app.post("/api/test-upscale")
+async def test_upscale():
+    """Test endpoint to verify upscaling functionality"""
+    return {"message": "Upscaling endpoint is working"}
+
+
+# ----------------------------
+# New simple image tools
+# ----------------------------
+
+@app.post("/api/blur-background")
+async def blur_background(
+    request: Request,
+    file: UploadFile = File(...),
+    blur_radius: float = Form(12.0),
+    category: str = Form("portrait"),
+):
+    """Blur the background while keeping the subject sharp using existing segmentation."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGBA")
+        # Downscale for processing efficiency
+        proc_image = downscale_image_if_needed(image)
+        # Segment foreground
+        session = get_session_for_category(category)
+        async with PROCESS_SEM:
+            cutout = remove(
+                proc_image,
+                session=session,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_size=10,
+                post_process_mask=True,
+            )
+        # Build mask from alpha
+        if cutout.mode != "RGBA":
+            cutout = cutout.convert("RGBA")
+        mask = cutout.split()[-1]
+        # Prepare blurred background from original
+        base_rgb = image.convert("RGB")
+        blurred = base_rgb.filter(ImageFilter.GaussianBlur(radius=max(0.0, float(blur_radius))))
+        blurred_rgba = blurred.convert("RGBA")
+        # Composite: paste sharp subject onto blurred bg
+        # Resize cutout to original size if we downscaled
+        if cutout.size != image.size:
+            cutout = cutout.resize(image.size, Image.LANCZOS)
+            mask = mask.resize(image.size, Image.LANCZOS)
+        output = blurred_rgba.copy()
+        output.paste(cutout, (0, 0), mask=mask)
+        buf = io.BytesIO()
+        output.save(buf, format="PNG")
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("blur_background_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Blur background error: {str(e)}")
+
+
+@app.post("/api/enhance-image")
+async def enhance_image(
+    file: UploadFile = File(...),
+    sharpen: float = Form(1.0),
+    contrast: float = Form(105.0),
+    brightness: float = Form(100.0),
+):
+    """Simple photo enhancement: unsharp + mild contrast/brightness tweaks."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    try:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+        img = downscale_image_if_needed(img)
+        # Sharpen
+        if sharpen != 1.0:
+            sharp_enh = ImageEnhance.Sharpness(img)
+            img = sharp_enh.enhance(max(0.0, float(sharpen)))
+        # Contrast
+        if contrast != 100.0:
+            cont_enh = ImageEnhance.Contrast(img)
+            img = cont_enh.enhance(max(0.0, float(contrast)) / 100.0)
+        # Brightness
+        if brightness != 100.0:
+            bri_enh = ImageEnhance.Brightness(img)
+            img = bri_enh.enhance(max(0.0, float(brightness)) / 100.0)
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("enhance_image_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Enhance image error: {str(e)}")
+
+

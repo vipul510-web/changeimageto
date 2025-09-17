@@ -54,6 +54,10 @@ function getPageType() {
     if (path === '/change-image-background.html') return 'color_palette';
     if (path === '/change-color-of-image.html') return 'color_change';
     if (path === '/convert-image-format.html') return 'convert_format';
+    if (path === '/upscale-image.html') return 'upscale_image';
+    if (path === '/blur-background.html') return 'blur_background';
+    if (path === '/enhance-image.html') return 'enhance_image';
+    
     return 'unknown';
 }
 
@@ -61,10 +65,24 @@ function updateCtaText(){
   if(!processBtn) return;
   const isColorPage = !!document.body.getAttribute('data-target-color') || !!document.getElementById('color-palette');
   const isColorChangePage = window.location.pathname === '/change-color-of-image.html';
+  const isUpscalePage = window.location.pathname === '/upscale-image.html';
+  const isBlurPage = window.location.pathname === '/blur-background.html';
+  const isEnhancePage = window.location.pathname === '/enhance-image.html';
+  const isDenoisePage = false;
   
   if (isColorChangePage) {
     processBtn.textContent = 'Change Image Color';
     processBtn.setAttribute('aria-label', 'Change Image Color');
+  } else if (isUpscalePage) {
+    processBtn.textContent = 'Upscale Image';
+    processBtn.setAttribute('aria-label', 'Upscale Image');
+  } else if (isBlurPage) {
+    processBtn.textContent = 'Blur Background';
+    processBtn.setAttribute('aria-label', 'Blur Background');
+  } else if (isEnhancePage) {
+    processBtn.textContent = 'Enhance Image';
+    processBtn.setAttribute('aria-label', 'Enhance Image');
+  
   } else if (isColorPage) {
     processBtn.textContent = 'Change image background';
     processBtn.setAttribute('aria-label', 'Change image background');
@@ -78,9 +96,20 @@ function updatePromptText(){
   if(!prompt) return;
   const isColorPage = !!document.body.getAttribute('data-target-color') || !!document.getElementById('color-palette');
   const isColorChangePage = window.location.pathname === '/change-color-of-image.html';
+  const isUpscalePage = window.location.pathname === '/upscale-image.html';
+  const isBlurPage = window.location.pathname === '/blur-background.html';
+  const isEnhancePage = window.location.pathname === '/enhance-image.html';
+  const isDenoisePage = false;
   
   if (isColorChangePage) {
     prompt.textContent = 'Press "Change Image Color" to process.';
+  } else if (isUpscalePage) {
+    prompt.textContent = 'Press "Upscale Image" to process.';
+  } else if (isBlurPage) {
+    prompt.textContent = 'Press "Blur Background" to process.';
+  } else if (isEnhancePage) {
+    prompt.textContent = 'Press "Enhance Image" to process.';
+  
   } else if (isColorPage) {
     prompt.textContent = 'Press "Change image background" to process.';
   } else {
@@ -320,6 +349,17 @@ if (form) form.addEventListener('submit', async (e) => {
     logDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
     logDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
     logDetails.contrast = document.getElementById('contrast-slider')?.value || 100;
+  } else if (pageType === 'upscale_image') {
+    logDetails.action_type = 'upscale_image';
+    logDetails.scale_factor = document.getElementById('scale-factor')?.value || '2';
+    logDetails.method = document.getElementById('upscale-method')?.value || 'lanczos';
+  } else if (pageType === 'blur_background') {
+    logDetails.action_type = 'blur_background';
+    logDetails.blur_radius = document.getElementById('blur-radius')?.value || '12';
+  } else if (pageType === 'enhance_image') {
+    logDetails.action_type = 'enhance_image';
+    logDetails.preset = document.getElementById('enhance-preset')?.value || 'balanced';
+  
   } else {
     logDetails.category = categoryInput?.value || 'unknown';
     logDetails.target_color = targetColor;
@@ -372,6 +412,33 @@ if (form) form.addEventListener('submit', async (e) => {
       for (let [key, value] of body.entries()) {
         console.log(key, ':', value);
       }
+    } else if (window.location.pathname === '/upscale-image.html') {
+      // Upscaling page
+      endpoint = '/api/upscale-image';
+      const scaleFactor = document.getElementById('scale-factor')?.value || '2';
+      const method = document.getElementById('upscale-method')?.value || 'lanczos';
+      
+      console.log('Upscaling values:', { scaleFactor, method });
+      
+      body.append('scale_factor', scaleFactor);
+      body.append('method', method);
+      
+      console.log('FormData contents:');
+      for (let [key, value] of body.entries()) {
+        console.log(key, ':', value);
+      }
+    } else if (window.location.pathname === '/blur-background.html') {
+      endpoint = '/api/blur-background';
+      const radius = document.getElementById('blur-radius')?.value || '12';
+      body.append('blur_radius', radius);
+    } else if (window.location.pathname === '/enhance-image.html') {
+      endpoint = '/api/enhance-image';
+      const preset = document.getElementById('enhance-preset')?.value || 'balanced';
+      // Map preset to parameters server expects
+      if (preset === 'soft') { body.append('sharpen', '1.0'); body.append('contrast', '105'); body.append('brightness', '100'); }
+      if (preset === 'balanced') { body.append('sharpen', '1.3'); body.append('contrast', '110'); body.append('brightness', '102'); }
+      if (preset === 'strong') { body.append('sharpen', '1.6'); body.append('contrast', '120'); body.append('brightness', '105'); }
+    
     } else {
       // Background removal or background change
       body.append('category', categoryInput?.value || 'product');
@@ -398,7 +465,19 @@ if (form) form.addEventListener('submit', async (e) => {
         const objectUrl = URL.createObjectURL(blob);
         resultImg.src = objectUrl;
         downloadLink.href = objectUrl;
-        downloadLink.download = `bg-removed-${Date.now()}.png`;
+        // Set a sensible filename based on page type
+        if (pageType === 'upscale_image') {
+          downloadLink.download = `upscaled-${Date.now()}.png`;
+        } else if (pageType === 'color_change') {
+          downloadLink.download = `color-changed-${Date.now()}.png`;
+        } else if (pageType === 'blur_background') {
+          downloadLink.download = `blur-background-${Date.now()}.png`;
+        } else if (pageType === 'enhance_image') {
+          downloadLink.download = `enhanced-${Date.now()}.png`;
+        
+        } else {
+          downloadLink.download = `bg-removed-${Date.now()}.png`;
+        }
         try {
           // Convert blob to DataURL so it persists across navigation (Blob URLs are per-document)
           const fr = new FileReader();
@@ -443,6 +522,17 @@ if (form) form.addEventListener('submit', async (e) => {
       successLogDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
       successLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
       successLogDetails.contrast = document.getElementById('contrast-slider')?.value || 100;
+    } else if (pageType === 'upscale_image') {
+      successLogDetails.action_type = 'upscale_image';
+      successLogDetails.scale_factor = document.getElementById('scale-factor')?.value || '2';
+      successLogDetails.method = document.getElementById('upscale-method')?.value || 'lanczos';
+    } else if (pageType === 'blur_background') {
+      successLogDetails.action_type = 'blur_background';
+      successLogDetails.blur_radius = document.getElementById('blur-radius')?.value || '12';
+    } else if (pageType === 'enhance_image') {
+      successLogDetails.action_type = 'enhance_image';
+      successLogDetails.preset = document.getElementById('enhance-preset')?.value || 'balanced';
+    
     } else {
       successLogDetails.category = categoryInput?.value || 'unknown';
       successLogDetails.target_color = targetColor;
@@ -498,6 +588,17 @@ if (form) form.addEventListener('submit', async (e) => {
       errorLogDetails.saturation = document.getElementById('saturation-slider')?.value || 100;
       errorLogDetails.brightness = document.getElementById('brightness-slider')?.value || 100;
       errorLogDetails.contrast = document.getElementById('contrast-slider')?.value || 100;
+    } else if (pageType === 'upscale_image') {
+      errorLogDetails.action_type = 'upscale_image';
+      errorLogDetails.scale_factor = document.getElementById('scale-factor')?.value || '2';
+      errorLogDetails.method = document.getElementById('upscale-method')?.value || 'lanczos';
+    } else if (pageType === 'blur_background') {
+      errorLogDetails.action_type = 'blur_background';
+      errorLogDetails.blur_radius = document.getElementById('blur-radius')?.value || '12';
+    } else if (pageType === 'enhance_image') {
+      errorLogDetails.action_type = 'enhance_image';
+      errorLogDetails.preset = document.getElementById('enhance-preset')?.value || 'balanced';
+    
     } else {
       errorLogDetails.category = categoryInput?.value || 'unknown';
       errorLogDetails.target_color = targetColor;

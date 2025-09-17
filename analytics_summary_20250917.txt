@@ -1,0 +1,15 @@
+Analytics Summary - 2025-09-17
+Total actions: 414
+Action breakdown:
+  frontend_analytics: 282
+  processing_completed: 29
+  request_started: 28
+  file_processed: 28
+  processing_started: 28
+  color_change_request_started: 3
+  color_change_file_processed: 3
+  color_change_processing_started: 3
+  color_change_processing_completed: 3
+  upscale_completed: 3
+  convert_request_started: 2
+  convert_completed: 2
