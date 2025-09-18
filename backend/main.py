@@ -781,11 +781,38 @@ async def blog_index():
         data = {"posts": []}
     items = data.get("posts", [])
     # simple HTML list
-    lis = "".join([f"<li><a href='/blog/{p['slug']}.html'>{p['title']}</a> — {p.get('date','')}</li>" for p in items])
-    html = f"""<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
-<title>Blog</title><link rel='preload' as='style' href='/styles.css?v=20250916-3'/><link rel='stylesheet' href='/styles.css?v=20250916-3'/></head>
-<body><header class='container header'><a href='/' class='logo-link'><img src='/logo.png' class='logo-img' alt='ChangeImageTo'/></a><h1>Blog</h1></header>
-<main class='container main'><ul>{lis}</ul></main><script src='/script.js?v=20250916-3' defer></script></body></html>"""
+    lis = "".join([f"<li><a href='/blog/{p['slug']}.html'>{p['title']}</a> — {p.get('date','')[:10]}</li>" for p in items])
+    page_title = "Image Editing Blog | Tutorials, Tips & How‑To Guides"
+    page_desc = "Learn image editing: remove background, change colors, upscale, blur, enhance images. Free tutorials and guides."
+    json_ld = json.dumps({
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        "name": page_title,
+        "description": page_desc,
+        "url": "https://www.changeimageto.com/blog"
+    })
+    html = f"""<!doctype html><html lang='en'><head>
+<meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>{page_title}</title>
+<meta name='description' content='{page_desc}'>
+<link rel='canonical' href='https://www.changeimageto.com/blog'>
+<script type='application/ld+json'>{json_ld}</script>
+<link rel='preload' as='style' href='/styles.css?v=20250916-3'/><link rel='stylesheet' href='/styles.css?v=20250916-3'/></head>
+<body>
+<header class='container header'>
+  <a href='/' class='logo-link'><img src='/logo.png' class='logo-img' alt='ChangeImageTo'/></a>
+  <div style='display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%'>
+    <h1 style='margin:0'>Image Editing Blog</h1>
+    <nav class='top-nav'><a href='/blog' aria-label='Read our blog'>Blog</a></nav>
+  </div>
+  <p style='margin-top:8px'>Guides and tutorials for background removal, color changes, upscaling, blurring, and enhancements.</p>
+  <div class='seo' style='margin-top:8px'>
+    <h2 style='font-size:1.125rem;margin:0 0 4px'>Latest articles</h2>
+  </div>
+  </header>
+<main class='container main'><ul>{lis}</ul></main>
+<nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/blur-background.html'>Blur Background</a><a href='/enhance-image.html'>Enhance Image</a></nav>
+<script src='/script.js?v=20250916-3' defer></script></body></html>"""
     return Response(content=html, media_type="text/html")
 
 
