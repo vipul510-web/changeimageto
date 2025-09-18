@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Depends
-from fastapi.responses import Response
+from fastapi.responses import Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageEnhance, ImageOps, ImageFilter
 import io
@@ -57,6 +57,37 @@ MODEL_NAME_FOR_CATEGORY = {
 
 BLOG_BUCKET = os.getenv("BLOG_BUCKET", "")
 CRON_TOKEN = os.getenv("CRON_TOKEN", "")
+
+# Resolve path to static frontend assets so blog pages can use site-wide styles in local/dev
+FRONTEND_DIR = os.getenv(
+    "FRONTEND_DIR",
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
+)
+
+# Minimal static file endpoints used by blog HTML
+@app.get("/styles.css")
+async def serve_styles():
+    path = os.path.join(FRONTEND_DIR, "styles.css")
+    return FileResponse(path, media_type="text/css")
+
+
+@app.get("/script.js")
+async def serve_script():
+    path = os.path.join(FRONTEND_DIR, "script.js")
+    return FileResponse(path, media_type="application/javascript")
+
+
+@app.get("/logo.png")
+async def serve_logo():
+    path = os.path.join(FRONTEND_DIR, "logo.png")
+    return FileResponse(path, media_type="image/png")
+
+
+@app.get("/favicon.ico")
+async def serve_favicon():
+    # Reuse logo for now if favicon not present
+    path = os.path.join(FRONTEND_DIR, "logo.png")
+    return FileResponse(path, media_type="image/png")
 
 _sessions_cache = {}
 def downscale_image_if_needed(image: Image.Image, max_side: int = int(os.getenv("MAX_IMAGE_SIDE", "1600"))) -> Image.Image:
@@ -164,11 +195,13 @@ def pick_keywords(seeds: list, existing_slugs: set) -> list:
 
 def render_article_html(title: str, slug: str, body_sections: list) -> str:
     # minimal, reuse global CSS and script
+    now_iso = datetime.utcnow().isoformat()
     json_ld = {
         "@context": "https://schema.org",
         "@type": "Article",
         "headline": title,
-        "datePublished": datetime.utcnow().strftime('%Y-%m-%d'),
+        "datePublished": now_iso,
+        "author": {"@type": "Organization", "name": "ChangeImageTo.com Team"},
     }
     sections_html = "\n".join(body_sections)
     return f"""<!doctype html><html lang=\"en\"><head>
@@ -179,26 +212,87 @@ def render_article_html(title: str, slug: str, body_sections: list) -> str:
 <script type=\"application/ld+json\">{json.dumps(json_ld)}</script>
 <link rel=\"preload\" as=\"style\" href=\"/styles.css?v=20250916-3\"/><link rel=\"stylesheet\" href=\"/styles.css?v=20250916-3\"/>
 </head><body>
-<header class=\"container header\"><a href=\"/\" class=\"logo-link\"><img src=\"/logo.png\" alt=\"ChangeImageTo\" class=\"logo-img\"/></a><h1>{title}</h1></header>
-<main class=\"container main\">{sections_html}</main>
+<header class=\"container header\"><a href=\"/\" class=\"logo-link\"><img src=\"/logo.png\" alt=\"ChangeImageTo\" class=\"logo-img\"/></a><div style=\"display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%\"><h1 style=\"margin:0\">{title}</h1><nav class=\"top-nav\"><a href=\"/blog\" aria-label=\"Read our blog\">Blog</a></nav></div></header>
+<main class=\"container main\">\n  <p class=\"seo\" style=\"margin:0 0 16px\"><strong>By:</strong> ChangeImageTo.com Team · <time datetime=\"{now_iso}\">{now_iso.replace('T',' ')[:19]} UTC</time></p>\n  {sections_html}\n  <p class=\"seo\" style=\"margin-top:24px\"><a href=\"/blog\" style=\"color:#fff\">← Back to blog</a></p>\n</main>
 <nav class=\"seo-links\"><a href=\"/remove-background-from-image.html\">Remove Background from Image</a><a href=\"/change-color-of-image.html\">Change color of image online</a><a href=\"/change-image-background.html\">Change image background</a><a href=\"/convert-image-format.html\">Convert image format</a><a href=\"/upscale-image.html\">AI Image Upscaler</a><a href=\"/blur-background.html\">Blur Background</a><a href=\"/enhance-image.html\">Enhance Image</a></nav>
 <footer class=\"container footer\"><p>Built for speed and quality.</p></footer>
 <script src=\"/script.js?v=20250916-3\" defer></script>
 </body></html>"""
 
 def build_sections(keyword: str) -> list:
-    k = keyword
-    return [
-        f"<section class=\"seo\"><h2>What is {k}?</h2><p>This article explains {k} in simple terms and shows how to do it online free.</p></section>",
-        f"<section class=\"seo\"><h2>Step-by-step: {k}</h2><ol><li>Open the relevant tool below.</li><li>Upload your image.</li><li>Adjust options.</li><li>Download the result as PNG.</li></ol></section>",
-        "<section class=\"seo\"><h3>Useful tools</h3><ul>"
-        "<li><a href=\"/remove-background-from-image.html\">Remove background</a></li>"
-        "<li><a href=\"/upscale-image.html\">Upscale image</a></li>"
-        "<li><a href=\"/blur-background.html\">Blur background</a></li>"
-        "<li><a href=\"/enhance-image.html\">Enhance image</a></li>"
-        "</ul></section>",
-        f"<section class=\"seo\"><h2>FAQ on {k}</h2><details><summary>Is this free?</summary><p>Yes, no login, no watermark.</p></details></section>",
-    ]
+    k = keyword.lower()
+    sections = []
+
+    def tools_list():
+        return (
+            "<section class=\"seo\"><h3>Try it online (free)</h3><ul>"
+            "<li><a href=\"/remove-background-from-image.html\">Remove background from image</a></li>"
+            "<li><a href=\"/change-image-background.html\">Change image background</a></li>"
+            "<li><a href=\"/upscale-image.html\">AI Image Upscaler</a></li>"
+            "<li><a href=\"/enhance-image.html\">Enhance image quality</a></li>"
+            "</ul></section>"
+        )
+
+    if "powerpoint" in k:
+        sections = [
+            "<section class=\"seo\"><p>Yes, you can remove the background of a picture directly in Microsoft PowerPoint. Here is the exact sequence that works in Office 365 and PowerPoint 2019+.</p></section>",
+            "<section class=\"seo\"><h2>Remove Background in PowerPoint (exact steps)</h2><ol>"
+            "<li>Insert the picture: Insert → Pictures → choose your file.</li>"
+            "<li>Select the picture, then go to Picture Format → Remove Background.</li>"
+            "<li>Use Mark Areas to Keep/Remove to refine. Zoom in and click along edges.</li>"
+            "<li>When satisfied, click Keep Changes. The background becomes transparent.</li>"
+            "<li>Export: File → Save As → PNG → check Transparent background when available.</li>"
+            "</ol><p>Older versions: the Remove Background button is under Picture Tools → Format.</p></section>",
+            tools_list(),
+            "<section class=\"seo\"><h2>Tips</h2><ul><li>High-contrast images work best.</li><li>If edges look rough, add a soft shadow or export at higher resolution.</li></ul></section>",
+        ]
+    elif "photoshop" in k:
+        sections = [
+            "<section class=\"seo\"><p>This guide shows the precise Photoshop commands to remove the background.</p></section>",
+            "<section class=\"seo\"><h2>Photoshop quick method</h2><ol>"
+            "<li>Open the image. In Layers, unlock the Background layer.</li>"
+            "<li>Select: Select → Subject. Then click Select and Mask.</li>"
+            "<li>Refine edges with the Refine Edge Brush, Output: New Layer with Layer Mask.</li>"
+            "<li>Hide or delete the background layer. Export: File → Export → Export As → PNG.</li>"
+            "</ol></section>",
+            tools_list(),
+            "<section class=\"seo\"><h2>Keyboard shortcuts</h2><p>Q toggles Quick Mask, Shift+F6 feathers a selection, and ⌘/Ctrl+J duplicates selection to a new layer.</p></section>",
+        ]
+    elif "iphone" in k or "ios" in k:
+        sections = [
+            "<section class=\"seo\"><p>On iPhone (iOS 16+), you can lift the subject from the background in Photos without any app.</p></section>",
+            "<section class=\"seo\"><h2>Remove background on iPhone</h2><ol>"
+            "<li>Open the photo in Photos.</li>"
+            "<li>Press and hold the subject until a glow appears, choose Copy or Share → Save Image to export the cutout with a transparent background.</li>"
+            "<li>For color backgrounds, upload the cutout to our Change Background tool and pick a color.</li>"
+            "</ol></section>",
+            tools_list(),
+        ]
+    elif "free" in k:
+        sections = [
+            "<section class=\"seo\"><p>Here are free, watermark‑free ways to remove image backgrounds online.</p></section>",
+            "<section class=\"seo\"><h2>Completely free methods</h2><ol>"
+            "<li>Use our Remove Background tool (no login, no watermark).</li>"
+            "<li>For batch images, process one by one to keep best quality.</li>"
+            "<li>Download as PNG to preserve transparency.</li>"
+            "</ol></section>",
+            tools_list(),
+        ]
+    else:
+        sections = [
+            f"<section class=\"seo\"><p>This tutorial explains how to {keyword} precisely using built‑in tools and our free online apps.</p></section>",
+            "<section class=\"seo\"><h2>Exact steps (online)</h2><ol>"
+            "<li>Open the Remove Background tool.</li>"
+            "<li>Upload your image (JPG/PNG/WebP). Processing takes ~5–10s.</li>"
+            "<li>Download the PNG with transparent background, or change the background color.</li>"
+            "</ol></section>",
+            tools_list(),
+        ]
+
+    sections.append(
+        f"<section class=\"seo\"><h2>FAQ</h2><details><summary>Is it really free?</summary><p>Yes, our tools are free with no watermark and no login required.</p></details><details><summary>Best file format?</summary><p>Use PNG to keep transparency; use JPG for photos with solid backgrounds.</p></details></section>"
+    )
+    return sections
 
 def list_existing_slugs(client) -> set:
     if not BLOG_BUCKET:
@@ -770,18 +864,30 @@ async def generate_blog_daily(token: str):
 
 @app.get("/blog")
 async def blog_index():
-    if not BLOG_BUCKET:
-        raise HTTPException(status_code=500, detail="BLOG_BUCKET not configured")
-    client = get_storage_client()
-    bucket = get_or_create_bucket(client)
-    idx = bucket.blob("blog/index.json")
-    try:
-        data = json.loads(idx.download_as_text())
-    except Exception:
-        data = {"posts": []}
-    items = data.get("posts", [])
+    # Local/dev fallback when BLOG_BUCKET is not configured
+    items = []
+    if BLOG_BUCKET:
+        client = get_storage_client()
+        bucket = get_or_create_bucket(client)
+        idx = bucket.blob("blog/index.json")
+        try:
+            data = json.loads(idx.download_as_text())
+        except Exception:
+            data = {"posts": []}
+        items = data.get("posts", [])
+    else:
+        items = [
+            {"slug": "remove-background-from-image-in-powerpoint", "title": "Remove Background From Image In Powerpoint", "date": datetime.utcnow().isoformat()},
+            {"slug": "remove-background-from-image-photoshop", "title": "Remove Background From Image Photoshop", "date": datetime.utcnow().isoformat()},
+            {"slug": "remove-background-from-image-iphone", "title": "Remove Background From Image Iphone", "date": datetime.utcnow().isoformat()},
+            {"slug": "remove-background-from-image-free", "title": "Remove Background From Image Free", "date": datetime.utcnow().isoformat()},
+            {"slug": "remove-background-from-image", "title": "Remove Background From Image", "date": datetime.utcnow().isoformat()},
+        ]
     # simple HTML list
-    lis = "".join([f"<li><a href='/blog/{p['slug']}.html'>{p['title']}</a> — {p.get('date','')[:10]}</li>" for p in items])
+    lis = "".join([
+        f"<li><a href='/blog/{p['slug']}.html'>{p['title']}</a> <span class='date'>— {p.get('date','')[:10]}</span></li>"
+        for p in items
+    ])
     page_title = "Image Editing Blog | Tutorials, Tips & How‑To Guides"
     page_desc = "Learn image editing: remove background, change colors, upscale, blur, enhance images. Free tutorials and guides."
     json_ld = json.dumps({
@@ -797,33 +903,51 @@ async def blog_index():
 <meta name='description' content='{page_desc}'>
 <link rel='canonical' href='https://www.changeimageto.com/blog'>
 <script type='application/ld+json'>{json_ld}</script>
-<link rel='preload' as='style' href='/styles.css?v=20250916-3'/><link rel='stylesheet' href='/styles.css?v=20250916-3'/></head>
+<link rel='preload' as='style' href='/styles.css?v=20250916-3'/><link rel='stylesheet' href='/styles.css?v=20250916-3'/>
+<style>
+  .blog-wrap{{max-width:1000px;margin:0 auto;padding:24px}}
+  .blog-title{{margin:0 0 12px}}
+  .blog-sub{{color:var(--muted);margin:0 0 16px}}
+  .blog-list{{list-style:none;padding:0;margin:0}}
+  .blog-list li{{padding:10px 0;border-bottom:1px solid var(--border)}}
+  .blog-list li:last-child{{border-bottom:none}}
+  .blog-list a{{color:#fff;text-decoration:none;font-weight:700}}
+  .blog-list a:hover{{text-decoration:underline}}
+  .blog-list .date{{color:var(--muted);font-weight:400}}
+</style>
+</head>
 <body>
-<header class='container header'>
-  <a href='/' class='logo-link'><img src='/logo.png' class='logo-img' alt='ChangeImageTo'/></a>
-  <div style='display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%'>
-    <h1 style='margin:0'>Image Editing Blog</h1>
-    <nav class='top-nav'><a href='/blog' aria-label='Read our blog'>Blog</a></nav>
-  </div>
-  <p style='margin-top:8px'>Guides and tutorials for background removal, color changes, upscaling, blurring, and enhancements.</p>
-  <div class='seo' style='margin-top:8px'>
-    <h2 style='font-size:1.125rem;margin:0 0 4px'>Latest articles</h2>
-  </div>
+  <header class='container header'>
+    <a href='/' class='logo-link'><img src='/logo.png' class='logo-img' alt='ChangeImageTo'/></a>
+    <div style='display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%'>
+      <h1 style='margin:0'>Image Editing Blog</h1>
+      <nav class='top-nav'><a href='/blog' aria-label='Read our blog'>Blog</a></nav>
+    </div>
   </header>
-<main class='container main'><ul>{lis}</ul></main>
-<nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/blur-background.html'>Blur Background</a><a href='/enhance-image.html'>Enhance Image</a></nav>
-<script src='/script.js?v=20250916-3' defer></script></body></html>"""
+  <main class='blog-wrap'>
+    <p class='blog-sub'>Guides for removing backgrounds, changing colors, upscaling, blurring, and enhancing images.</p>
+    <ul class='blog-list'>{lis}</ul>
+  </main>
+  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/blur-background.html'>Blur Background</a><a href='/enhance-image.html'>Enhance Image</a></nav>
+  <footer class='container footer'><p>Built for speed and quality. <a href='#' rel='nofollow'>Contact</a></p></footer>
+  <script src='/script.js?v=20250916-3' defer></script>
+</body></html>"""
     return Response(content=html, media_type="text/html")
 
 
 @app.get("/blog/{slug}.html")
 async def blog_article(slug: str):
-    client = get_storage_client()
-    bucket = get_or_create_bucket(client)
-    blob = bucket.blob(f"blog/{slug}.html")
-    if not blob.exists():
-        raise HTTPException(status_code=404, detail="Not found")
-    html = blob.download_as_text()
+    # If bucket configured, try to serve stored HTML
+    if BLOG_BUCKET:
+        client = get_storage_client()
+        bucket = get_or_create_bucket(client)
+        blob = bucket.blob(f"blog/{slug}.html")
+        if blob.exists():
+            html = blob.download_as_text()
+            return Response(content=html, media_type="text/html")
+    # Dev fallback: render from slug using sections builder
+    title = slug.replace('-', ' ').title()
+    html = render_article_html(title, slug, build_sections(title))
     return Response(content=html, media_type="text/html")
 
 
