@@ -1,16 +1,11 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
-    }
+    { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "rewrites": [
     { "source": "/blog", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog" },
-    { "source": "/blog/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "/frontend/$1" }
+    { "source": "/blog/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" },
+    { "source": "/(.*)", "destination": "/frontend/$1" }
   ]
 }
