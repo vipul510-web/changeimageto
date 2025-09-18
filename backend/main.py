@@ -903,7 +903,9 @@ async def blog_index():
 <meta name='description' content='{page_desc}'>
 <link rel='canonical' href='https://www.changeimageto.com/blog'>
 <script type='application/ld+json'>{json_ld}</script>
-<link rel='preload' as='style' href='/styles.css?v=20250916-3'/><link rel='stylesheet' href='/styles.css?v=20250916-3'/>
+<link rel='preload' as='style' href='/styles.css?v=20250916-3'/>
+<link rel='stylesheet' href='/styles.css?v=20250916-3'/>
+<link rel='stylesheet' href='https://www.changeimageto.com/styles.css?v=20250916-3'/>
 <style>
   .blog-wrap{{max-width:1000px;margin:0 auto;padding:24px}}
   .blog-title{{margin:0 0 12px}}
@@ -918,7 +920,7 @@ async def blog_index():
 </head>
 <body>
   <header class='container header'>
-    <a href='/' class='logo-link'><img src='/logo.png' class='logo-img' alt='ChangeImageTo'/></a>
+    <a href='/' class='logo-link'><img src='https://www.changeimageto.com/logo.png?v=20250916-2' class='logo-img' alt='ChangeImageTo'/></a>
     <div style='display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%'>
       <h1 style='margin:0'>Image Editing Blog</h1>
       <nav class='top-nav'><a href='/blog' aria-label='Read our blog'>Blog</a></nav>
