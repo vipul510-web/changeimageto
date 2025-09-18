@@ -94,6 +94,23 @@ def get_storage_client():
         raise RuntimeError("google-cloud-storage not installed")
     return storage.Client()
 
+def get_or_create_bucket(client):
+    """Return the GCS bucket for BLOG_BUCKET, creating it if it doesn't exist.
+
+    This avoids 404 errors on first run when the bucket hasn't been created yet.
+    Location defaults to US; can be overridden via env GCS_BUCKET_LOCATION.
+    """
+    try:
+        bucket = client.lookup_bucket(BLOG_BUCKET)
+        if bucket is None:
+            location = os.getenv("GCS_BUCKET_LOCATION", "US")
+            bucket = storage.Bucket(client, BLOG_BUCKET)
+            bucket.location = location
+            bucket = client.create_bucket(bucket)
+        return bucket
+    except Exception as e:
+        raise RuntimeError(f"Failed to access or create BLOG_BUCKET '{BLOG_BUCKET}': {str(e)}")
+
 def normalize_slug(text: str) -> str:
     text = text.lower().strip()
     text = re.sub(r"[^a-z0-9\s-]", "", text)
@@ -187,7 +204,7 @@ def list_existing_slugs(client) -> set:
     if not BLOG_BUCKET:
         return set()
     try:
-        bucket = client.bucket(BLOG_BUCKET)
+        bucket = get_or_create_bucket(client)
         blobs = list(bucket.list_blobs(prefix="blog/"))
         slugs = set()
         for b in blobs:
@@ -199,7 +216,7 @@ def list_existing_slugs(client) -> set:
         return set()
 
 def save_article(client, slug: str, html: str):
-    bucket = client.bucket(BLOG_BUCKET)
+    bucket = get_or_create_bucket(client)
     blob = bucket.blob(f"blog/{slug}.html")
     blob.cache_control = "public, max-age=86400"
     blob.upload_from_string(html, content_type="text/html; charset=utf-8")
@@ -756,7 +773,7 @@ async def blog_index():
     if not BLOG_BUCKET:
         raise HTTPException(status_code=500, detail="BLOG_BUCKET not configured")
     client = get_storage_client()
-    bucket = client.bucket(BLOG_BUCKET)
+    bucket = get_or_create_bucket(client)
     idx = bucket.blob("blog/index.json")
     try:
         data = json.loads(idx.download_as_text())
@@ -775,7 +792,7 @@ async def blog_index():
 @app.get("/blog/{slug}.html")
 async def blog_article(slug: str):
     client = get_storage_client()
-    bucket = client.bucket(BLOG_BUCKET)
+    bucket = get_or_create_bucket(client)
     blob = bucket.blob(f"blog/{slug}.html")
     if not blob.exists():
         raise HTTPException(status_code=404, detail="Not found")
