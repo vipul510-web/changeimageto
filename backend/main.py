@@ -1542,7 +1542,6 @@ def detect_image_quality(image_array):
         if laplacian_var < 100:
             issues.append("blur")
             quality_metrics["blur_score"] = max(0, (laplacian_var / 100) * 100)
-            overall_score -= 30
         else:
             quality_metrics["blur_score"] = 100
         
@@ -1555,7 +1554,6 @@ def detect_image_quality(image_array):
         if noise_level > 50:
             issues.append("noise")
             quality_metrics["noise_score"] = max(0, 100 - (noise_level - 50))
-            overall_score -= 25
         else:
             quality_metrics["noise_score"] = 100
         
@@ -1566,27 +1564,31 @@ def detect_image_quality(image_array):
         if edge_density < 0.05:
             issues.append("pixelation")
             quality_metrics["pixelation_score"] = max(0, edge_density * 2000)
-            overall_score -= 20
         else:
             quality_metrics["pixelation_score"] = 100
         
-        # 4. Exposure Analysis
+        # 4. Exposure Analysis - Improved algorithm
         hist, _ = np.histogram(gray, bins=256, range=(0, 256))
         hist = hist / hist.sum()
         
-        # Check for overexposure (too many bright pixels)
-        bright_pixels = np.sum(hist[200:])
-        if bright_pixels > 0.3:
-            issues.append("overexposed")
-            quality_metrics["exposure_score"] = max(0, 100 - (bright_pixels - 0.3) * 200)
-            overall_score -= 15
-        # Check for underexposure (too many dark pixels)
-        elif np.sum(hist[:50]) > 0.3:
+        # Calculate exposure score based on histogram distribution
+        # Good exposure should have balanced distribution
+        dark_pixels = np.sum(hist[:85])      # 0-85 (dark)
+        mid_pixels = np.sum(hist[85:170])    # 85-170 (mid-tone)
+        bright_pixels = np.sum(hist[170:])   # 170-255 (bright)
+        
+        # Ideal distribution: ~25% dark, ~50% mid, ~25% bright
+        exposure_score = 100
+        if dark_pixels > 0.4:  # Too dark
             issues.append("underexposed")
-            quality_metrics["exposure_score"] = max(0, 100 - (np.sum(hist[:50]) - 0.3) * 200)
-            overall_score -= 15
-        else:
-            quality_metrics["exposure_score"] = 100
+            exposure_score = max(0, 100 - (dark_pixels - 0.25) * 200)
+        elif bright_pixels > 0.4:  # Too bright
+            issues.append("overexposed")
+            exposure_score = max(0, 100 - (bright_pixels - 0.25) * 200)
+        elif mid_pixels < 0.3:  # Not enough mid-tones
+            exposure_score = max(0, mid_pixels * 333)
+        
+        quality_metrics["exposure_score"] = exposure_score
         
         # 5. Resolution Assessment
         height, width = gray.shape
@@ -1595,10 +1597,8 @@ def detect_image_quality(image_array):
         if total_pixels < 100000:  # Less than ~316x316
             issues.append("low_resolution")
             quality_metrics["resolution_score"] = max(0, (total_pixels / 100000) * 100)
-            overall_score -= 20
         elif total_pixels < 400000:  # Less than ~632x632
             quality_metrics["resolution_score"] = 80
-            overall_score -= 5
         else:
             quality_metrics["resolution_score"] = 100
         
@@ -1618,12 +1618,28 @@ def detect_image_quality(image_array):
             if artifact_ratio > 0.1:
                 issues.append("compression_artifacts")
                 quality_metrics["compression_score"] = max(0, 100 - artifact_ratio * 500)
-                overall_score -= 15
             else:
                 quality_metrics["compression_score"] = 100
         
-        # Overall quality score
-        quality_metrics["overall_score"] = max(0, overall_score)
+        # Calculate overall quality score as weighted average
+        # Give more weight to blur and resolution, less to minor issues
+        weights = {
+            'blur_score': 0.3,      # Most important for image quality
+            'resolution_score': 0.25, # Very important for usability
+            'exposure_score': 0.2,   # Important for visual appeal
+            'noise_score': 0.15,     # Moderate importance
+            'compression_score': 0.1 # Least important
+        }
+        
+        overall_score = (
+            quality_metrics['blur_score'] * weights['blur_score'] +
+            quality_metrics['resolution_score'] * weights['resolution_score'] +
+            quality_metrics['exposure_score'] * weights['exposure_score'] +
+            quality_metrics['noise_score'] * weights['noise_score'] +
+            quality_metrics['compression_score'] * weights['compression_score']
+        )
+        
+        quality_metrics["overall_score"] = round(overall_score, 1)
         quality_metrics["issues"] = issues
         quality_metrics["dimensions"] = f"{width}x{height}"
         
