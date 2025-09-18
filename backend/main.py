@@ -1341,3 +1341,183 @@ async def bulk_resize(
         raise HTTPException(status_code=500, detail=f"Bulk resize error: {str(e)}")
 
 
+@app.post("/api/bulk-convert-format")
+async def bulk_convert_format(
+    request: Request,
+    files: List[UploadFile] = File(...),
+    target_format: str = Form("png"),
+    transparent: bool = Form(False),
+    quality: int = Form(90),
+):
+    """Convert multiple images to a different format and return as a ZIP file."""
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    # Validate inputs
+    if len(files) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 images allowed per batch")
+    
+    if quality < 1 or quality > 100:
+        raise HTTPException(status_code=400, detail="Quality must be between 1 and 100")
+    
+    supported_targets = {"png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "ppm", "pgm"}
+    if target_format not in supported_targets:
+        raise HTTPException(status_code=400, detail=f"Unsupported target_format. Use one of: {sorted(supported_targets)}")
+    
+    log_user_action("bulk_convert_started", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "file_count": len(files),
+        "target_format": target_format,
+        "transparent": transparent,
+        "quality": quality
+    })
+    
+    processed_images = []
+    errors = []
+    
+    try:
+        for i, file in enumerate(files):
+            try:
+                # Validate file type
+                if not file.content_type or not file.content_type.startswith("image/"):
+                    errors.append(f"File {i+1} ({file.filename}): Not an image file")
+                    continue
+                
+                # Read and process image
+                contents = await file.read()
+                if len(contents) > 10 * 1024 * 1024:  # 10MB limit per file
+                    errors.append(f"File {i+1} ({file.filename}): File too large (max 10MB)")
+                    continue
+                
+                image = Image.open(io.BytesIO(contents))
+                
+                # Decide mode based on transparency setting and target
+                supports_alpha = target_format in {"png", "webp", "tiff", "ico", "gif"}
+                keep_alpha = bool(transparent and supports_alpha)
+                
+                # Convert image based on format requirements
+                if keep_alpha:
+                    converted = image.convert("RGBA")
+                    # Auto-trim fully transparent padding
+                    try:
+                        alpha = converted.split()[-1]
+                        bbox = alpha.getbbox()
+                        if bbox and bbox != (0, 0, converted.width, converted.height):
+                            converted = converted.crop(bbox)
+                    except Exception:
+                        pass
+                else:
+                    # Flatten onto opaque white background for formats w/o alpha
+                    if image.mode in ("RGBA", "LA"):
+                        background = Image.new("RGB", image.size, (255, 255, 255))
+                        background.paste(image, mask=image.split()[-1])
+                        converted = background
+                    else:
+                        converted = image.convert("RGB")
+                
+                # Prepare save parameters
+                params = {}
+                if target_format == "jpg":
+                    params.update({"quality": max(1, min(int(quality), 100)), "optimize": True})
+                    save_format = "JPEG"
+                elif target_format == "webp":
+                    params.update({"quality": max(1, min(int(quality), 100))})
+                    save_format = "WEBP"
+                elif target_format == "bmp":
+                    save_format = "BMP"
+                elif target_format == "gif":
+                    if keep_alpha:
+                        converted = converted.convert("RGBA")
+                        palette_image = converted.convert("P", palette=Image.ADAPTIVE, colors=255)
+                        alpha = converted.split()[-1]
+                        mask = Image.eval(alpha, lambda a: 255 if a <= 1 else 0)
+                        palette_image.info['transparency'] = 255
+                        palette_image.paste(255, None, mask)
+                        converted = palette_image
+                    else:
+                        converted = converted.convert("P", palette=Image.ADAPTIVE, colors=256)
+                    params.update({"optimize": True, "save_all": False})
+                    save_format = "GIF"
+                elif target_format == "tiff":
+                    params.update({"compression": "tiff_lzw"})
+                    save_format = "TIFF"
+                elif target_format == "ico":
+                    # ICO must be 256x256
+                    size = 256
+                    img_rgba = converted.convert("RGBA")
+                    min_side = min(img_rgba.width, img_rgba.height)
+                    scale = size / float(min_side)
+                    resized = img_rgba.resize((max(1, int(round(img_rgba.width * scale))),
+                                               max(1, int(round(img_rgba.height * scale)))), Image.LANCZOS)
+                    left = (resized.width - size) // 2
+                    top = (resized.height - size) // 2
+                    converted = resized.crop((left, top, left + size, top + size))
+                    save_format = "ICO"
+                    params.update({"sizes": [(256, 256)]})
+                elif target_format in {"ppm", "pgm"}:
+                    if target_format == "ppm":
+                        converted = converted.convert("RGB")
+                    else:
+                        converted = converted.convert("L")
+                    save_format = "PPM"
+                    params.update({"bits": 8})
+                else:
+                    save_format = "PNG"
+                
+                # Save to bytes
+                output_buffer = io.BytesIO()
+                converted.save(output_buffer, format=save_format, **params)
+                output_data = output_buffer.getvalue()
+                
+                # Store filename and data
+                filename = file.filename or f"image_{i+1}.{target_format}"
+                if not filename.lower().endswith(f'.{target_format}'):
+                    name_without_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
+                    filename = f"{name_without_ext}.{target_format}"
+                
+                processed_images.append({
+                    'filename': filename,
+                    'data': output_data,
+                    'original_size': f"{image.width}x{image.height}",
+                    'new_format': target_format
+                })
+                
+            except Exception as e:
+                errors.append(f"File {i+1} ({file.filename}): {str(e)}")
+                continue
+        
+        if not processed_images:
+            raise HTTPException(status_code=400, detail="No images could be processed. " + "; ".join(errors))
+        
+        # Create ZIP file
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for img_data in processed_images:
+                zip_file.writestr(img_data['filename'], img_data['data'])
+        
+        zip_data = zip_buffer.getvalue()
+        
+        log_user_action("bulk_convert_completed", {
+            "processed_count": len(processed_images),
+            "error_count": len(errors),
+            "target_format": target_format,
+            "zip_size_bytes": len(zip_data),
+            "zip_size_mb": round(len(zip_data) / (1024 * 1024), 2)
+        })
+        
+        # Return ZIP file
+        headers = {
+            "Content-Disposition": f"attachment; filename=converted_images_{target_format}.zip",
+            "Content-Type": "application/zip"
+        }
+        
+        return Response(content=zip_data, headers=headers, media_type="application/zip")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("bulk_convert_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Bulk convert error: {str(e)}")
+
+

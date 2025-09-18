@@ -64,13 +64,6 @@
             <option value="70">Smaller (70)</option>
           </select>
 
-          <div class="preset-buttons" style="display:flex;gap:8px;align-items:center;margin-top:8px">
-            <span style="font-weight:600">Presets:</span>
-            <button type="button" class="preset-btn" data-convert-preset="gimp">GIMP (PNG RGBA)</button>
-            <button type="button" class="preset-btn" data-convert-preset="inkscape-png">Inkscape (PNG Transparent)</button>
-            <button type="button" class="preset-btn" data-convert-preset="inkscape-webp">Inkscape (WEBP Transparent)</button>
-          </div>
-
           <button id="convert-btn" type="submit" disabled>Convert Image</button>
         </div>
       </form>
@@ -134,6 +127,91 @@
       </section>
     </main>
 
+    <!-- Bulk Format Conversion Section -->
+    <section class="container bulk-section">
+      <div class="bulk-header">
+        <h2>Bulk Convert Multiple Images</h2>
+        <p>Convert up to 50 images at once to your chosen format. Download all converted images in a ZIP file.</p>
+      </div>
+
+      <div class="bulk-upload-section">
+        <div class="bulk-upload-area" id="bulkUploadArea">
+          <div class="bulk-upload-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7,10 12,15 17,10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <h3>Drop images here or click to browse</h3>
+            <p>Upload up to 50 images (JPG, PNG, WebP, GIF, etc.)</p>
+            <p class="file-limit">Max 10MB per file</p>
+          </div>
+          <input type="file" id="bulkFileInput" multiple accept="image/*" style="display:none" />
+        </div>
+        
+        <div class="bulk-file-list" id="bulkFileList" style="display:none">
+          <h3>Selected Files:</h3>
+          <ul id="bulkFileItems"></ul>
+        </div>
+      </div>
+
+      <div class="bulk-controls-section">
+        <div class="bulk-control-group">
+          <label for="bulkTargetFormat">Convert to:</label>
+          <select id="bulkTargetFormat">
+            <option value="png">PNG (supports transparency)</option>
+            <option value="jpg">JPG</option>
+            <option value="webp">WEBP (supports transparency)</option>
+            <option value="bmp">BMP</option>
+            <option value="gif">GIF (single frame)</option>
+            <option value="tiff">TIFF (LZW)</option>
+            <option value="ico">ICO (256×256)</option>
+            <option value="ppm">PPM</option>
+            <option value="pgm">PGM (grayscale)</option>
+          </select>
+        </div>
+        
+        <div class="bulk-control-group">
+          <label>
+            <input type="checkbox" id="bulkKeepTransparent" />
+            Keep transparent background (if supported)
+          </label>
+        </div>
+        
+        <div class="bulk-control-group">
+          <label for="bulkQuality">Quality:</label>
+          <select id="bulkQuality">
+            <option value="90" selected>High (90)</option>
+            <option value="80">Medium (80)</option>
+            <option value="70">Smaller (70)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="bulk-action-section">
+        <button id="bulkConvertBtn" class="btn btn-primary" disabled>
+          <span class="btn-text">Convert All Images</span>
+          <span class="btn-loading" style="display:none">Processing...</span>
+        </button>
+        <button id="bulkClearBtn" class="btn btn-secondary" style="display:none">Clear All</button>
+      </div>
+
+      <div class="bulk-result-section" id="bulkResultSection" style="display:none">
+        <h3>Processing Complete!</h3>
+        <div class="bulk-result-info">
+          <p id="bulkResultText"></p>
+          <a id="bulkDownloadBtn" class="btn btn-success" download>
+            Download ZIP File
+          </a>
+        </div>
+      </div>
+
+      <div class="bulk-error-section" id="bulkErrorSection" style="display:none">
+        <h3>Error</h3>
+        <p id="bulkErrorText"></p>
+      </div>
+    </section>
+
     <nav class="seo-links">
       <a href="/remove-background-from-image.html">Remove Background from Image</a>
       <a href="/change-color-of-image.html">Change color of image online</a>
@@ -151,6 +229,343 @@
     </footer>
 
     <script src="./script.js?v=20250916-3" defer></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Bulk conversion functionality
+        const bulkUploadArea = document.getElementById('bulkUploadArea');
+        const bulkFileInput = document.getElementById('bulkFileInput');
+        const bulkFileList = document.getElementById('bulkFileList');
+        const bulkFileItems = document.getElementById('bulkFileItems');
+        const bulkConvertBtn = document.getElementById('bulkConvertBtn');
+        const bulkClearBtn = document.getElementById('bulkClearBtn');
+        const bulkResultSection = document.getElementById('bulkResultSection');
+        const bulkErrorSection = document.getElementById('bulkErrorSection');
+        const bulkDownloadBtn = document.getElementById('bulkDownloadBtn');
+        const bulkTargetFormat = document.getElementById('bulkTargetFormat');
+        const bulkKeepTransparent = document.getElementById('bulkKeepTransparent');
+        const bulkQuality = document.getElementById('bulkQuality');
+
+        let bulkSelectedFiles = [];
+        let bulkZipBlob = null;
+
+        // Upload area click
+        bulkUploadArea.addEventListener('click', () => bulkFileInput.click());
+
+        // Drag and drop
+        bulkUploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          bulkUploadArea.classList.add('dragover');
+        });
+
+        bulkUploadArea.addEventListener('dragleave', () => {
+          bulkUploadArea.classList.remove('dragover');
+        });
+
+        bulkUploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          bulkUploadArea.classList.remove('dragover');
+          handleBulkFiles(e.dataTransfer.files);
+        });
+
+        // File input change
+        bulkFileInput.addEventListener('change', (e) => {
+          handleBulkFiles(e.target.files);
+        });
+
+        function handleBulkFiles(files) {
+          const newFiles = Array.from(files).filter(file => {
+            return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
+          });
+
+          if (bulkSelectedFiles.length + newFiles.length > 50) {
+            alert('Maximum 50 images allowed. Please select fewer images.');
+            return;
+          }
+
+          bulkSelectedFiles = [...bulkSelectedFiles, ...newFiles];
+          updateBulkFileList();
+          updateBulkButtons();
+        }
+
+        function updateBulkFileList() {
+          if (bulkSelectedFiles.length === 0) {
+            bulkFileList.style.display = 'none';
+            return;
+          }
+
+          bulkFileList.style.display = 'block';
+          bulkFileItems.innerHTML = '';
+
+          bulkSelectedFiles.forEach((file, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <span>${file.name}</span>
+              <span class="file-size">(${(file.size / 1024 / 1024).toFixed(1)}MB)</span>
+              <button class="remove-file" data-index="${index}">×</button>
+            `;
+            bulkFileItems.appendChild(li);
+          });
+
+          // Remove file buttons
+          document.querySelectorAll('#bulkFileItems .remove-file').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const index = parseInt(e.target.dataset.index);
+              bulkSelectedFiles.splice(index, 1);
+              updateBulkFileList();
+              updateBulkButtons();
+            });
+          });
+        }
+
+        function updateBulkButtons() {
+          bulkConvertBtn.disabled = bulkSelectedFiles.length === 0;
+          bulkClearBtn.style.display = bulkSelectedFiles.length > 0 ? 'inline-block' : 'none';
+        }
+
+        // Clear all files
+        bulkClearBtn.addEventListener('click', () => {
+          bulkSelectedFiles = [];
+          bulkFileInput.value = '';
+          updateBulkFileList();
+          updateBulkButtons();
+          hideBulkResults();
+        });
+
+        // Convert images
+        bulkConvertBtn.addEventListener('click', async () => {
+          if (bulkSelectedFiles.length === 0) return;
+
+          const formData = new FormData();
+          bulkSelectedFiles.forEach(file => formData.append('files', file));
+          formData.append('target_format', bulkTargetFormat.value);
+          formData.append('transparent', bulkKeepTransparent.checked);
+          formData.append('quality', bulkQuality.value);
+
+          bulkConvertBtn.disabled = true;
+          bulkConvertBtn.querySelector('.btn-text').style.display = 'none';
+          bulkConvertBtn.querySelector('.btn-loading').style.display = 'inline';
+
+          try {
+            const response = await fetch('/api/bulk-convert-format', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(errorText || 'Processing failed');
+            }
+
+            bulkZipBlob = await response.blob();
+            showBulkResult(bulkSelectedFiles.length);
+            bulkDownloadBtn.href = URL.createObjectURL(bulkZipBlob);
+
+          } catch (error) {
+            showBulkError(error.message);
+          } finally {
+            bulkConvertBtn.disabled = false;
+            bulkConvertBtn.querySelector('.btn-text').style.display = 'inline';
+            bulkConvertBtn.querySelector('.btn-loading').style.display = 'none';
+          }
+        });
+
+        function showBulkResult(count) {
+          hideBulkResults();
+          bulkResultSection.style.display = 'block';
+          document.getElementById('bulkResultText').textContent = 
+            `Successfully converted ${count} image${count !== 1 ? 's' : ''} to ${bulkTargetFormat.options[bulkTargetFormat.selectedIndex].text}. Click download to get your ZIP file.`;
+        }
+
+        function showBulkError(message) {
+          hideBulkResults();
+          bulkErrorSection.style.display = 'block';
+          document.getElementById('bulkErrorText').textContent = message;
+        }
+
+        function hideBulkResults() {
+          bulkResultSection.style.display = 'none';
+          bulkErrorSection.style.display = 'none';
+        }
+      });
+    </script>
+
+    <style>
+      /* Bulk conversion section styles */
+      .bulk-section {
+        margin-top: 4rem;
+        padding-top: 3rem;
+        border-top: 2px solid #eee;
+      }
+
+      .bulk-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .bulk-header h2 {
+        color: #333;
+        margin-bottom: 1rem;
+      }
+
+      .bulk-header p {
+        color: #666;
+        font-size: 1.1rem;
+      }
+
+      .bulk-upload-section {
+        margin-bottom: 2rem;
+      }
+
+      .bulk-upload-area {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f9f9f9;
+      }
+
+      .bulk-upload-area:hover,
+      .bulk-upload-area.dragover {
+        border-color: #007bff;
+        background: #f0f8ff;
+      }
+
+      .bulk-upload-content svg {
+        color: #666;
+        margin-bottom: 1rem;
+      }
+
+      .bulk-upload-content h3 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+      }
+
+      .bulk-upload-content p {
+        margin: 0.25rem 0;
+        color: #666;
+      }
+
+      .bulk-file-list {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .bulk-file-list h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+      }
+
+      .bulk-file-list ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .bulk-file-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background: white;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        color: #333;
+      }
+
+      .bulk-file-list .file-size {
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .bulk-file-list .remove-file {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .bulk-controls-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .bulk-control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .bulk-control-group label {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .bulk-control-group select {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+
+      .bulk-control-group input[type="checkbox"] {
+        margin-right: 0.5rem;
+      }
+
+      .bulk-action-section {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .bulk-result-section,
+      .bulk-error-section {
+        text-align: center;
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+
+      .bulk-result-section {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+
+      .bulk-error-section {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+
+      .bulk-result-info p {
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+      }
+
+      @media (max-width: 768px) {
+        .bulk-controls-section {
+          grid-template-columns: 1fr;
+        }
+        
+        .bulk-upload-area {
+          padding: 2rem 1rem;
+        }
+      }
+    </style>
   </body>
 </html>
 
