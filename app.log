@@ -560,3 +560,22 @@
 2025-09-17 11:30:00,550 - INFO - USER_ACTION: {"timestamp": "2025-09-17T11:30:00.550083", "action": "frontend_analytics", "details": {"timestamp": "2025-09-17T09:30:00.539Z", "action": "page_visit", "page": "/convert-image-format.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36", "details": {"page_type": "convert_format", "url": "http://127.0.0.1:8080/convert-image-format.html", "referrer": "http://127.0.0.1:8080/remove-background-from-image.html"}}}
 2025-09-17 11:30:02,183 - INFO - USER_ACTION: {"timestamp": "2025-09-17T11:30:02.183373", "action": "frontend_analytics", "details": {"timestamp": "2025-09-17T09:30:02.180Z", "action": "page_visit", "page": "/convert-image-format.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36", "details": {"page_type": "convert_format", "url": "http://127.0.0.1:8080/convert-image-format.html", "referrer": "http://127.0.0.1:8080/remove-background-from-image.html"}}}
 2025-09-17 11:30:08,191 - INFO - USER_ACTION: {"timestamp": "2025-09-17T11:30:08.191752", "action": "frontend_analytics", "details": {"timestamp": "2025-09-17T09:30:08.188Z", "action": "page_visit", "page": "/convert-image-format.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36", "details": {"page_type": "convert_format", "url": "http://127.0.0.1:8080/convert-image-format.html", "referrer": "http://127.0.0.1:8080/remove-background-from-image.html"}}}
+2025-09-18 11:28:40,175 - INFO - Background model warmup tasks started
+2025-09-18 11:28:45,265 - INFO - Background model warmup tasks started
+2025-09-18 11:29:12,094 - INFO - Background model warmup tasks started
+2025-09-18 11:29:49,491 - INFO - Background model warmup tasks started
+2025-09-18 11:29:53,621 - INFO - Background model warmup tasks started
+2025-09-18 11:30:26,237 - INFO - Background model warmup tasks started
+2025-09-18 11:31:36,099 - INFO - Background model warmup tasks started
+2025-09-18 11:31:44,419 - INFO - Background model warmup tasks started
+2025-09-18 11:31:49,403 - INFO - Background model warmup tasks started
+2025-09-18 11:37:19,078 - INFO - Background model warmup tasks started
+2025-09-18 11:37:36,026 - INFO - Background model warmup tasks started
+2025-09-18 11:37:46,074 - INFO - Background model warmup tasks started
+2025-09-18 11:37:46,668 - INFO - Background model warmup tasks started
+2025-09-18 12:02:37,229 - INFO - Background model warmup tasks started
+2025-09-18 12:15:58,172 - INFO - Background model warmup tasks started
+2025-09-18 12:19:25,290 - INFO - Background model warmup tasks started
+2025-09-18 12:24:13,979 - INFO - Background model warmup tasks started
+2025-09-18 12:27:49,198 - INFO - Background model warmup tasks started
+2025-09-18 12:39:41,222 - INFO - Background model warmup tasks started
