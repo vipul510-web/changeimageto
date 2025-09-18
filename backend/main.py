@@ -8,11 +8,13 @@ import asyncio
 import json
 import os
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 import numpy as np
 import re
 import hashlib
 import requests
+import zipfile
+import tempfile
 
 try:
     from google.cloud import storage
@@ -1191,5 +1193,143 @@ async def enhance_image(
     except Exception as e:
         log_user_action("enhance_image_error", {"message": str(e)})
         raise HTTPException(status_code=500, detail=f"Enhance image error: {str(e)}")
+
+
+@app.post("/api/bulk-resize")
+async def bulk_resize(
+    request: Request,
+    files: List[UploadFile] = File(...),
+    width: int = Form(800),
+    height: int = Form(600),
+    maintain_aspect: bool = Form(True),
+    quality: int = Form(90),
+):
+    """Resize multiple images and return as a ZIP file."""
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    # Validate inputs
+    if len(files) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 images allowed per batch")
+    
+    if width < 1 or width > 4000 or height < 1 or height > 4000:
+        raise HTTPException(status_code=400, detail="Width and height must be between 1 and 4000 pixels")
+    
+    if quality < 1 or quality > 100:
+        raise HTTPException(status_code=400, detail="Quality must be between 1 and 100")
+    
+    log_user_action("bulk_resize_started", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "file_count": len(files),
+        "target_width": width,
+        "target_height": height,
+        "maintain_aspect": maintain_aspect,
+        "quality": quality
+    })
+    
+    processed_images = []
+    errors = []
+    
+    try:
+        for i, file in enumerate(files):
+            try:
+                # Validate file type
+                if not file.content_type or not file.content_type.startswith("image/"):
+                    errors.append(f"File {i+1} ({file.filename}): Not an image file")
+                    continue
+                
+                # Read and process image
+                contents = await file.read()
+                if len(contents) > 10 * 1024 * 1024:  # 10MB limit per file
+                    errors.append(f"File {i+1} ({file.filename}): File too large (max 10MB)")
+                    continue
+                
+                image = Image.open(io.BytesIO(contents))
+                
+                # Convert to RGB if necessary
+                if image.mode in ('RGBA', 'LA', 'P'):
+                    # Create white background for transparent images
+                    background = Image.new('RGB', image.size, (255, 255, 255))
+                    if image.mode == 'P':
+                        image = image.convert('RGBA')
+                    background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+                    image = background
+                elif image.mode != 'RGB':
+                    image = image.convert('RGB')
+                
+                # Resize image
+                if maintain_aspect:
+                    # Calculate new dimensions maintaining aspect ratio
+                    original_width, original_height = image.size
+                    aspect_ratio = original_width / original_height
+                    target_aspect = width / height
+                    
+                    if aspect_ratio > target_aspect:
+                        # Image is wider than target aspect ratio
+                        new_width = width
+                        new_height = int(width / aspect_ratio)
+                    else:
+                        # Image is taller than target aspect ratio
+                        new_height = height
+                        new_width = int(height * aspect_ratio)
+                else:
+                    new_width, new_height = width, height
+                
+                # Resize with high quality
+                resized = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                # Save to bytes
+                output_buffer = io.BytesIO()
+                resized.save(output_buffer, format='JPEG', quality=quality, optimize=True)
+                output_data = output_buffer.getvalue()
+                
+                # Store filename and data
+                filename = file.filename or f"image_{i+1}.jpg"
+                if not filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+                    filename += '.jpg'
+                
+                processed_images.append({
+                    'filename': filename,
+                    'data': output_data,
+                    'original_size': f"{image.width}x{image.height}",
+                    'new_size': f"{new_width}x{new_height}"
+                })
+                
+            except Exception as e:
+                errors.append(f"File {i+1} ({file.filename}): {str(e)}")
+                continue
+        
+        if not processed_images:
+            raise HTTPException(status_code=400, detail="No images could be processed. " + "; ".join(errors))
+        
+        # Create ZIP file
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for img_data in processed_images:
+                zip_file.writestr(img_data['filename'], img_data['data'])
+        
+        zip_data = zip_buffer.getvalue()
+        
+        log_user_action("bulk_resize_completed", {
+            "processed_count": len(processed_images),
+            "error_count": len(errors),
+            "zip_size_bytes": len(zip_data),
+            "zip_size_mb": round(len(zip_data) / (1024 * 1024), 2)
+        })
+        
+        # Return ZIP file
+        headers = {
+            "Content-Disposition": "attachment; filename=resized_images.zip",
+            "Content-Type": "application/zip"
+        }
+        
+        return Response(content=zip_data, headers=headers, media_type="application/zip")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("bulk_resize_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Bulk resize error: {str(e)}")
 
 

@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bulk Image Resizer - Resize Multiple Images at Once (Free)</title>
+    <meta name="description" content="Resize multiple images at once for free. Upload up to 50 images, choose dimensions, and download as ZIP. No login, no watermark." />
+    <meta name="keywords" content="bulk image resizer, resize multiple images, batch image resize, image resizer online, free image resizer" />
+    <link rel="canonical" href="https://www.changeimageto.com/bulk-image-resizer.html" />
+    <link rel="preload" as="style" href="/styles.css?v=20250916-3" />
+    <link rel="stylesheet" href="/styles.css?v=20250916-3" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Bulk Image Resizer",
+      "description": "Resize multiple images at once for free. Upload up to 50 images, choose dimensions, and download as ZIP.",
+      "url": "https://www.changeimageto.com/bulk-image-resizer.html",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link">
+        <img src="/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" />
+      </a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Free Bulk Image Resizer</h1>
+        <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
+      </div>
+      <p>Upload multiple images and resize them all at once. Download as ZIP file. No login, no watermark.</p>
+    </header>
+
+    <main class="container main">
+      <div class="upload-section">
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7,10 12,15 17,10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <h3>Drop images here or click to browse</h3>
+            <p>Upload up to 50 images (JPG, PNG, WebP)</p>
+            <p class="file-limit">Max 10MB per file</p>
+          </div>
+          <input type="file" id="fileInput" multiple accept="image/*" style="display:none" />
+        </div>
+        
+        <div class="file-list" id="fileList" style="display:none">
+          <h3>Selected Files:</h3>
+          <ul id="fileItems"></ul>
+        </div>
+      </div>
+
+      <div class="controls-section">
+        <div class="control-group">
+          <label for="width">Width (pixels):</label>
+          <input type="number" id="width" value="800" min="1" max="4000" />
+        </div>
+        
+        <div class="control-group">
+          <label for="height">Height (pixels):</label>
+          <input type="number" id="height" value="600" min="1" max="4000" />
+        </div>
+        
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="maintainAspect" checked />
+            Maintain aspect ratio
+          </label>
+        </div>
+        
+        <div class="control-group">
+          <label for="quality">Quality:</label>
+          <input type="range" id="quality" min="1" max="100" value="90" />
+          <span id="qualityValue">90%</span>
+        </div>
+      </div>
+
+      <div class="action-section">
+        <button id="resizeBtn" class="btn btn-primary" disabled>
+          <span class="btn-text">Resize Images</span>
+          <span class="btn-loading" style="display:none">Processing...</span>
+        </button>
+        <button id="clearBtn" class="btn btn-secondary" style="display:none">Clear All</button>
+      </div>
+
+      <div class="result-section" id="resultSection" style="display:none">
+        <h3>Processing Complete!</h3>
+        <div class="result-info">
+          <p id="resultText"></p>
+          <a id="downloadBtn" class="btn btn-success" download="resized_images.zip">
+            Download ZIP File
+          </a>
+        </div>
+      </div>
+
+      <div class="error-section" id="errorSection" style="display:none">
+        <h3>Error</h3>
+        <p id="errorText"></p>
+      </div>
+    </main>
+
+    <section class="container seo-content">
+      <h2>How to resize multiple images at once</h2>
+      <p>Our bulk image resizer makes it easy to resize dozens of images simultaneously. Perfect for photographers, web developers, and content creators who need to process large batches of images.</p>
+      
+      <h3>Step-by-step guide:</h3>
+      <ol>
+        <li><strong>Upload images:</strong> Drag and drop or click to select up to 50 images at once.</li>
+        <li><strong>Set dimensions:</strong> Choose your target width and height in pixels.</li>
+        <li><strong>Choose options:</strong> Maintain aspect ratio to prevent distortion, or stretch to exact dimensions.</li>
+        <li><strong>Adjust quality:</strong> Set JPEG quality from 1-100% (higher = better quality, larger file size).</li>
+        <li><strong>Process:</strong> Click "Resize Images" and wait for processing to complete.</li>
+        <li><strong>Download:</strong> Get all resized images in a single ZIP file.</li>
+      </ol>
+
+      <h3>Why use our bulk image resizer?</h3>
+      <ul>
+        <li><strong>Free:</strong> No login required, no watermarks, no limits.</li>
+        <li><strong>Fast:</strong> Process up to 50 images in seconds using optimized algorithms.</li>
+        <li><strong>High quality:</strong> Uses Lanczos resampling for crisp, professional results.</li>
+        <li><strong>Flexible:</strong> Choose exact dimensions or maintain aspect ratios.</li>
+        <li><strong>Privacy:</strong> Images are processed on our server and not stored.</li>
+      </ul>
+
+      <h3>Supported formats and limits</h3>
+      <ul>
+        <li><strong>Input formats:</strong> JPG, PNG, WebP, GIF, BMP, TIFF</li>
+        <li><strong>Output format:</strong> JPEG (optimized for web use)</li>
+        <li><strong>File size limit:</strong> 10MB per image</li>
+        <li><strong>Batch limit:</strong> Up to 50 images per batch</li>
+        <li><strong>Dimension range:</strong> 1x1 to 4000x4000 pixels</li>
+      </ul>
+
+      <h3>Common use cases</h3>
+      <ul>
+        <li><strong>E-commerce:</strong> Resize product photos for consistent web display</li>
+        <li><strong>Social media:</strong> Batch resize images for different platform requirements</li>
+        <li><strong>Web development:</strong> Optimize images for faster page loading</li>
+        <li><strong>Photography:</strong> Create web-ready versions of high-resolution photos</li>
+        <li><strong>Content creation:</strong> Prepare images for blogs, presentations, or portfolios</li>
+      </ul>
+    </section>
+
+    <section class="container faq-section">
+      <h2>FAQ</h2>
+      
+      <details>
+        <summary>How many images can I resize at once?</summary>
+        <p>You can upload and resize up to 50 images in a single batch. Each image can be up to 10MB in size.</p>
+      </details>
+      
+      <details>
+        <summary>What image formats are supported?</summary>
+        <p>We support JPG, PNG, WebP, GIF, BMP, and TIFF input formats. All images are output as optimized JPEG files.</p>
+      </details>
+      
+      <details>
+        <summary>Will my images be stored on your servers?</summary>
+        <p>No, your images are processed temporarily and then deleted. We don't store or share your images.</p>
+      </details>
+      
+      <details>
+        <summary>What's the difference between maintaining aspect ratio and exact dimensions?</summary>
+        <p>Maintaining aspect ratio keeps the original proportions of your images, preventing distortion. Exact dimensions will stretch or crop images to fit the specified width and height exactly.</p>
+      </details>
+      
+      <details>
+        <summary>How long does processing take?</summary>
+        <p>Most batches of 10-20 images process in under 30 seconds. Larger batches may take 1-2 minutes depending on image sizes and dimensions.</p>
+      </details>
+      
+      <details>
+        <summary>Is there a file size limit?</summary>
+        <p>Each individual image can be up to 10MB. There's no limit on the total batch size, but processing time increases with larger files.</p>
+      </details>
+      
+      <details>
+        <summary>Can I resize images to different dimensions?</summary>
+        <p>All images in a batch will be resized to the same dimensions you specify. For different sizes, process them in separate batches.</p>
+      </details>
+      
+      <details>
+        <summary>What quality settings should I use?</summary>
+        <p>For web use, 80-90% quality provides excellent results with good file sizes. For print or archival purposes, use 95-100% quality.</p>
+      </details>
+    </section>
+
+    <nav class="seo-links">
+      <a href="/remove-background-from-image.html">Remove Background from Image</a>
+      <a href="/change-color-of-image.html">Change color of image online</a>
+      <a href="/change-image-background.html">Change image background</a>
+      <a href="/convert-image-format.html">Convert image format</a>
+      <a href="/upscale-image.html">AI Image Upscaler</a>
+      <a href="/blur-background.html">Blur Background</a>
+      <a href="/enhance-image.html">Enhance Image</a>
+      <a href="/bulk-image-resizer.html">Bulk Image Resizer</a>
+    </nav>
+
+    <footer class="container footer">
+      <p>Built for speed and quality. <a href="#" rel="nofollow">Contact</a></p>
+    </footer>
+
+    <script src="/script.js?v=20250916-3" defer></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileItems = document.getElementById('fileItems');
+        const resizeBtn = document.getElementById('resizeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultSection = document.getElementById('resultSection');
+        const errorSection = document.getElementById('errorSection');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const qualitySlider = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const maintainAspect = document.getElementById('maintainAspect');
+        const widthInput = document.getElementById('width');
+        const heightInput = document.getElementById('height');
+
+        let selectedFiles = [];
+        let zipBlob = null;
+
+        // Quality slider update
+        qualitySlider.addEventListener('input', function() {
+          qualityValue.textContent = this.value + '%';
+        });
+
+        // Aspect ratio handling
+        maintainAspect.addEventListener('change', function() {
+          if (this.checked) {
+            heightInput.disabled = false;
+          } else {
+            heightInput.disabled = false;
+          }
+        });
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+          uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragover');
+          handleFiles(e.dataTransfer.files);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+          handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+          const newFiles = Array.from(files).filter(file => {
+            return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
+          });
+
+          if (selectedFiles.length + newFiles.length > 50) {
+            alert('Maximum 50 images allowed. Please select fewer images.');
+            return;
+          }
+
+          selectedFiles = [...selectedFiles, ...newFiles];
+          updateFileList();
+          updateButtons();
+        }
+
+        function updateFileList() {
+          if (selectedFiles.length === 0) {
+            fileList.style.display = 'none';
+            return;
+          }
+
+          fileList.style.display = 'block';
+          fileItems.innerHTML = '';
+
+          selectedFiles.forEach((file, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <span>${file.name}</span>
+              <span class="file-size">(${(file.size / 1024 / 1024).toFixed(1)}MB)</span>
+              <button class="remove-file" data-index="${index}">×</button>
+            `;
+            fileItems.appendChild(li);
+          });
+
+          // Remove file buttons
+          document.querySelectorAll('.remove-file').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const index = parseInt(e.target.dataset.index);
+              selectedFiles.splice(index, 1);
+              updateFileList();
+              updateButtons();
+            });
+          });
+        }
+
+        function updateButtons() {
+          resizeBtn.disabled = selectedFiles.length === 0;
+          clearBtn.style.display = selectedFiles.length > 0 ? 'inline-block' : 'none';
+        }
+
+        // Clear all files
+        clearBtn.addEventListener('click', () => {
+          selectedFiles = [];
+          fileInput.value = '';
+          updateFileList();
+          updateButtons();
+          hideResults();
+        });
+
+        // Resize images
+        resizeBtn.addEventListener('click', async () => {
+          if (selectedFiles.length === 0) return;
+
+          const formData = new FormData();
+          selectedFiles.forEach(file => formData.append('files', file));
+          formData.append('width', widthInput.value);
+          formData.append('height', heightInput.value);
+          formData.append('maintain_aspect', maintainAspect.checked);
+          formData.append('quality', qualitySlider.value);
+
+          resizeBtn.disabled = true;
+          resizeBtn.querySelector('.btn-text').style.display = 'none';
+          resizeBtn.querySelector('.btn-loading').style.display = 'inline';
+
+          try {
+            const response = await fetch('/api/bulk-resize', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(errorText || 'Processing failed');
+            }
+
+            zipBlob = await response.blob();
+            showResult(selectedFiles.length);
+            downloadBtn.href = URL.createObjectURL(zipBlob);
+
+          } catch (error) {
+            showError(error.message);
+          } finally {
+            resizeBtn.disabled = false;
+            resizeBtn.querySelector('.btn-text').style.display = 'inline';
+            resizeBtn.querySelector('.btn-loading').style.display = 'none';
+          }
+        });
+
+        function showResult(count) {
+          hideResults();
+          resultSection.style.display = 'block';
+          document.getElementById('resultText').textContent = 
+            `Successfully processed ${count} image${count !== 1 ? 's' : ''}. Click download to get your ZIP file.`;
+        }
+
+        function showError(message) {
+          hideResults();
+          errorSection.style.display = 'block';
+          document.getElementById('errorText').textContent = message;
+        }
+
+        function hideResults() {
+          resultSection.style.display = 'none';
+          errorSection.style.display = 'none';
+        }
+      });
+    </script>
+
+    <style>
+      .upload-section {
+        margin-bottom: 2rem;
+      }
+
+      .upload-area {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f9f9f9;
+      }
+
+      .upload-area:hover,
+      .upload-area.dragover {
+        border-color: #007bff;
+        background: #f0f8ff;
+      }
+
+      .upload-content svg {
+        color: #666;
+        margin-bottom: 1rem;
+      }
+
+      .upload-content h3 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+      }
+
+      .upload-content p {
+        margin: 0.25rem 0;
+        color: #666;
+      }
+
+      .file-limit {
+        font-size: 0.9rem;
+        color: #999;
+      }
+
+      .file-list {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .file-list h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+      }
+
+      .file-list ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .file-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background: white;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+
+      .file-size {
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .remove-file {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .controls-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .control-group label {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .control-group input[type="number"] {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+
+      .control-group input[type="range"] {
+        width: 100%;
+      }
+
+      .control-group input[type="checkbox"] {
+        margin-right: 0.5rem;
+      }
+
+      .action-section {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .btn {
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin: 0 0.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: #007bff;
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: #0056b3;
+      }
+
+      .btn-primary:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #545b62;
+      }
+
+      .btn-success {
+        background: #28a745;
+        color: white;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .btn-success:hover {
+        background: #1e7e34;
+      }
+
+      .result-section,
+      .error-section {
+        text-align: center;
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+
+      .result-section {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+
+      .error-section {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+
+      .result-info p {
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+      }
+
+      .seo-content {
+        margin-top: 3rem;
+        line-height: 1.6;
+      }
+
+      .seo-content h2 {
+        color: #333;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+
+      .seo-content h3 {
+        color: #555;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .seo-content ul,
+      .seo-content ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .seo-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .faq-section {
+        margin-top: 3rem;
+      }
+
+      .faq-section details {
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 1rem;
+      }
+
+      .faq-section summary {
+        font-weight: 600;
+        cursor: pointer;
+        color: #333;
+      }
+
+      .faq-section summary:hover {
+        color: #007bff;
+      }
+
+      .faq-section p {
+        margin-top: 0.75rem;
+        margin-bottom: 0;
+        color: #666;
+      }
+
+      @media (max-width: 768px) {
+        .controls-section {
+          grid-template-columns: 1fr;
+        }
+        
+        .upload-area {
+          padding: 2rem 1rem;
+        }
+        
+        .btn {
+          display: block;
+          width: 100%;
+          margin: 0.5rem 0;
+        }
+      }
+    </style>
+  </body>
+</html>
