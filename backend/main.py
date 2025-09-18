@@ -15,6 +15,9 @@ import hashlib
 import requests
 import zipfile
 import tempfile
+import cv2
+from skimage import measure, filters, exposure
+from skimage.metrics import structural_similarity as ssim
 
 try:
     from google.cloud import storage
@@ -1519,5 +1522,246 @@ async def bulk_convert_format(
     except Exception as e:
         log_user_action("bulk_convert_error", {"message": str(e)})
         raise HTTPException(status_code=500, detail=f"Bulk convert error: {str(e)}")
+
+
+def detect_image_quality(image_array):
+    """Analyze image quality and return detailed metrics."""
+    try:
+        # Convert to grayscale for analysis
+        if len(image_array.shape) == 3:
+            gray = cv2.cvtColor(image_array, cv2.COLOR_RGB2GRAY)
+        else:
+            gray = image_array
+        
+        quality_metrics = {}
+        issues = []
+        overall_score = 100
+        
+        # 1. Blur Detection (Laplacian variance)
+        laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+        if laplacian_var < 100:
+            issues.append("blur")
+            quality_metrics["blur_score"] = max(0, (laplacian_var / 100) * 100)
+            overall_score -= 30
+        else:
+            quality_metrics["blur_score"] = 100
+        
+        # 2. Noise Detection (Standard deviation of gradient)
+        grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+        grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+        gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
+        noise_level = np.std(gradient_magnitude)
+        
+        if noise_level > 50:
+            issues.append("noise")
+            quality_metrics["noise_score"] = max(0, 100 - (noise_level - 50))
+            overall_score -= 25
+        else:
+            quality_metrics["noise_score"] = 100
+        
+        # 3. Pixelation Detection (Edge density)
+        edges = cv2.Canny(gray, 50, 150)
+        edge_density = np.sum(edges > 0) / (gray.shape[0] * gray.shape[1])
+        
+        if edge_density < 0.05:
+            issues.append("pixelation")
+            quality_metrics["pixelation_score"] = max(0, edge_density * 2000)
+            overall_score -= 20
+        else:
+            quality_metrics["pixelation_score"] = 100
+        
+        # 4. Exposure Analysis
+        hist, _ = np.histogram(gray, bins=256, range=(0, 256))
+        hist = hist / hist.sum()
+        
+        # Check for overexposure (too many bright pixels)
+        bright_pixels = np.sum(hist[200:])
+        if bright_pixels > 0.3:
+            issues.append("overexposed")
+            quality_metrics["exposure_score"] = max(0, 100 - (bright_pixels - 0.3) * 200)
+            overall_score -= 15
+        # Check for underexposure (too many dark pixels)
+        elif np.sum(hist[:50]) > 0.3:
+            issues.append("underexposed")
+            quality_metrics["exposure_score"] = max(0, 100 - (np.sum(hist[:50]) - 0.3) * 200)
+            overall_score -= 15
+        else:
+            quality_metrics["exposure_score"] = 100
+        
+        # 5. Resolution Assessment
+        height, width = gray.shape
+        total_pixels = height * width
+        
+        if total_pixels < 100000:  # Less than ~316x316
+            issues.append("low_resolution")
+            quality_metrics["resolution_score"] = max(0, (total_pixels / 100000) * 100)
+            overall_score -= 20
+        elif total_pixels < 400000:  # Less than ~632x632
+            quality_metrics["resolution_score"] = 80
+            overall_score -= 5
+        else:
+            quality_metrics["resolution_score"] = 100
+        
+        # 6. Compression Artifacts (JPEG block detection)
+        if len(image_array.shape) == 3:
+            # Check for block artifacts in JPEG
+            block_size = 8
+            artifacts_detected = 0
+            
+            for i in range(0, gray.shape[0] - block_size, block_size):
+                for j in range(0, gray.shape[1] - block_size, block_size):
+                    block = gray[i:i+block_size, j:j+block_size]
+                    if np.std(block) < 5:  # Very uniform blocks indicate compression
+                        artifacts_detected += 1
+            
+            artifact_ratio = artifacts_detected / ((gray.shape[0] // block_size) * (gray.shape[1] // block_size))
+            if artifact_ratio > 0.1:
+                issues.append("compression_artifacts")
+                quality_metrics["compression_score"] = max(0, 100 - artifact_ratio * 500)
+                overall_score -= 15
+            else:
+                quality_metrics["compression_score"] = 100
+        
+        # Overall quality score
+        quality_metrics["overall_score"] = max(0, overall_score)
+        quality_metrics["issues"] = issues
+        quality_metrics["dimensions"] = f"{width}x{height}"
+        
+        return quality_metrics
+        
+    except Exception as e:
+        return {
+            "overall_score": 0,
+            "issues": ["analysis_failed"],
+            "error": str(e),
+            "blur_score": 0,
+            "noise_score": 0,
+            "pixelation_score": 0,
+            "exposure_score": 0,
+            "resolution_score": 0,
+            "compression_score": 0
+        }
+
+
+@app.post("/api/bulk-quality-check")
+async def bulk_quality_check(
+    request: Request,
+    files: List[UploadFile] = File(...),
+):
+    """Analyze quality of multiple images and return detailed reports."""
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    # Validate inputs
+    if len(files) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 images allowed per batch")
+    
+    log_user_action("bulk_quality_check_started", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "file_count": len(files)
+    })
+    
+    analyzed_images = []
+    errors = []
+    
+    try:
+        for i, file in enumerate(files):
+            try:
+                # Validate file type
+                if not file.content_type or not file.content_type.startswith("image/"):
+                    errors.append(f"File {i+1} ({file.filename}): Not an image file")
+                    continue
+                
+                # Read and process image
+                contents = await file.read()
+                if len(contents) > 10 * 1024 * 1024:  # 10MB limit per file
+                    errors.append(f"File {i+1} ({file.filename}): File too large (max 10MB)")
+                    continue
+                
+                # Convert to OpenCV format
+                nparr = np.frombuffer(contents, np.uint8)
+                image_array = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                
+                if image_array is None:
+                    errors.append(f"File {i+1} ({file.filename}): Could not decode image")
+                    continue
+                
+                # Convert BGR to RGB for analysis
+                image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+                
+                # Analyze image quality
+                quality_metrics = detect_image_quality(image_array)
+                
+                # Determine quality category
+                overall_score = quality_metrics["overall_score"]
+                if overall_score >= 80:
+                    category = "good"
+                elif overall_score >= 60:
+                    category = "fair"
+                else:
+                    category = "poor"
+                
+                # Generate repair suggestions
+                repair_links = []
+                for issue in quality_metrics.get("issues", []):
+                    if issue == "blur":
+                        repair_links.append({"tool": "enhance", "url": "/enhance-image.html", "description": "Enhance Image"})
+                    elif issue == "noise":
+                        repair_links.append({"tool": "enhance", "url": "/enhance-image.html", "description": "Enhance Image"})
+                    elif issue == "pixelation":
+                        repair_links.append({"tool": "upscale", "url": "/upscale-image.html", "description": "AI Image Upscaler"})
+                    elif issue == "overexposed":
+                        repair_links.append({"tool": "enhance", "url": "/enhance-image.html", "description": "Enhance Image"})
+                    elif issue == "underexposed":
+                        repair_links.append({"tool": "enhance", "url": "/enhance-image.html", "description": "Enhance Image"})
+                    elif issue == "low_resolution":
+                        repair_links.append({"tool": "upscale", "url": "/upscale-image.html", "description": "AI Image Upscaler"})
+                    elif issue == "compression_artifacts":
+                        repair_links.append({"tool": "enhance", "url": "/enhance-image.html", "description": "Enhance Image"})
+                
+                analyzed_images.append({
+                    'filename': file.filename or f"image_{i+1}",
+                    'quality_metrics': quality_metrics,
+                    'category': category,
+                    'repair_links': repair_links,
+                    'file_size_mb': round(len(contents) / (1024 * 1024), 2)
+                })
+                
+            except Exception as e:
+                errors.append(f"File {i+1} ({file.filename}): {str(e)}")
+                continue
+        
+        if not analyzed_images:
+            raise HTTPException(status_code=400, detail="No images could be analyzed. " + "; ".join(errors))
+        
+        # Categorize images
+        good_images = [img for img in analyzed_images if img['category'] == 'good']
+        fair_images = [img for img in analyzed_images if img['category'] == 'fair']
+        poor_images = [img for img in analyzed_images if img['category'] == 'poor']
+        
+        log_user_action("bulk_quality_check_completed", {
+            "total_analyzed": len(analyzed_images),
+            "good_count": len(good_images),
+            "fair_count": len(fair_images),
+            "poor_count": len(poor_images),
+            "error_count": len(errors)
+        })
+        
+        return {
+            "total_images": len(analyzed_images),
+            "good_images": len(good_images),
+            "fair_images": len(fair_images),
+            "poor_images": len(poor_images),
+            "error_count": len(errors),
+            "images": analyzed_images,
+            "errors": errors
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("bulk_quality_check_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Quality check error: {str(e)}")
 
 
