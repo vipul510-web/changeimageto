@@ -988,18 +988,22 @@ async def blog_index():
 
 @app.get("/blog/{slug}.html")
 async def blog_article(slug: str):
-    # If bucket configured, try to serve stored HTML
-    if BLOG_BUCKET:
-        client = get_storage_client()
-        bucket = get_or_create_bucket(client)
-        blob = bucket.blob(f"blog/{slug}.html")
-        if blob.exists():
-            html = blob.download_as_text()
-            return Response(content=html, media_type="text/html")
-    # Dev fallback: render from slug using sections builder
+    # Always render fresh from current template/sections
     title = slug.replace('-', ' ').title()
-    html = render_article_html(title, slug, build_sections(title))
-    return Response(content=html, media_type="text/html")
+    fresh_html = render_article_html(title, slug, build_sections(title))
+    # If in production with bucket, compare and update stored HTML if changed
+    if BLOG_BUCKET:
+        try:
+            client = get_storage_client()
+            bucket = get_or_create_bucket(client)
+            blob = bucket.blob(f"blog/{slug}.html")
+            old_html = blob.download_as_text() if blob.exists() else ""
+            if old_html != fresh_html:
+                save_article(client, slug, fresh_html)
+        except Exception:
+            # Non-fatal: still serve fresh content even if bucket update fails
+            pass
+    return Response(content=fresh_html, media_type="text/html")
 
 
 @app.post("/api/upscale-image")
