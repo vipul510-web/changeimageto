@@ -1258,26 +1258,34 @@ async def bulk_resize(
                 elif image.mode != 'RGB':
                     image = image.convert('RGB')
                 
-                # Resize image
-                if maintain_aspect:
-                    # Calculate new dimensions maintaining aspect ratio
-                    original_width, original_height = image.size
-                    aspect_ratio = original_width / original_height
-                    target_aspect = width / height
-                    
-                    if aspect_ratio > target_aspect:
-                        # Image is wider than target aspect ratio
-                        new_width = width
-                        new_height = int(width / aspect_ratio)
-                    else:
-                        # Image is taller than target aspect ratio
-                        new_height = height
-                        new_width = int(height * aspect_ratio)
-                else:
-                    new_width, new_height = width, height
+                # Resize image to exact dimensions
+                original_width, original_height = image.size
+                target_aspect = width / height
+                original_aspect = original_width / original_height
                 
-                # Resize with high quality
-                resized = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                if maintain_aspect:
+                    # Fit within target dimensions while maintaining aspect ratio
+                    if original_aspect > target_aspect:
+                        # Image is wider - fit to width
+                        new_width = width
+                        new_height = int(width / original_aspect)
+                    else:
+                        # Image is taller - fit to height
+                        new_height = height
+                        new_width = int(height * original_aspect)
+                    
+                    # Resize maintaining aspect ratio
+                    resized = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                    
+                    # Create canvas with exact target dimensions and center the image
+                    canvas = Image.new('RGB', (width, height), (255, 255, 255))
+                    offset_x = (width - new_width) // 2
+                    offset_y = (height - new_height) // 2
+                    canvas.paste(resized, (offset_x, offset_y))
+                    resized = canvas
+                else:
+                    # Crop and resize to exact dimensions (may distort)
+                    resized = image.resize((width, height), Image.Resampling.LANCZOS)
                 
                 # Save to bytes
                 output_buffer = io.BytesIO()
