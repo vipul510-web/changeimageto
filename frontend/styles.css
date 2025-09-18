@@ -8,6 +8,8 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,C
 .logo-img{height:36px;width:auto;display:block}
 .logo-text{color:var(--fg);font-weight:700}
 .main{padding-top:8px}
+.top-nav a{color:#fff;text-decoration:none;font-weight:600}
+.top-nav a:hover{text-decoration:underline}
 .controls{margin:16px 0;display:flex;gap:12px;align-items:center}
 select{background:var(--card);color:var(--fg);border:1px solid var(--border);padding:10px 12px;border-radius:8px}
 .uploader{position:relative;border:2px dashed var(--border);border-radius:12px;padding:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card)}

@@ -8,6 +8,10 @@
   ],
   "routes": [
     {
+      "src": "/blog(.*)",
+      "dest": "https://bgremover-backend-121350814881.us-central1.run.app/blog$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/$1"
     }
