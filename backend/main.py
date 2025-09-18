@@ -313,7 +313,8 @@ def list_existing_slugs(client) -> set:
 def save_article(client, slug: str, html: str):
     bucket = get_or_create_bucket(client)
     blob = bucket.blob(f"blog/{slug}.html")
-    blob.cache_control = "public, max-age=86400"
+    # Keep CDN/browser cache short so edits propagate quickly
+    blob.cache_control = "public, max-age=600"
     blob.upload_from_string(html, content_type="text/html; charset=utf-8")
     # update index json (append latest)
     idx = bucket.blob("blog/index.json")
@@ -325,6 +326,53 @@ def save_article(client, slug: str, html: str):
     existing["posts"] = ([{"slug": slug, "title": html.split('<title>')[1].split('</title>')[0], "url": url, "date": datetime.utcnow().isoformat()}] 
                            + [p for p in existing.get("posts", []) if p.get("slug") != slug])[:200]
     idx.upload_from_string(json.dumps(existing), content_type="application/json")
+
+@app.post("/api/blog/regenerate-all")
+async def blog_regenerate_all(token: str):
+    """Re-render and overwrite all existing blog posts using current templates/content.
+
+    Requires CRON_TOKEN for authorization.
+    """
+    if CRON_TOKEN and token != CRON_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if not BLOG_BUCKET:
+        raise HTTPException(status_code=400, detail="BLOG_BUCKET not configured in production")
+    client = get_storage_client()
+    bucket = get_or_create_bucket(client)
+    # Determine slugs from index.json, fallback to listing blobs
+    slugs: set[str] = set()
+    try:
+        idx = bucket.blob("blog/index.json")
+        data = json.loads(idx.download_as_text())
+        for p in data.get("posts", []):
+            s = p.get("slug")
+            if s:
+                slugs.add(s)
+    except Exception:
+        pass
+    if not slugs:
+        for b in bucket.list_blobs(prefix="blog/"):
+            if b.name.endswith(".html"):
+                slugs.add(os.path.basename(b.name).replace(".html", ""))
+    regenerated = []
+    for slug in sorted(slugs):
+        title = slug.replace('-', ' ').title()
+        html = render_article_html(title, slug, build_sections(title))
+        save_article(client, slug, html)
+        regenerated.append(slug)
+    return {"regenerated": regenerated, "count": len(regenerated)}
+
+@app.post("/api/blog/regenerate-one")
+async def blog_regenerate_one(slug: str, token: str):
+    if CRON_TOKEN and token != CRON_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if not BLOG_BUCKET:
+        raise HTTPException(status_code=400, detail="BLOG_BUCKET not configured in production")
+    client = get_storage_client()
+    title = slug.replace('-', ' ').title()
+    html = render_article_html(title, slug, build_sections(title))
+    save_article(client, slug, html)
+    return {"ok": True, "slug": slug}
 
 def get_session_for_category(category: str):
     category = category.lower()
