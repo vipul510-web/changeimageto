@@ -237,11 +237,29 @@
         });
 
         // Aspect ratio handling
+        let aspectRatio = 800 / 600; // Default aspect ratio
+        
         maintainAspect.addEventListener('change', function() {
           if (this.checked) {
             heightInput.disabled = false;
+            // Recalculate aspect ratio from current values
+            aspectRatio = widthInput.value / heightInput.value;
           } else {
             heightInput.disabled = false;
+          }
+        });
+
+        // Auto-update height when width changes (if aspect ratio is maintained)
+        widthInput.addEventListener('input', function() {
+          if (maintainAspect.checked) {
+            heightInput.value = Math.round(this.value / aspectRatio);
+          }
+        });
+
+        // Auto-update width when height changes (if aspect ratio is maintained)
+        heightInput.addEventListener('input', function() {
+          if (maintainAspect.checked) {
+            widthInput.value = Math.round(this.value * aspectRatio);
           }
         });
 
@@ -455,6 +473,12 @@
         margin-bottom: 0.5rem;
         border-radius: 4px;
         border: 1px solid #ddd;
+        color: #333;
+      }
+
+      .file-list li span:first-child {
+        color: #333;
+        font-weight: 500;
       }
 
       .file-size {
