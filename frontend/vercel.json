@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/blog/", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog" },
+    { "source": "/blog", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog" },
+    { "source": "/blog/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" }
+  ]
+}
+
+
