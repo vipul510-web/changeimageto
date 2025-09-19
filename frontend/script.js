@@ -45,6 +45,33 @@ document.addEventListener('DOMContentLoaded', function() {
         url: window.location.href,
         referrer: document.referrer || 'direct'
     });
+
+    // Inject standard footer link pills across all pages
+    try {
+      const footer = document.querySelector('footer.container.footer');
+      if (footer) {
+        const existing = document.querySelector('nav.seo-links');
+        if (!existing) {
+          const nav = document.createElement('nav');
+          nav.className = 'seo-links';
+          nav.innerHTML = [
+            { href: '/remove-background-from-image.html', label: 'Remove Background from Image' },
+            { href: '/enhance-image.html', label: 'Enhance Image' },
+            { href: '/upscale-image.html', label: 'AI Image Upscaler' },
+            { href: '/change-color-of-image.html', label: 'Change color of image online' },
+            { href: '/change-image-background.html', label: 'Change image background' },
+            { href: '/convert-image-format.html', label: 'Convert image format' },
+            { href: '/blur-background.html', label: 'Blur Background' },
+            { href: '/bulk-image-resizer.html', label: 'Bulk Image Resizer' },
+            { href: '/image-quality-checker.html', label: 'Image Quality Checker' },
+          ].map(i => `<a href="${i.href}">${i.label}</a>`).join('');
+          // Insert right before footer to match existing structure
+          footer.parentElement.insertBefore(nav, footer);
+        }
+      }
+    } catch (e) {
+      console.warn('Footer injection failed:', e);
+    }
 });
 
 function getPageType() {
