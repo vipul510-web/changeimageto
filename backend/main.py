@@ -941,9 +941,14 @@ async def blog_index():
     # Canonicalize and deduplicate similar/alias posts (e.g., remove-background-from-image-* → remove-background-from-image)
     def canonicalize_slug(s: str) -> str:
         base = s.strip().lower()
-        if base.startswith("remove-background-from-image"):
-            return "remove-background-from-image"
-        return base
+        # Only collapse the exact near-duplicate variants, not tutorial-specific ones
+        alias_map = {
+            "remove-background-from-image": "remove-background-from-image",
+            "remove-background-from-image-free": "remove-background-from-image",
+            "remove-background-from-image-online": "remove-background-from-image",
+            "remove-background-from-image-free-online": "remove-background-from-image",
+        }
+        return alias_map.get(base, base)
 
     dedup: dict[str, dict] = {}
     for p in items:
@@ -1025,9 +1030,12 @@ async def blog_article(slug: str):
     # Redirect aliases to canonical to avoid duplicate content
     def canonicalize_slug(s: str) -> str:
         base = s.strip().lower()
-        if base.startswith("remove-background-from-image"):
-            return "remove-background-from-image"
-        return base
+        alias_map = {
+            "remove-background-from-image-free": "remove-background-from-image",
+            "remove-background-from-image-online": "remove-background-from-image",
+            "remove-background-from-image-free-online": "remove-background-from-image",
+        }
+        return alias_map.get(base, base)
 
     canon = canonicalize_slug(slug)
     if canon != slug:
