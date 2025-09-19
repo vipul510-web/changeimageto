@@ -274,6 +274,27 @@ def build_sections(keyword: str) -> list:
             "</ol></section>",
             tools_list(),
         ]
+    elif "google slides" in k or ("slides" in k and "google" in k):
+        # Google Slides does not have native background removal. Provide exact, correct workflow.
+        sections = [
+            "<section class=\"seo\"><p>Google Slides does not include a one‑click background removal tool. The reliable workflow is to remove the background outside Slides, then insert the cut‑out image back into your deck. Here are the exact steps.</p></section>",
+            "<section class=\"seo\"><h2>Remove Background for Google Slides (exact steps)</h2><ol>"
+            "<li>Open <a href=\"/remove-background-from-image.html\">Remove Background</a> in your browser.</li>"
+            "<li>Click <strong>Upload image</strong> and select your file (JPG/PNG/WebP). Wait ~5–10s.</li>"
+            "<li>Click <strong>Download</strong> to save the PNG with a transparent background.</li>"
+            "<li>In Google Slides: open your presentation → go to the target slide.</li>"
+            "<li>Insert the cut‑out: <strong>Insert → Image → Upload from computer</strong> and choose the downloaded PNG.</li>"
+            "<li>Optional: set a background color or photo for the slide via <strong>Slide → Change background…</strong>.</li>"
+            "<li>Fine‑tune the look: select the image → <strong>Format options</strong> → enable <strong>Drop shadow</strong> (adjust transparency/angle/distance) for realism.</li>"
+            "</ol></section>",
+            tools_list(),
+            "<section class=\"seo\"><h2>Tips for better results in Slides</h2><ul>"
+            "<li>Use high‑resolution images; PNG preserves transparency best.</li>"
+            "<li>If the subject still has soft edges, run it through <a href=\"/enhance-image.html\">Enhance Image</a> before inserting.</li>"
+            "<li>To place the subject behind text or elements: <strong>Right‑click → Order → Send backward/forward</strong>.</li>"
+            "<li>Use <strong>Arrange → Align and center</strong> to position precisely.</li>"
+            "</ul></section>",
+        ]
     elif "free" in k:
         sections = [
             "<section class=\"seo\"><p>Here are free, watermark‑free ways to remove image backgrounds online.</p></section>",
