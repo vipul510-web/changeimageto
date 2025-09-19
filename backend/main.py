@@ -937,6 +937,35 @@ async def blog_index():
             {"slug": "remove-background-from-image-free", "title": "Remove Background From Image Free", "date": datetime.utcnow().isoformat()},
             {"slug": "remove-background-from-image", "title": "Remove Background From Image", "date": datetime.utcnow().isoformat()},
         ]
+
+    # Canonicalize and deduplicate similar/alias posts (e.g., remove-background-from-image-* → remove-background-from-image)
+    def canonicalize_slug(s: str) -> str:
+        base = s.strip().lower()
+        if base.startswith("remove-background-from-image"):
+            return "remove-background-from-image"
+        return base
+
+    dedup: dict[str, dict] = {}
+    for p in items:
+        slug = p.get("slug", "")
+        canon = canonicalize_slug(slug)
+        # Prefer an exact canonical entry if it exists; otherwise keep the most recent by date
+        if canon not in dedup:
+            dedup[canon] = {**p, "slug": canon, "title": p.get("title") or canon.replace('-', ' ').title()}
+        else:
+            # If existing is an alias but new one is truly canonical, replace
+            if slug == canon and dedup[canon].get("slug") != canon:
+                dedup[canon] = {**p, "slug": canon, "title": p.get("title") or canon.replace('-', ' ').title()}
+            else:
+                # Otherwise keep the one with the latest date
+                try:
+                    old_date = dedup[canon].get("date", "")
+                    new_date = p.get("date", "")
+                    if new_date and new_date > old_date:
+                        dedup[canon] = {**p, "slug": canon, "title": p.get("title") or canon.replace('-', ' ').title()}
+                except Exception:
+                    pass
+    items = list(dedup.values())
     # simple HTML list
     lis = "".join([
         f"<li><a href='/blog/{p['slug']}.html'>{p['title']}</a> <span class='date'>— {p.get('date','')[:10]}</span></li>"
@@ -993,6 +1022,18 @@ async def blog_index():
 
 @app.get("/blog/{slug}.html")
 async def blog_article(slug: str):
+    # Redirect aliases to canonical to avoid duplicate content
+    def canonicalize_slug(s: str) -> str:
+        base = s.strip().lower()
+        if base.startswith("remove-background-from-image"):
+            return "remove-background-from-image"
+        return base
+
+    canon = canonicalize_slug(slug)
+    if canon != slug:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=f"/blog/{canon}.html", status_code=301)
+
     # Always render fresh from current template/sections
     title = slug.replace('-', ' ').title()
     fresh_html = render_article_html(title, slug, build_sections(title))
