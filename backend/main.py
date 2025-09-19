@@ -1651,7 +1651,7 @@ def detect_image_quality(image_array):
         gray_std = float(np.std(gray_float))
         gray_mean = float(np.mean(gray_float))
 
-        # 1) Blur detection (normalized Laplacian + Tenengrad)
+        # 1) Blur detection (normalized Laplacian + Tenengrad + depth-of-field analysis)
         lap = cv2.Laplacian(gray_float, cv2.CV_64F)
         lap_var = float(lap.var())
         sobel_x = cv2.Sobel(gray_float, cv2.CV_64F, 1, 0, ksize=3)
@@ -1662,34 +1662,83 @@ def detect_image_quality(image_array):
         lap_norm = lap_var / texture_var
         ten_norm = ten_var / texture_var
         blur_index = 0.5 * lap_norm + 0.5 * ten_norm  # higher is sharper
-        # Map blur_index to 0-100 score; thresholds tuned for typical 8-bit images
-        # Using soft cap at ~1.2 as "very sharp"
-        blur_score = max(0.0, min(100.0, (blur_index / 1.2) * 100.0))
+        
+        # Depth-of-field detection: check if center is sharper than edges (intentional blur)
+        center_h, center_w = height // 2, width // 2
+        center_size = min(height, width) // 3  # Center region size
+        y1, y2 = center_h - center_size//2, center_h + center_size//2
+        x1, x2 = center_w - center_size//2, center_w + center_size//2
+        y1, y2 = max(0, y1), min(height, y2)
+        x1, x2 = max(0, x1), min(width, x2)
+        
+        # Calculate sharpness in center vs edges
+        center_lap = lap[y1:y2, x1:x2]
+        center_ten = tenengrad[y1:y2, x1:x2]
+        center_sharpness = float(np.mean(center_lap)) + float(np.mean(center_ten))
+        
+        # Edge regions (corners and borders)
+        edge_regions = []
+        if y1 > 0: edge_regions.append(lap[:y1, :])  # top
+        if y2 < height: edge_regions.append(lap[y2:, :])  # bottom
+        if x1 > 0: edge_regions.append(lap[:, :x1])  # left
+        if x2 < width: edge_regions.append(lap[:, x2:])  # right
+        
+        if edge_regions:
+            edge_sharpness = float(np.mean([np.mean(region) for region in edge_regions]))
+            # If center is significantly sharper than edges, likely intentional DOF blur
+            dof_ratio = center_sharpness / (edge_sharpness + 1e-6)
+            if dof_ratio > 2.0:  # Center is 2x sharper than edges
+                # Boost blur score for intentional depth-of-field
+                blur_index *= 1.3
+                blur_score = max(0.0, min(100.0, (blur_index / 1.2) * 100.0))
+            else:
+                blur_score = max(0.0, min(100.0, (blur_index / 1.2) * 100.0))
+        else:
+            blur_score = max(0.0, min(100.0, (blur_index / 1.2) * 100.0))
+        
         if blur_score < 40:  # More lenient threshold for decent images
             issues.append("blur")
         quality_metrics["blur_score"] = float(round(blur_score, 1))
 
-        # 2) Noise detection (high-pass residual + SNR) with edge-masked flats
+        # 2) Noise detection (resolution-aware + texture-aware filtering)
         hp_kernel = np.array([[-1, -1, -1],
                               [-1,  8, -1],
                               [-1, -1, -1]], dtype=np.float64)
         residual = cv2.filter2D(gray_float, -1, hp_kernel, borderType=cv2.BORDER_REFLECT)
+        
+        # Resolution-aware noise threshold (higher res = more detail = higher noise threshold)
+        resolution_factor = min(2.0, max(0.5, total_pixels / 500000.0))  # Scale based on resolution
+        
         # Build flat-region mask: low edges and low local variance
         edges_mask = cv2.Canny(gray.astype(np.uint8), 50, 150) == 0
         mean = cv2.blur(gray_float, (5, 5))
         sqmean = cv2.blur(gray_float * gray_float, (5, 5))
         local_var = np.maximum(0.0, sqmean - mean * mean)
-        flats_mask = (local_var < 50.0) & edges_mask  # 50 is a mild texture threshold
+        
+        # Adjust texture threshold based on resolution
+        texture_threshold = 50.0 * resolution_factor
+        flats_mask = (local_var < texture_threshold) & edges_mask
+        
         if np.any(flats_mask):
             residual_std = float(np.std(residual[flats_mask]))
         else:
             residual_std = float(np.std(residual))
+        
         snr = (gray_mean + 1e-6) / (gray_std + 1e-6)
-        # Convert to score: higher snr -> higher score; large residual -> lower score
-        snr_score = max(0.0, min(100.0, (snr / 10.0) * 100.0))  # snr ~10 is good
-        residual_penalty = max(0.0, min(100.0, (residual_std / 50.0) * 100.0))  # 50 is a rough high residual
+        
+        # Resolution-aware scoring
+        snr_score = max(0.0, min(100.0, (snr / 10.0) * 100.0))
+        # Adjust residual penalty based on resolution
+        residual_threshold = 50.0 * resolution_factor
+        residual_penalty = max(0.0, min(100.0, (residual_std / residual_threshold) * 100.0))
+        
+        # Combine scores with resolution awareness
         noise_score = max(0.0, min(100.0, 0.7 * snr_score + 0.3 * (100.0 - residual_penalty)))
-        if noise_score < 35:  # More lenient threshold for decent images
+        
+        # Adjust threshold based on resolution (high-res images get more lenient threshold)
+        noise_threshold = max(25.0, 35.0 - (resolution_factor - 1.0) * 10.0)
+        
+        if noise_score < noise_threshold:
             issues.append("noise")
         quality_metrics["noise_score"] = float(round(noise_score, 1))
 
@@ -1752,21 +1801,36 @@ def detect_image_quality(image_array):
         pixelation_score = max(0.0, min(100.0, 100.0 - pixelation_penalty))
         quality_metrics["pixelation_score"] = float(round(pixelation_score, 1))
 
-        # 4) Exposure & lighting (histogram balance + entropy + RMS contrast)
+        # 4) Exposure & lighting (histogram balance + white background detection)
         hist, _ = np.histogram(gray, bins=256, range=(0, 256))
         hist = hist.astype(np.float64)
         hist /= (hist.sum() + 1e-6)
         dark_pixels = float(np.sum(hist[:85]))
         mid_pixels = float(np.sum(hist[85:170]))
         bright_pixels = float(np.sum(hist[170:]))
+        
+        # White background detection (common in product photos)
+        very_bright_pixels = float(np.sum(hist[200:]))  # Very bright pixels (200-255)
+        white_background_detected = very_bright_pixels > 0.4  # 40%+ very bright pixels
+        
         # balance score
         exposure_score = 100.0
         if dark_pixels > 0.60:  # More lenient threshold for decent images
             issues.append("underexposed")
             exposure_score = max(0.0, 100.0 - (dark_pixels - 0.50) * 200.0)
         elif bright_pixels > 0.60:  # More lenient threshold for decent images
-            issues.append("overexposed")
-            exposure_score = max(0.0, 100.0 - (bright_pixels - 0.50) * 200.0)
+            # Special handling for white background product photos
+            if white_background_detected:
+                # For white backgrounds, only flag if extremely overexposed
+                if bright_pixels > 0.80:  # 80%+ bright pixels
+                    issues.append("overexposed")
+                    exposure_score = max(0.0, 100.0 - (bright_pixels - 0.70) * 150.0)
+                else:
+                    # White background is acceptable, don't penalize heavily
+                    exposure_score = max(80.0, 100.0 - (bright_pixels - 0.60) * 50.0)
+            else:
+                issues.append("overexposed")
+                exposure_score = max(0.0, 100.0 - (bright_pixels - 0.50) * 200.0)
         elif mid_pixels < 0.25:
             exposure_score = max(0.0, mid_pixels * 400.0)
         # entropy (0..1)
