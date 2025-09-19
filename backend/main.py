@@ -219,11 +219,11 @@ def render_article_html(title: str, slug: str, body_sections: list) -> str:
 <link rel=\"stylesheet\" href=\"https://www.changeimageto.com/styles.css?v=20250916-3\"/>
 <style>
   /* Force readable white text on blog articles */
-  body, .main, main.container.main, .seo, .seo p, .seo li, .seo h2, .seo h3, .seo details, .seo summary { color: #ffffff; }
-  .seo a { color: #9ccfff; }
-  .seo a:hover { text-decoration: underline; }
-  .seo-links a { color: #ffffff; }
-  .header h1 { color: #ffffff; }
+  body, .main, main.container.main, .seo, .seo p, .seo li, .seo h2, .seo h3, .seo details, .seo summary {{ color: #ffffff; }}
+  .seo a {{ color: #9ccfff; }}
+  .seo a:hover {{ text-decoration: underline; }}
+  .seo-links a {{ color: #ffffff; }}
+  .header h1 {{ color: #ffffff; }}
 </style>
 </head><body>
 <header class=\"container header\"><a href=\"https://www.changeimageto.com/\" class=\"logo-link\"><img src=\"https://www.changeimageto.com/logo.png?v=20250916-2\" alt=\"ChangeImageTo\" class=\"logo-img\"/></a><div style=\"display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%\"><h1 style=\"margin:0\">{title}</h1><nav class=\"top-nav\"><a href=\"https://www.changeimageto.com/blog\" aria-label=\"Read our blog\">Blog</a></nav></div></header>
