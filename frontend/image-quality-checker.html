@@ -360,12 +360,23 @@
             const issues = imageData.quality_metrics.issues || [];
             
             let repairLinksHtml = '';
-            if (issues.length > 0) {
-              repairLinksHtml = '<div class="repair-links"><h4>Fix Issues:</h4><ul>';
-              imageData.repair_links.forEach(link => {
-                repairLinksHtml += `<li><a href="${link.url}" target="_blank">${link.description}</a></li>`;
+            if (issues.length > 0 && imageData.category !== 'good') {
+              const uniqueLinks = [];
+              const seen = new Set();
+              (imageData.repair_links || []).forEach(link => {
+                const key = `${link.url}|${link.description}`;
+                if (!seen.has(key)) {
+                  seen.add(key);
+                  uniqueLinks.push(link);
+                }
               });
-              repairLinksHtml += '</ul></div>';
+              if (uniqueLinks.length > 0) {
+                repairLinksHtml = '<div class="repair-links"><h4>Fix Issues:</h4><ul>';
+                uniqueLinks.forEach(link => {
+                  repairLinksHtml += `<li><a href="${link.url}" target="_blank">${link.description}</a></li>`;
+                });
+                repairLinksHtml += '</ul></div>';
+              }
             }
 
             imageCard.innerHTML = `
