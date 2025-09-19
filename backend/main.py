@@ -1665,7 +1665,7 @@ def detect_image_quality(image_array):
         # Map blur_index to 0-100 score; thresholds tuned for typical 8-bit images
         # Using soft cap at ~1.2 as "very sharp"
         blur_score = max(0.0, min(100.0, (blur_index / 1.2) * 100.0))
-        if blur_score < 60:
+        if blur_score < 40:  # More lenient threshold for decent images
             issues.append("blur")
         quality_metrics["blur_score"] = float(round(blur_score, 1))
 
@@ -1689,7 +1689,7 @@ def detect_image_quality(image_array):
         snr_score = max(0.0, min(100.0, (snr / 10.0) * 100.0))  # snr ~10 is good
         residual_penalty = max(0.0, min(100.0, (residual_std / 50.0) * 100.0))  # 50 is a rough high residual
         noise_score = max(0.0, min(100.0, 0.7 * snr_score + 0.3 * (100.0 - residual_penalty)))
-        if noise_score < 60:
+        if noise_score < 35:  # More lenient threshold for decent images
             issues.append("noise")
         quality_metrics["noise_score"] = float(round(noise_score, 1))
 
@@ -1761,12 +1761,12 @@ def detect_image_quality(image_array):
         bright_pixels = float(np.sum(hist[170:]))
         # balance score
         exposure_score = 100.0
-        if dark_pixels > 0.45:
+        if dark_pixels > 0.60:  # More lenient threshold for decent images
             issues.append("underexposed")
-            exposure_score = max(0.0, 100.0 - (dark_pixels - 0.30) * 250.0)
-        elif bright_pixels > 0.45:
+            exposure_score = max(0.0, 100.0 - (dark_pixels - 0.50) * 200.0)
+        elif bright_pixels > 0.60:  # More lenient threshold for decent images
             issues.append("overexposed")
-            exposure_score = max(0.0, 100.0 - (bright_pixels - 0.30) * 250.0)
+            exposure_score = max(0.0, 100.0 - (bright_pixels - 0.50) * 200.0)
         elif mid_pixels < 0.25:
             exposure_score = max(0.0, mid_pixels * 400.0)
         # entropy (0..1)
@@ -1779,9 +1779,9 @@ def detect_image_quality(image_array):
         zeros_frac = float(np.mean(gray == 0))
         fulls_frac = float(np.mean(gray == 255))
         clip_frac = zeros_frac + fulls_frac
-        if clip_frac > 0.08:
+        if clip_frac > 0.15:  # More lenient threshold for decent images
             issues.append("clipped")
-            exposure_score = min(exposure_score, max(0.0, 100.0 - (clip_frac - 0.05) * 500.0))
+            exposure_score = min(exposure_score, max(0.0, 100.0 - (clip_frac - 0.10) * 300.0))
         exposure_combined = 0.5 * exposure_score + 0.25 * entropy_score + 0.25 * contrast_score
         quality_metrics["exposure_score"] = float(round(exposure_combined, 1))
 
@@ -1827,7 +1827,7 @@ def detect_image_quality(image_array):
         if entropy_score < 20.0:
             compression_score = 100.0
             issues = [iss for iss in issues if iss != "compression_artifacts"]
-        elif compression_score < 70.0:
+        elif compression_score < 50.0:  # More lenient threshold for decent images
             issues.append("compression_artifacts")
         quality_metrics["compression_score"] = float(round(compression_score, 1))
 
@@ -1849,11 +1849,11 @@ def detect_image_quality(image_array):
 
         # Overall scoring (rebalanced for new metrics)
         weights = {
-            'blur_score': 0.28,
-            'resolution_score': 0.22,
-            'exposure_score': 0.20,
+            'blur_score': 0.25,
+            'resolution_score': 0.25,
+            'exposure_score': 0.15,  # Reduced weight since it's often subjective
             'noise_score': 0.15,
-            'compression_score': 0.10,
+            'compression_score': 0.15,  # Increased weight
             'pixelation_score': 0.05,
         }
         overall_score = (
