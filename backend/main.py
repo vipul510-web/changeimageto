@@ -1319,82 +1319,93 @@ async def bulk_resize(
     processed_images = []
     errors = []
     
-    try:
-        for i, file in enumerate(files):
-            try:
-                # Validate file type
-                if not file.content_type or not file.content_type.startswith("image/"):
-                    errors.append(f"File {i+1} ({file.filename}): Not an image file")
-                    continue
-                
-                # Read and process image
-                contents = await file.read()
-                if len(contents) > 10 * 1024 * 1024:  # 10MB limit per file
-                    errors.append(f"File {i+1} ({file.filename}): File too large (max 10MB)")
-                    continue
-                
-                image = Image.open(io.BytesIO(contents))
-                
-                # Convert to RGB if necessary
-                if image.mode in ('RGBA', 'LA', 'P'):
-                    # Create white background for transparent images
-                    background = Image.new('RGB', image.size, (255, 255, 255))
-                    if image.mode == 'P':
-                        image = image.convert('RGBA')
-                    background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
-                    image = background
-                elif image.mode != 'RGB':
-                    image = image.convert('RGB')
-                
-                # Resize image to exact dimensions
-                original_width, original_height = image.size
-                target_aspect = width / height
-                original_aspect = original_width / original_height
-                
-                if maintain_aspect:
-                    # Fit within target dimensions while maintaining aspect ratio
-                    if original_aspect > target_aspect:
-                        # Image is wider - fit to width
-                        new_width = width
-                        new_height = int(width / original_aspect)
-                    else:
-                        # Image is taller - fit to height
-                        new_height = height
-                        new_width = int(height * original_aspect)
-                    
-                    # Resize maintaining aspect ratio
-                    resized = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                    
-                    # Create canvas with exact target dimensions and center the image
-                    canvas = Image.new('RGB', (width, height), (255, 255, 255))
-                    offset_x = (width - new_width) // 2
-                    offset_y = (height - new_height) // 2
-                    canvas.paste(resized, (offset_x, offset_y))
-                    resized = canvas
+    async def process_single_resize(i, file):
+        """Process a single image resize and return result or error."""
+        try:
+            # Validate file type
+            if not file.content_type or not file.content_type.startswith("image/"):
+                return f"File {i+1} ({file.filename}): Not an image file"
+            
+            # Read and process image
+            contents = await file.read()
+            if len(contents) > 10 * 1024 * 1024:  # 10MB limit per file
+                return f"File {i+1} ({file.filename}): File too large (max 10MB)"
+            
+            image = Image.open(io.BytesIO(contents))
+            
+            # Convert to RGB if necessary
+            if image.mode in ('RGBA', 'LA', 'P'):
+                # Create white background for transparent images
+                background = Image.new('RGB', image.size, (255, 255, 255))
+                if image.mode == 'P':
+                    image = image.convert('RGBA')
+                background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+                image = background
+            elif image.mode != 'RGB':
+                image = image.convert('RGB')
+            
+            # Resize image to exact dimensions
+            original_width, original_height = image.size
+            target_aspect = width / height
+            original_aspect = original_width / original_height
+            
+            if maintain_aspect:
+                # Fit within target dimensions while maintaining aspect ratio
+                if original_aspect > target_aspect:
+                    # Image is wider - fit to width
+                    new_width = width
+                    new_height = int(width / original_aspect)
                 else:
-                    # Crop and resize to exact dimensions (may distort)
-                    resized = image.resize((width, height), Image.Resampling.LANCZOS)
+                    # Image is taller - fit to height
+                    new_height = height
+                    new_width = int(height * original_aspect)
                 
-                # Save to bytes
-                output_buffer = io.BytesIO()
-                resized.save(output_buffer, format='JPEG', quality=quality, optimize=True)
-                output_data = output_buffer.getvalue()
+                # Resize maintaining aspect ratio
+                resized = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
                 
-                # Store filename and data
-                filename = file.filename or f"image_{i+1}.jpg"
-                if not filename.lower().endswith(('.jpg', '.jpeg', '.png')):
-                    filename += '.jpg'
-                
-                processed_images.append({
-                    'filename': filename,
-                    'data': output_data,
-                    'original_size': f"{image.width}x{image.height}",
-                    'new_size': f"{new_width}x{new_height}"
-                })
-                
-            except Exception as e:
-                errors.append(f"File {i+1} ({file.filename}): {str(e)}")
-                continue
+                # Create canvas with exact target dimensions and center the image
+                canvas = Image.new('RGB', (width, height), (255, 255, 255))
+                offset_x = (width - new_width) // 2
+                offset_y = (height - new_height) // 2
+                canvas.paste(resized, (offset_x, offset_y))
+                resized = canvas
+            else:
+                # Crop and resize to exact dimensions (may distort)
+                resized = image.resize((width, height), Image.Resampling.LANCZOS)
+            
+            # Save to bytes
+            output_buffer = io.BytesIO()
+            resized.save(output_buffer, format='JPEG', quality=quality, optimize=True)
+            output_data = output_buffer.getvalue()
+            
+            # Store filename and data
+            filename = file.filename or f"image_{i+1}.jpg"
+            if not filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+                filename += '.jpg'
+            
+            return {
+                'filename': filename,
+                'data': output_data,
+                'original_size': f"{image.width}x{image.height}",
+                'new_size': f"{new_width}x{new_height}"
+            }
+            
+        except Exception as e:
+            return f"File {i+1} ({file.filename}): {str(e)}"
+    
+    try:
+        # Process images in parallel with bounded concurrency
+        tasks = [process_single_resize(i, file) for i, file in enumerate(files)]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Separate successful results from errors
+        for result in results:
+            if isinstance(result, str):  # Error message
+                errors.append(result)
+            elif isinstance(result, dict):  # Successful resize
+                processed_images.append(result)
+            else:  # Exception
+                errors.append(f"Unexpected error: {str(result)}")
         
         if not processed_images:
             raise HTTPException(status_code=400, detail="No images could be processed. " + "; ".join(errors))
@@ -1464,116 +1475,127 @@ async def bulk_convert_format(
     processed_images = []
     errors = []
     
-    try:
-        for i, file in enumerate(files):
-            try:
-                # Validate file type
-                if not file.content_type or not file.content_type.startswith("image/"):
-                    errors.append(f"File {i+1} ({file.filename}): Not an image file")
-                    continue
-                
-                # Read and process image
-                contents = await file.read()
-                if len(contents) > 10 * 1024 * 1024:  # 10MB limit per file
-                    errors.append(f"File {i+1} ({file.filename}): File too large (max 10MB)")
-                    continue
-                
-                image = Image.open(io.BytesIO(contents))
-                
-                # Decide mode based on transparency setting and target
-                supports_alpha = target_format in {"png", "webp", "tiff", "ico", "gif"}
-                keep_alpha = bool(transparent and supports_alpha)
-                
-                # Convert image based on format requirements
+    async def process_single_convert(i, file):
+        """Process a single image format conversion and return result or error."""
+        try:
+            # Validate file type
+            if not file.content_type or not file.content_type.startswith("image/"):
+                return f"File {i+1} ({file.filename}): Not an image file"
+            
+            # Read and process image
+            contents = await file.read()
+            if len(contents) > 10 * 1024 * 1024:  # 10MB limit per file
+                return f"File {i+1} ({file.filename}): File too large (max 10MB)"
+            
+            image = Image.open(io.BytesIO(contents))
+            
+            # Decide mode based on transparency setting and target
+            supports_alpha = target_format in {"png", "webp", "tiff", "ico", "gif"}
+            keep_alpha = bool(transparent and supports_alpha)
+            
+            # Convert image based on format requirements
+            if keep_alpha:
+                converted = image.convert("RGBA")
+                # Auto-trim fully transparent padding
+                try:
+                    alpha = converted.split()[-1]
+                    bbox = alpha.getbbox()
+                    if bbox and bbox != (0, 0, converted.width, converted.height):
+                        converted = converted.crop(bbox)
+                except Exception:
+                    pass
+            else:
+                # Flatten onto opaque white background for formats w/o alpha
+                if image.mode in ("RGBA", "LA"):
+                    background = Image.new("RGB", image.size, (255, 255, 255))
+                    background.paste(image, mask=image.split()[-1])
+                    converted = background
+                else:
+                    converted = image.convert("RGB")
+            
+            # Prepare save parameters
+            params = {}
+            if target_format == "jpg":
+                params.update({"quality": max(1, min(int(quality), 100)), "optimize": True})
+                save_format = "JPEG"
+            elif target_format == "webp":
+                params.update({"quality": max(1, min(int(quality), 100))})
+                save_format = "WEBP"
+            elif target_format == "bmp":
+                save_format = "BMP"
+            elif target_format == "gif":
                 if keep_alpha:
-                    converted = image.convert("RGBA")
-                    # Auto-trim fully transparent padding
-                    try:
-                        alpha = converted.split()[-1]
-                        bbox = alpha.getbbox()
-                        if bbox and bbox != (0, 0, converted.width, converted.height):
-                            converted = converted.crop(bbox)
-                    except Exception:
-                        pass
+                    converted = converted.convert("RGBA")
+                    palette_image = converted.convert("P", palette=Image.ADAPTIVE, colors=255)
+                    alpha = converted.split()[-1]
+                    mask = Image.eval(alpha, lambda a: 255 if a <= 1 else 0)
+                    palette_image.info['transparency'] = 255
+                    palette_image.paste(255, None, mask)
+                    converted = palette_image
                 else:
-                    # Flatten onto opaque white background for formats w/o alpha
-                    if image.mode in ("RGBA", "LA"):
-                        background = Image.new("RGB", image.size, (255, 255, 255))
-                        background.paste(image, mask=image.split()[-1])
-                        converted = background
-                    else:
-                        converted = image.convert("RGB")
-                
-                # Prepare save parameters
-                params = {}
-                if target_format == "jpg":
-                    params.update({"quality": max(1, min(int(quality), 100)), "optimize": True})
-                    save_format = "JPEG"
-                elif target_format == "webp":
-                    params.update({"quality": max(1, min(int(quality), 100))})
-                    save_format = "WEBP"
-                elif target_format == "bmp":
-                    save_format = "BMP"
-                elif target_format == "gif":
-                    if keep_alpha:
-                        converted = converted.convert("RGBA")
-                        palette_image = converted.convert("P", palette=Image.ADAPTIVE, colors=255)
-                        alpha = converted.split()[-1]
-                        mask = Image.eval(alpha, lambda a: 255 if a <= 1 else 0)
-                        palette_image.info['transparency'] = 255
-                        palette_image.paste(255, None, mask)
-                        converted = palette_image
-                    else:
-                        converted = converted.convert("P", palette=Image.ADAPTIVE, colors=256)
-                    params.update({"optimize": True, "save_all": False})
-                    save_format = "GIF"
-                elif target_format == "tiff":
-                    params.update({"compression": "tiff_lzw"})
-                    save_format = "TIFF"
-                elif target_format == "ico":
-                    # ICO must be 256x256
-                    size = 256
-                    img_rgba = converted.convert("RGBA")
-                    min_side = min(img_rgba.width, img_rgba.height)
-                    scale = size / float(min_side)
-                    resized = img_rgba.resize((max(1, int(round(img_rgba.width * scale))),
-                                               max(1, int(round(img_rgba.height * scale)))), Image.LANCZOS)
-                    left = (resized.width - size) // 2
-                    top = (resized.height - size) // 2
-                    converted = resized.crop((left, top, left + size, top + size))
-                    save_format = "ICO"
-                    params.update({"sizes": [(256, 256)]})
-                elif target_format in {"ppm", "pgm"}:
-                    if target_format == "ppm":
-                        converted = converted.convert("RGB")
-                    else:
-                        converted = converted.convert("L")
-                    save_format = "PPM"
-                    params.update({"bits": 8})
+                    converted = converted.convert("P", palette=Image.ADAPTIVE, colors=256)
+                params.update({"optimize": True, "save_all": False})
+                save_format = "GIF"
+            elif target_format == "tiff":
+                params.update({"compression": "tiff_lzw"})
+                save_format = "TIFF"
+            elif target_format == "ico":
+                # ICO must be 256x256
+                size = 256
+                img_rgba = converted.convert("RGBA")
+                min_side = min(img_rgba.width, img_rgba.height)
+                scale = size / float(min_side)
+                resized = img_rgba.resize((max(1, int(round(img_rgba.width * scale))),
+                                           max(1, int(round(img_rgba.height * scale)))), Image.LANCZOS)
+                left = (resized.width - size) // 2
+                top = (resized.height - size) // 2
+                converted = resized.crop((left, top, left + size, top + size))
+                save_format = "ICO"
+                params.update({"sizes": [(256, 256)]})
+            elif target_format in {"ppm", "pgm"}:
+                if target_format == "ppm":
+                    converted = converted.convert("RGB")
                 else:
-                    save_format = "PNG"
-                
-                # Save to bytes
-                output_buffer = io.BytesIO()
-                converted.save(output_buffer, format=save_format, **params)
-                output_data = output_buffer.getvalue()
-                
-                # Store filename and data
-                filename = file.filename or f"image_{i+1}.{target_format}"
-                if not filename.lower().endswith(f'.{target_format}'):
-                    name_without_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
-                    filename = f"{name_without_ext}.{target_format}"
-                
-                processed_images.append({
-                    'filename': filename,
-                    'data': output_data,
-                    'original_size': f"{image.width}x{image.height}",
-                    'new_format': target_format
-                })
-                
-            except Exception as e:
-                errors.append(f"File {i+1} ({file.filename}): {str(e)}")
-                continue
+                    converted = converted.convert("L")
+                save_format = "PPM"
+                params.update({"bits": 8})
+            else:
+                save_format = "PNG"
+            
+            # Save to bytes
+            output_buffer = io.BytesIO()
+            converted.save(output_buffer, format=save_format, **params)
+            output_data = output_buffer.getvalue()
+            
+            # Store filename and data
+            filename = file.filename or f"image_{i+1}.{target_format}"
+            if not filename.lower().endswith(f'.{target_format}'):
+                name_without_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
+                filename = f"{name_without_ext}.{target_format}"
+            
+            return {
+                'filename': filename,
+                'data': output_data,
+                'original_size': f"{image.width}x{image.height}",
+                'new_format': target_format
+            }
+            
+        except Exception as e:
+            return f"File {i+1} ({file.filename}): {str(e)}"
+    
+    try:
+        # Process images in parallel with bounded concurrency
+        tasks = [process_single_convert(i, file) for i, file in enumerate(files)]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Separate successful results from errors
+        for result in results:
+            if isinstance(result, str):  # Error message
+                errors.append(result)
+            elif isinstance(result, dict):  # Successful conversion
+                processed_images.append(result)
+            else:  # Exception
+                errors.append(f"Unexpected error: {str(result)}")
         
         if not processed_images:
             raise HTTPException(status_code=400, detail="No images could be processed. " + "; ".join(errors))
@@ -1622,109 +1644,227 @@ def detect_image_quality(image_array):
         issues = []
         overall_score = 100
         
-        # 1. Blur Detection (Laplacian variance)
-        laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-        if laplacian_var < 100:
-            issues.append("blur")
-            quality_metrics["blur_score"] = max(0, (laplacian_var / 100) * 100)
-        else:
-            quality_metrics["blur_score"] = 100
-        
-        # 2. Noise Detection (Standard deviation of gradient)
-        grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
-        grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-        gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
-        noise_level = np.std(gradient_magnitude)
-        
-        if noise_level > 50:
-            issues.append("noise")
-            quality_metrics["noise_score"] = max(0, 100 - (noise_level - 50))
-        else:
-            quality_metrics["noise_score"] = 100
-        
-        # 3. Pixelation Detection (Edge density)
-        edges = cv2.Canny(gray, 50, 150)
-        edge_density = np.sum(edges > 0) / (gray.shape[0] * gray.shape[1])
-        
-        if edge_density < 0.05:
-            issues.append("pixelation")
-            quality_metrics["pixelation_score"] = max(0, edge_density * 2000)
-        else:
-            quality_metrics["pixelation_score"] = 100
-        
-        # 4. Exposure Analysis - Improved algorithm
-        hist, _ = np.histogram(gray, bins=256, range=(0, 256))
-        hist = hist / hist.sum()
-        
-        # Calculate exposure score based on histogram distribution
-        # Good exposure should have balanced distribution
-        dark_pixels = np.sum(hist[:85])      # 0-85 (dark)
-        mid_pixels = np.sum(hist[85:170])    # 85-170 (mid-tone)
-        bright_pixels = np.sum(hist[170:])   # 170-255 (bright)
-        
-        # Ideal distribution: ~25% dark, ~50% mid, ~25% bright
-        exposure_score = 100
-        if dark_pixels > 0.4:  # Too dark
-            issues.append("underexposed")
-            exposure_score = max(0, 100 - (dark_pixels - 0.25) * 200)
-        elif bright_pixels > 0.4:  # Too bright
-            issues.append("overexposed")
-            exposure_score = max(0, 100 - (bright_pixels - 0.25) * 200)
-        elif mid_pixels < 0.3:  # Not enough mid-tones
-            exposure_score = max(0, mid_pixels * 333)
-        
-        quality_metrics["exposure_score"] = exposure_score
-        
-        # 5. Resolution Assessment
+        # Common stats
         height, width = gray.shape
-        total_pixels = height * width
-        
-        if total_pixels < 100000:  # Less than ~316x316
-            issues.append("low_resolution")
-            quality_metrics["resolution_score"] = max(0, (total_pixels / 100000) * 100)
-        elif total_pixels < 400000:  # Less than ~632x632
-            quality_metrics["resolution_score"] = 80
+        total_pixels = float(height * width)
+        gray_float = gray.astype(np.float64)
+        gray_std = float(np.std(gray_float))
+        gray_mean = float(np.mean(gray_float))
+
+        # 1) Blur detection (normalized Laplacian + Tenengrad)
+        lap = cv2.Laplacian(gray_float, cv2.CV_64F)
+        lap_var = float(lap.var())
+        sobel_x = cv2.Sobel(gray_float, cv2.CV_64F, 1, 0, ksize=3)
+        sobel_y = cv2.Sobel(gray_float, cv2.CV_64F, 0, 1, ksize=3)
+        tenengrad = np.hypot(sobel_x, sobel_y)
+        ten_var = float(tenengrad.var())
+        texture_var = float(np.var(gray_float)) + 1e-6
+        lap_norm = lap_var / texture_var
+        ten_norm = ten_var / texture_var
+        blur_index = 0.5 * lap_norm + 0.5 * ten_norm  # higher is sharper
+        # Map blur_index to 0-100 score; thresholds tuned for typical 8-bit images
+        # Using soft cap at ~1.2 as "very sharp"
+        blur_score = max(0.0, min(100.0, (blur_index / 1.2) * 100.0))
+        if blur_score < 60:
+            issues.append("blur")
+        quality_metrics["blur_score"] = float(round(blur_score, 1))
+
+        # 2) Noise detection (high-pass residual + SNR) with edge-masked flats
+        hp_kernel = np.array([[-1, -1, -1],
+                              [-1,  8, -1],
+                              [-1, -1, -1]], dtype=np.float64)
+        residual = cv2.filter2D(gray_float, -1, hp_kernel, borderType=cv2.BORDER_REFLECT)
+        # Build flat-region mask: low edges and low local variance
+        edges_mask = cv2.Canny(gray.astype(np.uint8), 50, 150) == 0
+        mean = cv2.blur(gray_float, (5, 5))
+        sqmean = cv2.blur(gray_float * gray_float, (5, 5))
+        local_var = np.maximum(0.0, sqmean - mean * mean)
+        flats_mask = (local_var < 50.0) & edges_mask  # 50 is a mild texture threshold
+        if np.any(flats_mask):
+            residual_std = float(np.std(residual[flats_mask]))
         else:
-            quality_metrics["resolution_score"] = 100
-        
-        # 6. Compression Artifacts (JPEG block detection)
-        if len(image_array.shape) == 3:
-            # Check for block artifacts in JPEG
-            block_size = 8
-            artifacts_detected = 0
-            
-            for i in range(0, gray.shape[0] - block_size, block_size):
-                for j in range(0, gray.shape[1] - block_size, block_size):
-                    block = gray[i:i+block_size, j:j+block_size]
-                    if np.std(block) < 5:  # Very uniform blocks indicate compression
-                        artifacts_detected += 1
-            
-            artifact_ratio = artifacts_detected / ((gray.shape[0] // block_size) * (gray.shape[1] // block_size))
-            if artifact_ratio > 0.1:
-                issues.append("compression_artifacts")
-                quality_metrics["compression_score"] = max(0, 100 - artifact_ratio * 500)
-            else:
-                quality_metrics["compression_score"] = 100
-        
-        # Calculate overall quality score as weighted average
-        # Give more weight to blur and resolution, less to minor issues
+            residual_std = float(np.std(residual))
+        snr = (gray_mean + 1e-6) / (gray_std + 1e-6)
+        # Convert to score: higher snr -> higher score; large residual -> lower score
+        snr_score = max(0.0, min(100.0, (snr / 10.0) * 100.0))  # snr ~10 is good
+        residual_penalty = max(0.0, min(100.0, (residual_std / 50.0) * 100.0))  # 50 is a rough high residual
+        noise_score = max(0.0, min(100.0, 0.7 * snr_score + 0.3 * (100.0 - residual_penalty)))
+        if noise_score < 60:
+            issues.append("noise")
+        quality_metrics["noise_score"] = float(round(noise_score, 1))
+
+        # 3) Pixelation detection (FFT grid peaks + edge density + SSIM smoothness check)
+        # Downsample to speed up FFT while keeping grid artifacts
+        max_side = 512
+        scale = max(1.0, max(height, width) / max_side)
+        if scale > 1.0:
+            small = cv2.resize(gray_float, (int(round(width / scale)), int(round(height / scale))), interpolation=cv2.INTER_AREA)
+        else:
+            small = gray_float
+        # FFT magnitude
+        f = np.fft.fftshift(np.fft.fft2(small))
+        mag = np.abs(f)
+        # Ignore DC and very low frequencies
+        h, w = small.shape
+        cy, cx = h // 2, w // 2
+        low_radius = max(3, int(0.02 * min(h, w)))
+        yy, xx = np.ogrid[:h, :w]
+        mask_low = (yy - cy) ** 2 + (xx - cx) ** 2 <= low_radius ** 2
+        mag_filt = mag.copy()
+        mag_filt[mask_low] = 0
+        # Estimate grid energy along 8-pixel periodicity harmonics
+        # Translate pixel-domain 8px blocks to frequency-domain ~w/8 and h/8 bands
+        bands = []
+        for k in (1, 2, 3):
+            vx = int(round((w / 8.0) * k))
+            vy = int(round((h / 8.0) * k))
+            bands.append((vx, 0))
+            bands.append((0, vy))
+        band_radius = max(1, int(0.01 * min(h, w)))
+        grid_energy = 0.0
+        for bx, by in bands:
+            if bx != 0:
+                grid_energy += float(mag_filt[:, max(0, cx - bx - band_radius):min(w, cx - bx + band_radius)].sum())
+                grid_energy += float(mag_filt[:, max(0, cx + bx - band_radius):min(w, cx + bx + band_radius)].sum())
+            if by != 0:
+                grid_energy += float(mag_filt[max(0, cy - by - band_radius):min(h, cy - by + band_radius), :].sum())
+                grid_energy += float(mag_filt[max(0, cy + by - band_radius):min(h, cy + by + band_radius), :].sum())
+        total_hf_energy = float(mag_filt.sum()) + 1e-6
+        grid_ratio = grid_energy / total_hf_energy
+        # Edge density
+        edges = cv2.Canny(gray.astype(np.uint8), 50, 150)
+        edge_density = float(np.sum(edges > 0) / total_pixels)
+        # Pixelation score: penalize when grid_ratio high and edges sparse
+        pixelation_penalty = max(0.0, min(100.0, (grid_ratio / 0.3) * 100.0))  # 0.3 ~ strong grid
+        # SSIM smoothness check via 2x bicubic upsample then downsample
+        try:
+            up2 = cv2.resize(gray.astype(np.uint8), (width * 2, height * 2), interpolation=cv2.INTER_CUBIC)
+            down2 = cv2.resize(up2, (width, height), interpolation=cv2.INTER_AREA)
+            ssim_val = float(ssim(gray.astype(np.uint8), down2, data_range=255))
+        except Exception:
+            ssim_val = 1.0
+        ssim_change = 1.0 - ssim_val
+        if edge_density < 0.06 and grid_ratio > 0.12 and ssim_change > 0.15:
+            issues.append("pixelation")
+        else:
+            # dampen penalty if SSIM does not indicate strong blockiness reduction
+            pixelation_penalty *= 0.5
+        pixelation_score = max(0.0, min(100.0, 100.0 - pixelation_penalty))
+        quality_metrics["pixelation_score"] = float(round(pixelation_score, 1))
+
+        # 4) Exposure & lighting (histogram balance + entropy + RMS contrast)
+        hist, _ = np.histogram(gray, bins=256, range=(0, 256))
+        hist = hist.astype(np.float64)
+        hist /= (hist.sum() + 1e-6)
+        dark_pixels = float(np.sum(hist[:85]))
+        mid_pixels = float(np.sum(hist[85:170]))
+        bright_pixels = float(np.sum(hist[170:]))
+        # balance score
+        exposure_score = 100.0
+        if dark_pixels > 0.45:
+            issues.append("underexposed")
+            exposure_score = max(0.0, 100.0 - (dark_pixels - 0.30) * 250.0)
+        elif bright_pixels > 0.45:
+            issues.append("overexposed")
+            exposure_score = max(0.0, 100.0 - (bright_pixels - 0.30) * 250.0)
+        elif mid_pixels < 0.25:
+            exposure_score = max(0.0, mid_pixels * 400.0)
+        # entropy (0..1)
+        nz = hist[hist > 0]
+        entropy = float(-(nz * np.log2(nz)).sum() / np.log2(256))
+        entropy_score = max(0.0, min(100.0, entropy * 100.0))
+        # RMS contrast
+        contrast_score = max(0.0, min(100.0, (gray_std / 255.0) * 100.0))
+        # Clipping measure at 0/255
+        zeros_frac = float(np.mean(gray == 0))
+        fulls_frac = float(np.mean(gray == 255))
+        clip_frac = zeros_frac + fulls_frac
+        if clip_frac > 0.08:
+            issues.append("clipped")
+            exposure_score = min(exposure_score, max(0.0, 100.0 - (clip_frac - 0.05) * 500.0))
+        exposure_combined = 0.5 * exposure_score + 0.25 * entropy_score + 0.25 * contrast_score
+        quality_metrics["exposure_score"] = float(round(exposure_combined, 1))
+
+        # 5) Resolution & usability (with aspect ratio factor)
+        if total_pixels < 100000:  # ~316x316
+            issues.append("low_resolution")
+            resolution_score = max(0.0, (total_pixels / 100000.0) * 100.0)
+        elif total_pixels < 400000:  # ~632x632
+            resolution_score = 80.0
+        else:
+            resolution_score = 100.0
+        aspect_ratio = max(width / float(height), height / float(width))
+        if aspect_ratio > 3.0:
+            # penalize extreme panoramas
+            penalty = min(30.0, (aspect_ratio - 3.0) * 10.0)
+            resolution_score = max(0.0, resolution_score - penalty)
+        # Couple resolution with blur (high res but soft images shouldn't get full credit)
+        if resolution_score > 80.0 and quality_metrics["blur_score"] < 50.0:
+            res_cap = quality_metrics["blur_score"] + 20.0
+            resolution_score = min(resolution_score, res_cap)
+        quality_metrics["resolution_score"] = float(round(resolution_score, 1))
+
+        # 6) Compression artifacts (blockiness across 8x8 borders)
+        # Compute border differences at multiples of 8
+        block = 8
+        # vertical borders energy
+        vb = 0.0
+        for x in range(block, width, block):
+            vb += float(np.sum(np.abs(gray_float[:, x-1] - gray_float[:, x % width])))
+        # horizontal borders energy
+        hb = 0.0
+        for y in range(block, height, block):
+            hb += float(np.sum(np.abs(gray_float[y-1, :] - gray_float[y % height, :])))
+        border_energy = vb + hb
+        # baseline intra-block energy (differences away from borders)
+        # use shifted differences to approximate
+        intra_h = float(np.sum(np.abs(gray_float[:, 1:] - gray_float[:, :-1]))) + 1e-6
+        intra_v = float(np.sum(np.abs(gray_float[1:, :] - gray_float[:-1, :]))) + 1e-6
+        intra_total = intra_h + intra_v
+        blockiness_ratio = float(border_energy) / float(intra_total)
+        compression_score = max(0.0, min(100.0, 100.0 - (blockiness_ratio / 0.12) * 100.0))  # 0.12 is noticeable blockiness
+        # Texture-aware damping for flat logos/solids
+        if entropy_score < 20.0:
+            compression_score = 100.0
+            issues = [iss for iss in issues if iss != "compression_artifacts"]
+        elif compression_score < 70.0:
+            issues.append("compression_artifacts")
+        quality_metrics["compression_score"] = float(round(compression_score, 1))
+
+        # Tiny image adjustments: soften harsh penalties for very small images
+        min_side = min(height, width)
+        if min_side < 128:
+            # Relax blur/exposure for icons/thumbnails where metrics are unreliable
+            quality_metrics["blur_score"] = float(max(quality_metrics["blur_score"], 40.0))
+            quality_metrics["exposure_score"] = float(max(quality_metrics["exposure_score"], 40.0))
+            # Do not flag exposure issues for tiny images
+            issues = [iss for iss in issues if iss not in ("underexposed", "overexposed")]
+
+        # Entropy-based blur relaxation for flat backgrounds
+        if entropy_score < 30.0:
+            pre = quality_metrics["blur_score"]
+            quality_metrics["blur_score"] = float(max(quality_metrics["blur_score"], 60.0))
+            if pre < 60.0 and "blur" in issues and quality_metrics["blur_score"] >= 60.0:
+                issues = [iss for iss in issues if iss != "blur"]
+
+        # Overall scoring (rebalanced for new metrics)
         weights = {
-            'blur_score': 0.3,      # Most important for image quality
-            'resolution_score': 0.25, # Very important for usability
-            'exposure_score': 0.2,   # Important for visual appeal
-            'noise_score': 0.15,     # Moderate importance
-            'compression_score': 0.1 # Least important
+            'blur_score': 0.28,
+            'resolution_score': 0.22,
+            'exposure_score': 0.20,
+            'noise_score': 0.15,
+            'compression_score': 0.10,
+            'pixelation_score': 0.05,
         }
-        
         overall_score = (
             quality_metrics['blur_score'] * weights['blur_score'] +
             quality_metrics['resolution_score'] * weights['resolution_score'] +
             quality_metrics['exposure_score'] * weights['exposure_score'] +
             quality_metrics['noise_score'] * weights['noise_score'] +
-            quality_metrics['compression_score'] * weights['compression_score']
+            quality_metrics['compression_score'] * weights['compression_score'] +
+            quality_metrics['pixelation_score'] * weights['pixelation_score']
         )
-        
-        quality_metrics["overall_score"] = round(overall_score, 1)
+        quality_metrics["overall_score"] = round(float(overall_score), 1)
         quality_metrics["issues"] = issues
         quality_metrics["dimensions"] = f"{width}x{height}"
         
@@ -1766,33 +1906,31 @@ async def bulk_quality_check(
     analyzed_images = []
     errors = []
     
-    try:
-        for i, file in enumerate(files):
-            try:
-                # Validate file type
-                if not file.content_type or not file.content_type.startswith("image/"):
-                    errors.append(f"File {i+1} ({file.filename}): Not an image file")
-                    continue
-                
-                # Read and process image
-                contents = await file.read()
-                if len(contents) > 10 * 1024 * 1024:  # 10MB limit per file
-                    errors.append(f"File {i+1} ({file.filename}): File too large (max 10MB)")
-                    continue
-                
-                # Convert to OpenCV format
-                nparr = np.frombuffer(contents, np.uint8)
-                image_array = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-                
-                if image_array is None:
-                    errors.append(f"File {i+1} ({file.filename}): Could not decode image")
-                    continue
-                
-                # Convert BGR to RGB for analysis
-                image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
-                
-                # Analyze image quality
-                quality_metrics = detect_image_quality(image_array)
+    async def process_single_image(i, file):
+        """Process a single image file and return result or error."""
+        try:
+            # Validate file type
+            if not file.content_type or not file.content_type.startswith("image/"):
+                return f"File {i+1} ({file.filename}): Not an image file"
+            
+            # Read and process image
+            contents = await file.read()
+            if len(contents) > 10 * 1024 * 1024:  # 10MB limit per file
+                return f"File {i+1} ({file.filename}): File too large (max 10MB)"
+            
+            # Convert to OpenCV format
+            nparr = np.frombuffer(contents, np.uint8)
+            image_array = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            if image_array is None:
+                return f"File {i+1} ({file.filename}): Could not decode image"
+            
+            # Convert BGR to RGB for analysis
+            image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+            
+            # Analyze image quality (CPU-bound, run in thread pool)
+            async with PROCESS_SEM:
+                quality_metrics = await asyncio.to_thread(detect_image_quality, image_array)
                 
                 # Determine quality category
                 overall_score = quality_metrics["overall_score"]
@@ -1821,17 +1959,30 @@ async def bulk_quality_check(
                     elif issue == "compression_artifacts":
                         repair_links.append({"tool": "enhance", "url": "/enhance-image.html", "description": "Enhance Image"})
                 
-                analyzed_images.append({
+                return {
                     'filename': file.filename or f"image_{i+1}",
                     'quality_metrics': quality_metrics,
                     'category': category,
                     'repair_links': repair_links,
                     'file_size_mb': round(len(contents) / (1024 * 1024), 2)
-                })
+                }
                 
-            except Exception as e:
-                errors.append(f"File {i+1} ({file.filename}): {str(e)}")
-                continue
+        except Exception as e:
+            return f"File {i+1} ({file.filename}): {str(e)}"
+    
+    try:
+        # Process images in parallel with bounded concurrency
+        tasks = [process_single_image(i, file) for i, file in enumerate(files)]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Separate successful results from errors
+        for result in results:
+            if isinstance(result, str):  # Error message
+                errors.append(result)
+            elif isinstance(result, dict):  # Successful analysis
+                analyzed_images.append(result)
+            else:  # Exception
+                errors.append(f"Unexpected error: {str(result)}")
         
         if not analyzed_images:
             raise HTTPException(status_code=400, detail="No images could be analyzed. " + "; ".join(errors))
