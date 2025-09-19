@@ -217,6 +217,14 @@ def render_article_html(title: str, slug: str, body_sections: list) -> str:
 <script type=\"application/ld+json\">{json.dumps(json_ld)}</script>
 <link rel=\"preload\" as=\"style\" href=\"/styles.css?v=20250916-3\"/><link rel=\"stylesheet\" href=\"/styles.css?v=20250916-3\"/>
 <link rel=\"stylesheet\" href=\"https://www.changeimageto.com/styles.css?v=20250916-3\"/>
+<style>
+  /* Force readable white text on blog articles */
+  body, .main, main.container.main, .seo, .seo p, .seo li, .seo h2, .seo h3, .seo details, .seo summary { color: #ffffff; }
+  .seo a { color: #9ccfff; }
+  .seo a:hover { text-decoration: underline; }
+  .seo-links a { color: #ffffff; }
+  .header h1 { color: #ffffff; }
+</style>
 </head><body>
 <header class=\"container header\"><a href=\"https://www.changeimageto.com/\" class=\"logo-link\"><img src=\"https://www.changeimageto.com/logo.png?v=20250916-2\" alt=\"ChangeImageTo\" class=\"logo-img\"/></a><div style=\"display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%\"><h1 style=\"margin:0\">{title}</h1><nav class=\"top-nav\"><a href=\"https://www.changeimageto.com/blog\" aria-label=\"Read our blog\">Blog</a></nav></div></header>
 <main class=\"container main\">\n  <p class=\"seo\" style=\"margin:0 0 16px\"><strong>By:</strong> ChangeImageTo.com Team · <time datetime=\"{now_iso}\">{now_iso.replace('T',' ')[:19]} UTC</time></p>\n  {sections_html}\n  <p class=\"seo\" style=\"margin-top:24px\"><a href=\"https://www.changeimageto.com/blog\" style=\"color:#fff\">← Back to blog</a></p>\n</main>
