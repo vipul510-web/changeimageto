@@ -217,6 +217,13 @@ def render_article_html(title: str, slug: str, body_sections: list) -> str:
 <script type=\"application/ld+json\">{json.dumps(json_ld)}</script>
 <link rel=\"preload\" as=\"style\" href=\"/styles.css?v=20250916-3\"/><link rel=\"stylesheet\" href=\"/styles.css?v=20250916-3\"/>
 <link rel=\"stylesheet\" href=\"https://www.changeimageto.com/styles.css?v=20250916-3\"/>
+<style>
+  /* Force readable white text for blog content */
+  body, .seo, .blog-wrap, .blog-wrap p, .blog-wrap li { color: #fff !important; }
+  .blog-sub, .blog-list .date { color: #ddd !important; }
+  a { color: #9ecbff; }
+  h1, h2, h3, h4, h5, h6 { color: #fff !important; }
+</style>
 </head><body>
 <header class=\"container header\"><a href=\"https://www.changeimageto.com/\" class=\"logo-link\"><img src=\"https://www.changeimageto.com/logo.png?v=20250916-2\" alt=\"ChangeImageTo\" class=\"logo-img\"/></a><div style=\"display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%\"><h1 style=\"margin:0\">{title}</h1><nav class=\"top-nav\"><a href=\"https://www.changeimageto.com/blog\" aria-label=\"Read our blog\">Blog</a></nav></div></header>
 <main class=\"container main\">\n  <p class=\"seo\" style=\"margin:0 0 16px\"><strong>By:</strong> ChangeImageTo.com Team · <time datetime=\"{now_iso}\">{now_iso.replace('T',' ')[:19]} UTC</time></p>\n  {sections_html}\n  <p class=\"seo\" style=\"margin-top:24px\"><a href=\"https://www.changeimageto.com/blog\" style=\"color:#fff\">← Back to blog</a></p>\n</main>
@@ -1012,14 +1019,14 @@ async def blog_index():
 <link rel='stylesheet' href='https://www.changeimageto.com/styles.css?v=20250916-3'/>
 <style>
   .blog-wrap{{max-width:1000px;margin:0 auto;padding:24px}}
-  .blog-title{{margin:0 0 12px}}
-  .blog-sub{{color:var(--muted);margin:0 0 16px}}
-  .blog-list{{list-style:none;padding:0;margin:0}}
+  .blog-title{{margin:0 0 12px;color:#fff}}
+  .blog-sub{{color:#ddd;margin:0 0 16px}}
+  .blog-list{{list-style:none;padding:0;margin:0;color:#fff}}
   .blog-list li{{padding:10px 0;border-bottom:1px solid var(--border)}}
   .blog-list li:last-child{{border-bottom:none}}
   .blog-list a{{color:#fff;text-decoration:none;font-weight:700}}
   .blog-list a:hover{{text-decoration:underline}}
-  .blog-list .date{{color:var(--muted);font-weight:400}}
+  .blog-list .date{{color:#ddd;font-weight:400}}
 </style>
 </head>
 <body>
