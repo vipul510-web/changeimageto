@@ -390,19 +390,19 @@
                 <div class="quality-scores">
                   <div class="score-item">
                     <span>Blur:</span>
-                    <span class="score ${getScoreClass(imageData.quality_metrics.blur_score)}">${Math.round(imageData.quality_metrics.blur_score)}%</span>
+                    <span class="score ${getScoreClass(imageData.quality_metrics.blur_score, 'blur')}">${Math.round(imageData.quality_metrics.blur_score)}%</span>
                   </div>
                   <div class="score-item">
                     <span>Noise:</span>
-                    <span class="score ${getScoreClass(imageData.quality_metrics.noise_score)}">${Math.round(imageData.quality_metrics.noise_score)}%</span>
+                    <span class="score ${getScoreClass(imageData.quality_metrics.noise_score, 'noise')}">${Math.round(imageData.quality_metrics.noise_score)}%</span>
                   </div>
                   <div class="score-item">
                     <span>Resolution:</span>
-                    <span class="score ${getScoreClass(imageData.quality_metrics.resolution_score)}">${Math.round(imageData.quality_metrics.resolution_score)}%</span>
+                    <span class="score ${getScoreClass(imageData.quality_metrics.resolution_score, 'general')}">${Math.round(imageData.quality_metrics.resolution_score)}%</span>
                   </div>
                   <div class="score-item">
                     <span>Exposure:</span>
-                    <span class="score ${getScoreClass(imageData.quality_metrics.exposure_score)}">${Math.round(imageData.quality_metrics.exposure_score)}%</span>
+                    <span class="score ${getScoreClass(imageData.quality_metrics.exposure_score, 'exposure')}">${Math.round(imageData.quality_metrics.exposure_score)}%</span>
                   </div>
                 </div>
                 ${issues.length > 0 ? `<div class="issues-detected"><strong>Issues:</strong> ${issues.join(', ')}</div>` : ''}
@@ -417,10 +417,29 @@
           createImagePreviews();
         }
 
-        function getScoreClass(score) {
-          if (score >= 80) return 'good';
-          if (score >= 60) return 'fair';
-          return 'poor';
+        function getScoreClass(score, metricType = 'general') {
+          // Use dynamic thresholds based on metric type
+          if (metricType === 'noise') {
+            // Noise: 35%+ is good (not flagged), 25-35% is fair, <25% is poor
+            if (score >= 35) return 'good';
+            if (score >= 25) return 'fair';
+            return 'poor';
+          } else if (metricType === 'blur') {
+            // Blur: 40%+ is good (not flagged), 30-40% is fair, <30% is poor
+            if (score >= 40) return 'good';
+            if (score >= 30) return 'fair';
+            return 'poor';
+          } else if (metricType === 'exposure') {
+            // Exposure: 60%+ is good, 40-60% is fair, <40% is poor
+            if (score >= 60) return 'good';
+            if (score >= 40) return 'fair';
+            return 'poor';
+          } else {
+            // General: 80%+ is good, 60-80% is fair, <60% is poor
+            if (score >= 80) return 'good';
+            if (score >= 60) return 'fair';
+            return 'poor';
+          }
         }
 
         function createImagePreviews() {

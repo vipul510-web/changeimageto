@@ -1726,8 +1726,17 @@ def detect_image_quality(image_array):
         
         snr = (gray_mean + 1e-6) / (gray_std + 1e-6)
         
-        # Resolution-aware scoring
-        snr_score = max(0.0, min(100.0, (snr / 10.0) * 100.0))
+        # Contrast-aware SNR scoring (high contrast = good, not noise)
+        # Calculate contrast ratio to distinguish good contrast from noise
+        contrast_ratio = gray_std / (gray_mean + 1e-6)
+        
+        # For high-contrast images (product photos), adjust SNR scoring
+        if contrast_ratio > 0.3:  # High contrast image
+            # Boost SNR score for high-contrast images (good contrast, not noise)
+            snr_score = max(0.0, min(100.0, (snr / 8.0) * 100.0))  # More lenient threshold
+        else:
+            # Normal SNR scoring for low-contrast images
+            snr_score = max(0.0, min(100.0, (snr / 10.0) * 100.0))
         # Adjust residual penalty based on resolution
         residual_threshold = 50.0 * resolution_factor
         residual_penalty = max(0.0, min(100.0, (residual_std / residual_threshold) * 100.0))
