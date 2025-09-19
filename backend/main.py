@@ -274,6 +274,34 @@ def build_sections(keyword: str) -> list:
             "</ol></section>",
             tools_list(),
         ]
+    elif "google slides" in k or "google-slides" in k or "google" in k and "slides" in k:
+        sections = [
+            "<section class=\"seo\"><p>This guide shows the exact steps to remove a picture background in Google Slides without third‑party add‑ons. You can mask, crop, and make backgrounds transparent using built‑in tools and a quick detour via Google Drawings.</p></section>",
+            "<section class=\"seo\"><h2>Method 1 — Make white background transparent</h2><ol>"
+            "<li>Insert the image: Insert → Image → Upload from computer.</li>"
+            "<li>Select the image → Format options (right panel) → Adjustments.</li>"
+            "<li>Increase Transparency until the white/solid background fades. Fine‑tune Brightness/Contrast to keep the subject visible.</li>"
+            "<li>Optional: Add a colored shape behind the image (Insert → Shape) for a new background.</li>"
+            "</ol><p>Works best when the background is plain white or a single color.</p></section>",
+            "<section class=\"seo\"><h2>Method 2 — Background removal via Google Drawings (free)</h2><ol>"
+            "<li>Right‑click the image → Open with → Google Drawings.</li>"
+            "<li>In Drawings, use the <em>Format → Format options → Adjustments</em> slider and the <em>Image → Recolor</em> if needed to isolate the subject.</li>"
+            "<li>For tighter edges, use the <em>Crop</em> tool with <em>Mask</em> (dropdown next to the crop icon) and choose a shape that matches your subject. Drag the control handles to refine.</li>"
+            "<li>File → Download → PNG. This preserves transparency.</li>"
+            "<li>Back in Slides, Insert → Image → Upload → choose the PNG you downloaded.</li>"
+            "</ol><p>Tip: PNG is required to keep transparent backgrounds.</p></section>",
+            tools_list(),
+            "<section class=\"seo\"><h2>Method 3 — Quick online cutout (best edges)</h2><ol>"
+            "<li>Open our <a href=\"/remove-background-from-image.html\">Remove Background</a> tool.</li>"
+            "<li>Upload your picture → download the PNG with transparent background.</li>"
+            "<li>Insert the PNG into Google Slides and place a new background (Insert → Image → behind text).</li>"
+            "</ol></section>",
+            "<section class=\"seo\"><h2>Tips for Slides</h2><ul>"
+            "<li>Use high‑resolution images (at least 1600×1200) to avoid pixelation on projectors.</li>"
+            "<li>Add a soft shadow (Format options → Drop shadow) to make the cutout blend naturally.</li>"
+            "<li>Lock background elements by setting them as the slide background image.</li>"
+            "</ul></section>",
+        ]
     elif "free" in k:
         sections = [
             "<section class=\"seo\"><p>Here are free, watermark‑free ways to remove image backgrounds online.</p></section>",
