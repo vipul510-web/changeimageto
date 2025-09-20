@@ -18,6 +18,8 @@ import tempfile
 import cv2
 from skimage import measure, filters, exposure
 from skimage.metrics import structural_similarity as ssim
+import sqlite3
+from enum import Enum
 
 try:
     from google.cloud import storage
@@ -32,6 +34,20 @@ except Exception:
 from rembg import remove, new_session
 
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
+
+@app.get("/")
+async def root():
+    """Root endpoint with links to main features"""
+    return {
+        "message": "Image Processing API",
+        "version": "1.0.0",
+        "endpoints": {
+            "blog_cms": "/blog-admin",
+            "blog_index": "/blog", 
+            "image_tools": "/api/",
+            "docs": "/docs"
+        }
+    }
 
 # Setup logging
 logging.basicConfig(
@@ -930,26 +946,12 @@ async def convert_format(
 # ----------------------------
 @app.post("/api/generate-blog-daily")
 async def generate_blog_daily(token: str):
+    """Legacy endpoint - now redirects to draft generation"""
     if CRON_TOKEN and token != CRON_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    client = get_storage_client()
-    existing = list_existing_slugs(client)
-    seeds = [
-        "remove background from image",
-        "change image background color",
-        "image upscaler",
-        "blur background in photo",
-        "enhance image quality",
-        "convert image format",
-    ]
-    picks = pick_keywords(seeds, existing)
-    created = []
-    for kw, slug in picks:
-        title = kw.title()
-        html = render_article_html(title, slug, build_sections(kw))
-        save_article(client, slug, html)
-        created.append({"slug": slug, "title": title})
-    return {"created": created}
+    
+    # Redirect to the new draft generation system
+    return await generate_blog_draft(token)
 
 
 @app.get("/blog")
@@ -1094,6 +1096,460 @@ async def blog_article(slug: str):
             # Non-fatal: still serve fresh content even if bucket update fails
             pass
     return Response(content=fresh_html, media_type="text/html")
+
+
+# ----------------------------
+# Blog Management System
+# ----------------------------
+
+class BlogStatus(Enum):
+    DRAFT = "draft"
+    PENDING_APPROVAL = "pending_approval"
+    APPROVED = "approved"
+    PUBLISHED = "published"
+    REJECTED = "rejected"
+
+def init_blog_db():
+    """Initialize SQLite database for blog management"""
+    conn = sqlite3.connect('blog_management.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS blog_posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT UNIQUE NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'draft',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            published_at TIMESTAMP NULL,
+            author TEXT DEFAULT 'system',
+            notes TEXT,
+            metadata TEXT  -- JSON for additional data
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS blog_approvals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            action TEXT NOT NULL,  -- 'approve', 'reject', 'request_changes'
+            approver TEXT NOT NULL,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (post_id) REFERENCES blog_posts (id)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+def get_db_connection():
+    """Get database connection"""
+    return sqlite3.connect('blog_management.db')
+
+# Initialize database on startup
+init_blog_db()
+
+@app.get("/api/blog/admin/drafts")
+async def get_blog_drafts():
+    """Get all draft blog posts"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT id, slug, title, status, created_at, updated_at, notes
+        FROM blog_posts 
+        WHERE status IN ('draft', 'pending_approval', 'rejected')
+        ORDER BY created_at DESC
+    ''')
+    
+    drafts = []
+    for row in cursor.fetchall():
+        drafts.append({
+            'id': row[0],
+            'slug': row[1],
+            'title': row[2],
+            'status': row[3],
+            'created_at': row[4],
+            'updated_at': row[5],
+            'notes': row[6]
+        })
+    
+    conn.close()
+    return {"drafts": drafts}
+
+@app.get("/api/blog/admin/post/{post_id}")
+async def get_blog_post(post_id: int):
+    """Get specific blog post for editing"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT id, slug, title, content, status, created_at, updated_at, 
+               published_at, author, notes, metadata
+        FROM blog_posts 
+        WHERE id = ?
+    ''', (post_id,))
+    
+    row = cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    post = {
+        'id': row[0],
+        'slug': row[1],
+        'title': row[2],
+        'content': row[3],
+        'status': row[4],
+        'created_at': row[5],
+        'updated_at': row[6],
+        'published_at': row[7],
+        'author': row[8],
+        'notes': row[9],
+        'metadata': json.loads(row[10]) if row[10] else {}
+    }
+    
+    conn.close()
+    return post
+
+@app.post("/api/blog/admin/post/{post_id}/update")
+async def update_blog_post(post_id: int, request: Request):
+    """Update blog post content"""
+    data = await request.json()
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Update post
+    cursor.execute('''
+        UPDATE blog_posts 
+        SET title = ?, content = ?, updated_at = CURRENT_TIMESTAMP, notes = ?
+        WHERE id = ?
+    ''', (data.get('title'), data.get('content'), data.get('notes'), post_id))
+    
+    if cursor.rowcount == 0:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    conn.commit()
+    conn.close()
+    
+    return {"success": True, "message": "Post updated successfully"}
+
+@app.post("/api/blog/admin/post/{post_id}/approve")
+async def approve_blog_post(post_id: int, request: Request):
+    """Approve blog post for publishing"""
+    data = await request.json()
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Update post status
+    cursor.execute('''
+        UPDATE blog_posts 
+        SET status = 'approved', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    ''', (post_id,))
+    
+    if cursor.rowcount == 0:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Add approval record
+    cursor.execute('''
+        INSERT INTO blog_approvals (post_id, action, approver, notes)
+        VALUES (?, 'approve', ?, ?)
+    ''', (post_id, data.get('approver', 'admin'), data.get('notes', '')))
+    
+    conn.commit()
+    conn.close()
+    
+    return {"success": True, "message": "Post approved successfully"}
+
+@app.post("/api/blog/admin/post/{post_id}/reject")
+async def reject_blog_post(post_id: int, request: Request):
+    """Reject blog post"""
+    data = await request.json()
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Update post status
+    cursor.execute('''
+        UPDATE blog_posts 
+        SET status = 'rejected', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    ''', (post_id,))
+    
+    if cursor.rowcount == 0:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Add rejection record
+    cursor.execute('''
+        INSERT INTO blog_approvals (post_id, action, approver, notes)
+        VALUES (?, 'reject', ?, ?)
+    ''', (post_id, data.get('approver', 'admin'), data.get('notes', '')))
+    
+    conn.commit()
+    conn.close()
+    
+    return {"success": True, "message": "Post rejected"}
+
+@app.post("/api/blog/admin/post/{post_id}/publish")
+async def publish_blog_post(post_id: int):
+    """Publish approved blog post to live site"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Get post data
+    cursor.execute('''
+        SELECT slug, title, content FROM blog_posts 
+        WHERE id = ? AND status = 'approved'
+    ''', (post_id,))
+    
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Post not found or not approved")
+    
+    slug, title, content = row
+    
+    # Publish to Google Cloud Storage (if configured)
+    if BLOG_BUCKET:
+        try:
+            client = get_storage_client()
+            save_article(client, slug, content)
+            
+            # Update post status
+            cursor.execute('''
+                UPDATE blog_posts 
+                SET status = 'published', published_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (post_id,))
+            
+            conn.commit()
+            conn.close()
+            
+            return {"success": True, "message": "Post published successfully"}
+        except Exception as e:
+            conn.close()
+            raise HTTPException(status_code=500, detail=f"Publishing failed: {str(e)}")
+    else:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Blog publishing not configured")
+
+@app.post("/api/blog/admin/generate-draft")
+async def generate_blog_draft(token: str = None):
+    """Generate new blog post as draft (requires approval)"""
+    # For local testing, allow without token
+    if CRON_TOKEN and token != CRON_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    # Handle case when BLOG_BUCKET is not configured (local development)
+    existing = set()
+    if BLOG_BUCKET:
+        try:
+            client = get_storage_client()
+            existing = list_existing_slugs(client)
+        except Exception:
+            existing = set()
+    
+    # Get existing draft slugs from database
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT slug FROM blog_posts')
+    db_slugs = {row[0] for row in cursor.fetchall()}
+    conn.close()
+    
+    # Combine existing slugs
+    all_existing = existing.union(db_slugs)
+    
+    seeds = [
+        "remove background from image",
+        "change image background color", 
+        "image upscaler",
+        "blur background in photo",
+        "enhance image quality",
+        "convert image format",
+    ]
+    
+    picks = pick_keywords(seeds, all_existing)
+    created = []
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    for kw, slug in picks:
+        title = kw.title()
+        sections = build_sections(kw)
+        html = render_article_html(title, slug, sections)
+        
+        # Save as draft in database
+        cursor.execute('''
+            INSERT INTO blog_posts (slug, title, content, status, author, notes)
+            VALUES (?, ?, ?, 'draft', 'system', 'Auto-generated draft')
+        ''', (slug, title, html))
+        
+        created.append({"slug": slug, "title": title, "status": "draft"})
+    
+    conn.commit()
+    conn.close()
+    
+    return {"created": created, "message": "Drafts created - awaiting approval"}
+
+@app.get("/api/blog/admin/published")
+async def get_published_posts():
+    """Get all published blog posts"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT id, slug, title, status, created_at, published_at, author
+        FROM blog_posts 
+        WHERE status = 'published'
+        ORDER BY published_at DESC
+    ''')
+    
+    posts = []
+    for row in cursor.fetchall():
+        posts.append({
+            'id': row[0],
+            'slug': row[1],
+            'title': row[2],
+            'status': row[3],
+            'created_at': row[4],
+            'published_at': row[5],
+            'author': row[6]
+        })
+    
+    conn.close()
+    return {"posts": posts}
+
+
+@app.delete("/api/blog/admin/delete/{slug}")
+async def delete_blog_post(slug: str):
+    """Delete a blog post from Google Cloud Storage and update the blog index"""
+    try:
+        # Get storage client
+        client = get_storage_client()
+        bucket = client.bucket(BLOG_BUCKET)
+        
+        # Delete the HTML file
+        blob_name = f"blog/{slug}.html"
+        blob = bucket.blob(blob_name)
+        
+        if blob.exists():
+            blob.delete()
+            print(f"Deleted blog post: {slug}")
+        else:
+            print(f"Blog post not found: {slug}")
+            return {"message": f"Blog post '{slug}' not found", "deleted": False}
+        
+        # Update the blog index by regenerating it
+        await update_blog_index()
+        
+        return {"message": f"Blog post '{slug}' deleted successfully", "deleted": True}
+        
+    except Exception as e:
+        print(f"Error deleting blog post {slug}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error deleting blog post: {str(e)}")
+
+
+async def update_blog_index():
+    """Regenerate the blog index page after deleting posts"""
+    try:
+        client = get_storage_client()
+        bucket = client.bucket(BLOG_BUCKET)
+        
+        # List all blog posts
+        blobs = bucket.list_blobs(prefix="blog/")
+        blog_posts = []
+        
+        for blob in blobs:
+            if blob.name.endswith('.html') and blob.name != 'blog/index.html':
+                # Extract slug from filename
+                slug = blob.name.replace('blog/', '').replace('.html', '')
+                
+                # Get metadata
+                blob.reload()
+                metadata = blob.metadata or {}
+                
+                blog_posts.append({
+                    'slug': slug,
+                    'title': metadata.get('title', slug.replace('-', ' ').title()),
+                    'date': metadata.get('date', '2025-09-20')
+                })
+        
+        # Sort by date (newest first)
+        blog_posts.sort(key=lambda x: x['date'], reverse=True)
+        
+        # Generate new index HTML
+        index_html = f"""<!doctype html><html lang='en'><head>
+<meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Image Editing Blog | Tutorials, Tips & How‑To Guides</title>
+<meta name='description' content='Learn image editing: remove background, change colors, upscale, blur, enhance images. Free tutorials and guides.'>                                                  
+<link rel='canonical' href='https://www.changeimageto.com/blog'>
+<script type='application/ld+json'>{{"@context": "https://schema.org", "@type": "Blog", "name": "Image Editing Blog | Tutorials, Tips & How‑To Guides", "description": "Learn image editing: remove background, change colors, upscale, blur, enhance images. Free tutorials and guides.", "url": "https://www.changeimageto.com/blog"}}</script>                                                        
+<link rel='preload' as='style' href='/styles.css?v=20250916-3'/>
+<link rel='stylesheet' href='/styles.css?v=20250916-3'/>
+<link rel='stylesheet' href='https://www.changeimageto.com/styles.css?v=20250916-3'/>
+<style>
+  .blog-wrap{{max-width:1000px;margin:0 auto;padding:24px}}
+  .blog-title{{margin:0 0 12px}}
+  .blog-sub{{color:var(--muted);margin:0 0 16px}}
+  .blog-list{{list-style:none;padding:0;margin:0}}
+  .blog-list li{{padding:10px 0;border-bottom:1px solid var(--border)}}
+  .blog-list li:last-child{{border-bottom:none}}
+  .blog-list a{{color:#fff;text-decoration:none;font-weight:700}}
+  .blog-list a:hover{{text-decoration:underline}}
+  .blog-list .date{{color:var(--muted);font-weight:400}}
+</style>
+</head>
+<body>
+  <header class='container header'>
+    <a href='/' class='logo-link'><img src='https://www.changeimageto.com/logo.png?v=20250916-2' class='logo-img' alt='ChangeImageTo'/></a>                                                           
+    <div style='display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%'>
+      <h1 style='margin:0'>Image Editing Blog</h1>
+      <nav class='top-nav'><a href='/blog' aria-label='Read our blog'>Blog</a></nav>
+    </div>
+  </header>
+  <main class='blog-wrap'>
+    <p class='blog-sub'>Guides for removing backgrounds, changing colors, upscaling, blurring, and enhancing images.</p>                                                                              
+    <ul class='blog-list'>"""
+        
+        for post in blog_posts:
+            index_html += f"<li><a href='/blog/{post['slug']}.html'>{post['title']}</a> <span class='date'>— {post['date']}</span></li>"
+        
+        index_html += """</ul>                                                                                                
+  </main>
+  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/blur-background.html'>Blur Background</a><a href='/enhance-image.html'>Enhance Image</a></nav>                                   
+  <footer class='container footer'><p>Built for speed and quality. <a href='#' rel='nofollow'>Contact</a></p></footer>                                                                                
+  <script src='/script.js?v=20250916-3' defer></script>
+</body></html>"""
+        
+        # Upload updated index
+        index_blob = bucket.blob("blog/index.html")
+        index_blob.upload_from_string(index_html, content_type="text/html")
+        
+        print(f"Updated blog index with {len(blog_posts)} posts")
+        
+    except Exception as e:
+        print(f"Error updating blog index: {e}")
+        raise
+
+
+@app.get("/blog-admin")
+async def blog_admin():
+    """Serve blog admin interface"""
+    try:
+        with open("frontend/blog-admin.html", "r", encoding="utf-8") as f:
+            content = f.read()
+        return Response(content=content, media_type="text/html")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Admin interface not found")
 
 
 @app.post("/api/upscale-image")
