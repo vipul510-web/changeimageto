@@ -82,6 +82,8 @@ body[data-target-color] .checkerboard.processed{padding:0 !important}
 .actions a.btn{text-decoration:none;display:inline-block;text-align:center;cursor:pointer}
 .actions a.btn:hover{text-decoration:none}
 .seo{margin-top:40px;color:var(--muted)}
+.seo a{color:#fff;text-decoration:none}
+.seo a:hover{text-decoration:underline;color:var(--accent)}
 .footer{border-top:1px solid var(--border);margin-top:40px;color:var(--muted)}
 
 .category-buttons{display:flex;gap:8px}
