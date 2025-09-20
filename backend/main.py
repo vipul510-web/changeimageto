@@ -298,6 +298,51 @@ def build_sections(keyword: str) -> list:
             "</ol></section>",
             tools_list(),
         ]
+    elif "android" in k:
+        sections = [
+            "<section class=\"seo\"><p>Removing backgrounds from images on Android devices is easier than you might think. Here are the best methods using built-in Android features and popular apps.</p></section>",
+            "<section class=\"seo\"><h2>Method 1: Google Photos (Built-in)</h2><ol>"
+            "<li>Open Google Photos app on your Android device.</li>"
+            "<li>Select the image you want to edit.</li>"
+            "<li>Tap the \"Edit\" button (pencil icon).</li>"
+            "<li>Scroll down and tap \"Magic Eraser\" or \"Background Blur\".</li>"
+            "<li>Use your finger to highlight the background areas you want to remove.</li>"
+            "<li>Tap \"Done\" and save the edited image.</li>"
+            "</ol><p>Note: Magic Eraser is available on Google Pixel devices and newer Android phones with Google Photos.</p></section>",
+            "<section class=\"seo\"><h2>Method 2: Samsung Gallery Editor</h2><ol>"
+            "<li>Open Samsung Gallery app on your Samsung device.</li>"
+            "<li>Select the image and tap \"Edit\".</li>"
+            "<li>Look for \"Object Eraser\" or \"Background Eraser\" in the tools.</li>"
+            "<li>Draw over the background areas you want to remove.</li>"
+            "<li>Tap \"Apply\" and save your changes.</li>"
+            "</ol><p>This feature is available on Samsung Galaxy devices with One UI 3.0 or later.</p></section>",
+            "<section class=\"seo\"><h2>Method 3: Third-party Apps</h2><ol>"
+            "<li><strong>Background Eraser:</strong> Download from Google Play Store, upload image, use auto-detection.</li>"
+            "<li><strong>Remove.bg:</strong> Install the app, take or select photo, automatic background removal.</li>"
+            "<li><strong>PhotoRoom:</strong> Professional-grade background removal with manual editing tools.</li>"
+            "</ol></section>",
+            "<section class=\"seo\"><h2>Method 4: Our Free Online Tool (Best Results)</h2><ol>"
+            "<li>Open your Android browser and go to our <a href=\"/remove-background-from-image.html\">Remove Background</a> tool.</li>"
+            "<li>Upload your image from your phone's gallery.</li>"
+            "<li>Wait for automatic processing (5-10 seconds).</li>"
+            "<li>Download the result with transparent background.</li>"
+            "<li>Save to your Android device's gallery.</li>"
+            "</ol><p>This method works on any Android device and produces professional-quality results.</p></section>",
+            tools_list(),
+            "<section class=\"seo\"><h2>Tips for Android Background Removal</h2><ul>"
+            "<li>Use high-resolution images (at least 1080p) for better results.</li>"
+            "<li>Ensure good lighting when taking photos for background removal.</li>"
+            "<li>Images with clear subject-background contrast work best.</li>"
+            "<li>Save results as PNG format to preserve transparency.</li>"
+            "<li>Use landscape mode for better editing precision on tablets.</li>"
+            "</ul></section>",
+            "<section class=\"seo\"><h2>FAQ</h2>"
+            "<details><summary>Which Android version supports background removal?</summary><p>Most modern Android devices (Android 8.0+) support basic editing features. Advanced AI background removal requires Android 10+ or specific manufacturer apps.</p></details>"
+            "<details><summary>Is it really free on Android?</summary><p>Yes, our online tools are completely free on Android with no watermarks or login required.</p></details>"
+            "<details><summary>Best Android app for background removal?</summary><p>Google Photos (Pixel devices), Samsung Gallery (Samsung devices), or our free online tool for any Android device.</p></details>"
+            "<details><summary>Can I remove backgrounds from videos on Android?</summary><p>Yes, some apps like CapCut and InShot support video background removal on Android.</p></details>"
+            "</section>",
+        ]
     elif "google slides" in k or "google-slides" in k or "google" in k and "slides" in k:
         sections = [
             "<section class=\"seo\"><p>This guide shows the exact steps to remove a picture background in Google Slides without third‑party add‑ons. You can mask, crop, and make backgrounds transparent using built‑in tools and a quick detour via Google Drawings.</p></section>",
@@ -1159,7 +1204,11 @@ async def blog_article(slug: str):
         return RedirectResponse(url=f"/blog/{canon}.html", status_code=301)
 
     # Always render fresh from current template/sections
-    title = slug.replace('-', ' ').title()
+    # Use proper title formatting for specific slugs
+    if slug == "remove-background-from-image-android":
+        title = "How to Remove Background From Image on Android"
+    else:
+        title = slug.replace('-', ' ').title()
     fresh_html = render_article_html(title, slug, build_sections(title))
     # If in production with bucket, compare and update stored HTML if changed
     if BLOG_BUCKET:
@@ -1454,7 +1503,13 @@ async def generate_blog_draft(token: str = None):
         "change image background color powerpoint",
     ]
     
-    picks = pick_keywords(seeds, all_existing)
+    # Use exact keywords instead of generating variations
+    picks = []
+    for seed in seeds:
+        slug = normalize_slug(seed)
+        if slug not in all_existing:
+            picks.append((seed, slug))
+    
     created = []
     
     conn = get_db_connection()
