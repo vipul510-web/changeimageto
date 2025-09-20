@@ -326,6 +326,82 @@ def build_sections(keyword: str) -> list:
             "<li>Lock background elements by setting them as the slide background image.</li>"
             "</ul></section>",
         ]
+    elif "canva" in k:
+        sections = [
+            "<section class=\"seo\"><p>Canva has a built-in background remover that works well for simple images. Here's how to use it effectively.</p></section>",
+            "<section class=\"seo\"><h2>Remove background in Canva (step-by-step)</h2><ol>"
+            "<li>Upload your image to Canva or drag it from the Photos tab.</li>"
+            "<li>Select the image and click <strong>Edit image</strong> (or Effects).</li>"
+            "<li>Click <strong>Background remover</strong> in the left panel.</li>"
+            "<li>Canva will automatically detect and remove the background.</li>"
+            "<li>Use <strong>Restore</strong> and <strong>Erase</strong> brushes to refine edges.</li>"
+            "<li>Click <strong>Apply</strong> when satisfied.</li>"
+            "</ol><p>Note: Background remover is available on Canva Pro ($15/month) or with free trial.</p></section>",
+            "<section class=\"seo\"><h2>Free alternative for Canva users</h2><ol>"
+            "<li>Use our free <a href=\"/remove-background-from-image.html\">Remove Background</a> tool.</li>"
+            "<li>Download the PNG with transparent background.</li>"
+            "<li>Upload the PNG to Canva and use it in your designs.</li>"
+            "</ol><p>This method is completely free and often produces better results than Canva's built-in tool.</p></section>",
+            tools_list(),
+            "<section class=\"seo\"><h2>Tips for Canva</h2><ul>"
+            "<li>Use high-resolution images (at least 1000px wide) for best results.</li>"
+            "<li>Images with clear subject-background contrast work best.</li>"
+            "<li>Add a subtle shadow or border to make cutouts blend naturally.</li>"
+            "<li>PNG format preserves transparency when downloading.</li>"
+            "</ul></section>",
+        ]
+    elif "free" in k and "online" in k:
+        sections = [
+            "<section class=\"seo\"><p>Here are completely free, watermark-free ways to remove image backgrounds online without any software installation.</p></section>",
+            "<section class=\"seo\"><h2>Free online background removal methods</h2><ol>"
+            "<li><strong>Our Remove Background tool</strong> - No login, no watermark, unlimited use.</li>"
+            "<li><strong>Google Photos</strong> - Magic Eraser feature (Android/Google One users).</li>"
+            "<li><strong>Photopea</strong> - Free Photoshop alternative with background removal.</li>"
+            "<li><strong>GIMP</strong> - Free desktop software with powerful selection tools.</li>"
+            "</ol></section>",
+            "<section class=\"seo\"><h2>Best free online method</h2><ol>"
+            "<li>Visit our <a href=\"/remove-background-from-image.html\">Remove Background</a> tool.</li>"
+            "<li>Upload your image (JPG, PNG, or WebP up to 10MB).</li>"
+            "<li>Wait 5-10 seconds for AI processing.</li>"
+            "<li>Download the PNG with transparent background.</li>"
+            "</ol><p>This method is completely free, requires no registration, and produces professional results.</p></section>",
+            tools_list(),
+            "<section class=\"seo\"><h2>Why choose free online tools?</h2><ul>"
+            "<li><strong>No software installation</strong> - Works in any web browser.</li>"
+            "<li><strong>No watermarks</strong> - Download clean, professional results.</li>"
+            "<li><strong>AI-powered</strong> - Automatic detection with manual refinement options.</li>"
+            "<li><strong>Multiple formats</strong> - Support for JPG, PNG, and WebP images.</li>"
+            "</ul></section>",
+        ]
+    elif "change" in k and "background" in k and "color" in k and "powerpoint" in k:
+        sections = [
+            "<section class=\"seo\"><p>PowerPoint offers several ways to change image background colors. Here are the most effective methods for different scenarios.</p></section>",
+            "<section class=\"seo\"><h2>Method 1: Change background color of existing image</h2><ol>"
+            "<li>Insert your image: Insert → Pictures → choose your file.</li>"
+            "<li>Select the image and go to Picture Format → Color.</li>"
+            "<li>Choose from preset color options or click Picture Color Options for custom colors.</li>"
+            "<li>Adjust Brightness, Contrast, and Saturation as needed.</li>"
+            "</ol><p>This method works best for images with solid or simple backgrounds.</p></section>",
+            "<section class=\"seo\"><h2>Method 2: Remove background first, then add color</h2><ol>"
+            "<li>Select your image → Picture Format → Remove Background.</li>"
+            "<li>Use Mark Areas to Keep/Remove to refine the selection.</li>"
+            "<li>Click Keep Changes to remove the background.</li>"
+            "<li>Insert → Shapes → Rectangle, draw behind the image.</li>"
+            "<li>Right-click the shape → Format Shape → Fill → choose your color.</li>"
+            "</ol><p>This method gives you complete control over the background color.</p></section>",
+            "<section class=\"seo\"><h2>Method 3: Use our online tool (best results)</h2><ol>"
+            "<li>Visit our <a href=\"/change-image-background.html\">Change Background</a> tool.</li>"
+            "<li>Upload your image and choose a background color.</li>"
+            "<li>Download the result and insert it into PowerPoint.</li>"
+            "</ol><p>This method produces the cleanest results and works with complex backgrounds.</p></section>",
+            tools_list(),
+            "<section class=\"seo\"><h2>Tips for PowerPoint backgrounds</h2><ul>"
+            "<li>Use high-resolution images (at least 1920×1080) for presentations.</li>"
+            "<li>Choose colors that contrast well with your text.</li>"
+            "<li>Consider your presentation theme when selecting background colors.</li>"
+            "<li>PNG format preserves transparency when importing into PowerPoint.</li>"
+            "</ul></section>",
+        ]
     elif "free" in k:
         sections = [
             "<section class=\"seo\"><p>Here are free, watermark‑free ways to remove image backgrounds online.</p></section>",
@@ -1370,12 +1446,12 @@ async def generate_blog_draft(token: str = None):
     all_existing = existing.union(db_slugs)
     
     seeds = [
-        "remove background from image",
-        "change image background color", 
-        "image upscaler",
-        "blur background in photo",
-        "enhance image quality",
-        "convert image format",
+        "remove background from image canva",
+        "remove background from image for free online",
+        "remove background from image in google slides",
+        "remove background from image on iphone",
+        "remove background from image in photoshop",
+        "change image background color powerpoint",
     ]
     
     picks = pick_keywords(seeds, all_existing)
