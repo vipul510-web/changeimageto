@@ -4,10 +4,10 @@
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/api/$1" },
-    { "source": "/blog/", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog" },
-    { "source": "/blog", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog" },
-    { "source": "/blog/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" },
+    { "source": "/api/(.*)", "destination": "https://bgremover-backend-pqrgdlxdla-uc.a.run.app/api/$1" },
+    { "source": "/blog/", "destination": "https://bgremover-backend-pqrgdlxdla-uc.a.run.app/blog" },
+    { "source": "/blog", "destination": "https://bgremover-backend-pqrgdlxdla-uc.a.run.app/blog" },
+    { "source": "/blog/(.*)", "destination": "https://bgremover-backend-pqrgdlxdla-uc.a.run.app/blog/$1" },
     { "source": "/(.*)", "destination": "/frontend/$1" }
   ]
 }
