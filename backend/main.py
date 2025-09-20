@@ -1278,7 +1278,8 @@ def get_db_connection():
 
 def check_local_only():
     """Check if we're in local development mode"""
-    if os.getenv("ENVIRONMENT") == "production":
+    # Check if we're running on Cloud Run (production)
+    if os.getenv("K_SERVICE") or os.getenv("ENVIRONMENT") == "production":
         raise HTTPException(status_code=404, detail="Admin interface not found")
 
 # Initialize database on startup
