@@ -1281,14 +1281,14 @@ init_blog_db()
 
 @app.get("/api/blog/admin/drafts")
 async def get_blog_drafts():
-    """Get all draft blog posts"""
+    """Get all draft, pending, approved, and rejected blog posts"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
     cursor.execute('''
         SELECT id, slug, title, status, created_at, updated_at, notes
         FROM blog_posts 
-        WHERE status IN ('draft', 'pending_approval', 'rejected')
+        WHERE status IN ('draft', 'pending_approval', 'approved', 'rejected')
         ORDER BY created_at DESC
     ''')
     
