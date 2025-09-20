@@ -985,6 +985,8 @@ async def blog_index():
             "remove-background-from-image-free": "remove-background-from-image",
             "remove-background-from-image-online": "remove-background-from-image",
             "remove-background-from-image-free-online": "remove-background-from-image",
+            "remove-background-from-image-powerpoint": "remove-background-from-image",
+            "remove-background-from-image-in-powerpoint": "remove-background-from-image",
         }
         return alias_map.get(base, base)
 
