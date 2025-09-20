@@ -1276,12 +1276,18 @@ def get_db_connection():
     """Get database connection"""
     return sqlite3.connect('blog_management.db')
 
+def check_local_only():
+    """Check if we're in local development mode"""
+    if os.getenv("ENVIRONMENT") == "production":
+        raise HTTPException(status_code=404, detail="Admin interface not found")
+
 # Initialize database on startup
 init_blog_db()
 
 @app.get("/api/blog/admin/drafts")
 async def get_blog_drafts():
     """Get all draft, pending, approved, and rejected blog posts"""
+    check_local_only()
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -1310,6 +1316,7 @@ async def get_blog_drafts():
 @app.get("/api/blog/admin/post/{post_id}")
 async def get_blog_post(post_id: int):
     """Get specific blog post for editing"""
+    check_local_only()
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -1344,6 +1351,7 @@ async def get_blog_post(post_id: int):
 @app.post("/api/blog/admin/post/{post_id}/update")
 async def update_blog_post(post_id: int, request: Request):
     """Update blog post content"""
+    check_local_only()
     data = await request.json()
     
     conn = get_db_connection()
@@ -1368,6 +1376,7 @@ async def update_blog_post(post_id: int, request: Request):
 @app.post("/api/blog/admin/post/{post_id}/approve")
 async def approve_blog_post(post_id: int, request: Request):
     """Approve blog post for publishing"""
+    check_local_only()
     data = await request.json()
     
     conn = get_db_connection()
@@ -1398,6 +1407,7 @@ async def approve_blog_post(post_id: int, request: Request):
 @app.post("/api/blog/admin/post/{post_id}/reject")
 async def reject_blog_post(post_id: int, request: Request):
     """Reject blog post"""
+    check_local_only()
     data = await request.json()
     
     conn = get_db_connection()
@@ -1468,21 +1478,44 @@ async def publish_blog_post(post_id: int):
             conn.close()
             raise HTTPException(status_code=500, detail=f"Publishing failed: {str(e)}")
     else:
-        # For local development, update content with fresh title and mark as published
-        cursor.execute('''
-            UPDATE blog_posts 
-            SET content = ?, status = 'published', published_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ''', (fresh_content, post_id))
-        
-        conn.commit()
-        conn.close()
-        
-        return {"success": True, "message": "Post marked as published with updated content (local development mode)"}
+        # For local development, try to publish to production automatically
+        try:
+            # Try to get storage client and publish to production
+            if BLOG_BUCKET:
+                client = get_storage_client()
+                save_article(client, slug, fresh_content)
+                message = "Post published to production successfully"
+            else:
+                message = "Post marked as published locally (BLOG_BUCKET not configured)"
+            
+            # Update post status regardless
+            cursor.execute('''
+                UPDATE blog_posts 
+                SET content = ?, status = 'published', published_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (fresh_content, post_id))
+            
+            conn.commit()
+            conn.close()
+            
+            return {"success": True, "message": message}
+        except Exception as e:
+            # If production publishing fails, still mark as published locally
+            cursor.execute('''
+                UPDATE blog_posts 
+                SET content = ?, status = 'published', published_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (fresh_content, post_id))
+            
+            conn.commit()
+            conn.close()
+            
+            return {"success": True, "message": f"Post marked as published locally (production publishing failed: {str(e)})"}
 
 @app.post("/api/blog/admin/generate-draft")
 async def generate_blog_draft(token: str = None):
     """Generate new blog post as draft (requires approval)"""
+    check_local_only()
     # For local testing, allow without token
     if CRON_TOKEN and token != CRON_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -1548,6 +1581,7 @@ async def generate_blog_draft(token: str = None):
 @app.get("/api/blog/admin/published")
 async def get_published_posts():
     """Get all published blog posts"""
+    check_local_only()
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -1577,6 +1611,7 @@ async def get_published_posts():
 @app.delete("/api/blog/admin/delete/{slug}")
 async def delete_blog_post(slug: str):
     """Delete a blog post from Google Cloud Storage and update the blog index"""
+    check_local_only()
     try:
         # Get storage client
         client = get_storage_client()
@@ -1688,7 +1723,11 @@ async def update_blog_index():
 
 @app.get("/blog-admin")
 async def blog_admin():
-    """Serve blog admin interface"""
+    """Serve blog admin interface - Local development only"""
+    # Only allow access in local development
+    if os.getenv("ENVIRONMENT") == "production":
+        raise HTTPException(status_code=404, detail="Admin interface not found")
+    
     try:
         with open("frontend/blog-admin.html", "r", encoding="utf-8") as f:
             content = f.read()
