@@ -1444,11 +1444,14 @@ async def publish_blog_post(post_id: int):
     
     slug, title, content = row
     
+    # Regenerate content with current title to ensure consistency
+    fresh_content = render_article_html(title, slug, build_sections(title))
+    
     # Publish to Google Cloud Storage (if configured)
     if BLOG_BUCKET:
         try:
             client = get_storage_client()
-            save_article(client, slug, content)
+            save_article(client, slug, fresh_content)
             
             # Update post status
             cursor.execute('''
@@ -1465,8 +1468,17 @@ async def publish_blog_post(post_id: int):
             conn.close()
             raise HTTPException(status_code=500, detail=f"Publishing failed: {str(e)}")
     else:
+        # For local development, update content with fresh title and mark as published
+        cursor.execute('''
+            UPDATE blog_posts 
+            SET content = ?, status = 'published', published_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (fresh_content, post_id))
+        
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=400, detail="Blog publishing not configured")
+        
+        return {"success": True, "message": "Post marked as published with updated content (local development mode)"}
 
 @app.post("/api/blog/admin/generate-draft")
 async def generate_blog_draft(token: str = None):
