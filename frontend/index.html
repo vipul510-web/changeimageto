@@ -18,26 +18,69 @@
     {"@context":"https://schema.org","@type":"WebSite","name":"ChangeImageTo.com","description":"Free online image tools for background removal, color changes, and more.","url":"https://www.changeimageto.com/","potentialAction":{"@type":"SearchAction","target":"https://www.changeimageto.com/?q={search_term_string}","query-input":"required name=search_term_string"}}
     </script>
 
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="dns-prefetch" href="//www.googletagmanager.com">
+    
+    <!-- Preconnect to critical external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
-    <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+    
+    <!-- Critical CSS for above-the-fold content -->
+    <style>
+      :root{--bg:#0b0f13;--fg:#eaf0f6;--muted:#9aa7b2;--accent:#6aa7ff;--card:#12171d;--border:#1e2630}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+      .container{max-width:1000px;margin:0 auto;padding:24px}
+      .header h1{margin:0 0 8px}
+      .header p{margin:0;color:var(--muted)}
+      .logo-link{display:inline-flex;align-items:center;gap:10px;margin-bottom:10px;text-decoration:none;color:inherit}
+      .logo-img{height:36px;width:auto;display:block}
+      .top-nav a{color:#fff;text-decoration:none;font-weight:600}
+      .top-nav a:hover{text-decoration:underline}
+      .hero-features{margin:40px 0 60px}
+      .feature-grid{display:grid;grid-template-columns:1fr;gap:30px;margin-bottom:40px}
+      @media(min-width:800px){.feature-grid{grid-template-columns:repeat(2,1fr)}}
+      @media(min-width:1100px){.feature-grid{grid-template-columns:repeat(3,1fr)}}
+      .feature-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center;transition:all 0.3s ease;position:relative;overflow:hidden}
+      .feature-icon{width:80px;height:80px;margin:0 auto 24px;background:linear-gradient(135deg,var(--accent),#4f46e5);border-radius:20px;display:flex;align-items:center;justify-content:center;color:white}
+      .feature-card h3{font-size:24px;font-weight:700;margin:0 0 16px;color:var(--fg)}
+      .feature-card p{color:var(--muted);margin:0 0 24px;line-height:1.6}
+      .feature-btn{display:inline-block;background:var(--accent);color:#001633;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;transition:all 0.2s ease}
+      .feature-card .stretched-link{position:absolute;inset:0;z-index:1;border-radius:16px;font-size:0;line-height:0;color:transparent;text-decoration:none}
+      .feature-card .feature-btn{position:relative;z-index:2}
+      @media(max-width:768px){.feature-grid{grid-template-columns:1fr;gap:20px}.feature-card{padding:24px}}
+    </style>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" as="image" href="/logo.png?v=20250916-2">
+    <link rel="preload" as="style" href="./styles.css?v=20250916-3" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="./styles.css?v=20250916-3"></noscript>
   
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<!-- Google tag (gtag.js) - Load asynchronously after page load -->
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-D3Q582VFCG');
+  // Load Google Analytics after page load to improve FCP
+  window.addEventListener('load', function() {
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG';
+    document.head.appendChild(script);
+    
+    script.onload = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-D3Q582VFCG');
+    };
+  });
 </script>
 
   </head>
   <body>
     <header class="container header">
-      <a href="/" class="logo-link"><img src="/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
+      <a href="/" class="logo-link"><img src="/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" loading="eager" width="36" height="36" /></a>
       <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
         <h1 style="margin:0">Image Editing Tools Free Online</h1>
         <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
@@ -285,5 +328,14 @@
     </footer>
 
     <script src="./script.js?v=20250916-3" defer></script>
+    
+    <!-- Load non-critical JavaScript after page load -->
+    <script>
+      // Defer non-critical JavaScript execution
+      window.addEventListener('load', function() {
+        // Any non-critical JavaScript can be loaded here
+        console.log('Page fully loaded, non-critical JS can execute');
+      });
+    </script>
   </body>
 </html>
