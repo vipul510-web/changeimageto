@@ -22,10 +22,19 @@
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link rel="dns-prefetch" href="//www.googletagmanager.com">
+    <link rel="dns-prefetch" href="//bgremover-backend-121350814881.us-central1.run.app">
     
     <!-- Preconnect to critical external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://bgremover-backend-121350814881.us-central1.run.app">
+    
+    <!-- Preload critical resources immediately -->
+    <link rel="preload" as="image" href="/logo.png?v=20250921-1">
+    <link rel="preload" as="style" href="./styles.css?v=20250916-3">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" as="style">
+    
+    <!-- Load fonts with optimized technique -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
     
@@ -66,9 +75,8 @@
       @media(max-width:768px){.feature-grid{grid-template-columns:1fr;gap:20px}.feature-card{padding:24px}.color-grid{grid-template-columns:repeat(2,1fr);gap:16px}.container{padding:16px}}
     </style>
     
-    <!-- Preload critical resources -->
-    <link rel="preload" as="image" href="/logo.png?v=20250921-1">
-    <link rel="preload" as="style" href="./styles.css?v=20250916-3" onload="this.onload=null;this.rel='stylesheet'">
+    <!-- Load main stylesheet asynchronously -->
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="./styles.css?v=20250916-3"></noscript>
   
 <!-- Google tag (gtag.js) - Load asynchronously after page load -->
