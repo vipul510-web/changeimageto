@@ -26,7 +26,8 @@
     <!-- Preconnect to critical external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
     
     <!-- Critical CSS for above-the-fold content -->
     <style>
@@ -51,11 +52,22 @@
       .feature-btn{display:inline-block;background:var(--accent);color:#001633;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;transition:all 0.2s ease}
       .feature-card .stretched-link{position:absolute;inset:0;z-index:1;border-radius:16px;font-size:0;line-height:0;color:transparent;text-decoration:none}
       .feature-card .feature-btn{position:relative;z-index:2}
-      @media(max-width:768px){.feature-grid{grid-template-columns:1fr;gap:20px}.feature-card{padding:24px}}
+      .quick-colors{margin:60px 0}
+      .quick-colors h2{text-align:center;margin-bottom:32px;font-size:28px;color:var(--fg)}
+      .color-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;max-width:800px;margin:0 auto}
+      .color-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-decoration:none;text-align:center;transition:all 0.3s ease;display:flex;flex-direction:column;align-items:center;gap:12px}
+      .color-swatch{width:60px;height:60px;border-radius:50%;border:3px solid var(--border);transition:all 0.3s ease}
+      .color-swatch.white{background:#ffffff}
+      .color-swatch.blue{background:#3b82f6}
+      .color-swatch.black{background:#000000}
+      .color-swatch.yellow{background:#fbbf24}
+      .color-swatch.orange{background:#f97316}
+      .color-card span{color:var(--fg);font-weight:600;font-size:14px}
+      @media(max-width:768px){.feature-grid{grid-template-columns:1fr;gap:20px}.feature-card{padding:24px}.color-grid{grid-template-columns:repeat(2,1fr);gap:16px}.container{padding:16px}}
     </style>
     
     <!-- Preload critical resources -->
-    <link rel="preload" as="image" href="/logo.png?v=20250916-2">
+    <link rel="preload" as="image" href="/logo.png?v=20250921-1">
     <link rel="preload" as="style" href="./styles.css?v=20250916-3" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="./styles.css?v=20250916-3"></noscript>
   
@@ -80,7 +92,7 @@
   </head>
   <body>
     <header class="container header">
-      <a href="/" class="logo-link"><img src="/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" loading="eager" width="36" height="36" /></a>
+      <a href="/" class="logo-link"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" class="logo-img" loading="eager" width="200" height="68" /></a>
       <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
         <h1 style="margin:0">Image Editing Tools Free Online</h1>
         <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
