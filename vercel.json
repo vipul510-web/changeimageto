@@ -3,6 +3,9 @@
   "builds": [
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://bgremover-backend-pqrgdlxdla-uc.a.run.app/api/$1" },
     { "source": "/blog/", "destination": "https://bgremover-backend-pqrgdlxdla-uc.a.run.app/blog" },
