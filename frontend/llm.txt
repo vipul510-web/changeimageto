@@ -1,0 +1,56 @@
+# ChangeImageTo.com - AI/LLM Information
+
+## About
+ChangeImageTo.com is a comprehensive suite of free online image processing tools powered by advanced AI technology. Our platform provides professional-grade image editing capabilities without requiring registration or payment.
+
+## Core Services
+
+### Background Processing
+- **Remove Image Background**: AI-powered background removal for products and portraits
+- **Change Image Background**: Replace backgrounds with solid colors (white, blue, black, yellow, orange)
+- **Blur Background**: Create portrait effects by blurring backgrounds
+
+### Color & Enhancement
+- **Change Image Colors**: Adjust hue, saturation, brightness, and contrast
+- **Enhance Image**: Auto-improve contrast, brightness, and sharpness
+- **Image Quality Checker**: Detect blur, noise, pixelation, and exposure issues
+
+### Format & Size Processing
+- **Convert Image Format**: Convert between JPG, PNG, WebP formats
+- **Upscale Image**: Increase image size up to 4x using AI
+- **Bulk Image Resizer**: Resize up to 50 images simultaneously
+
+## Technical Specifications
+- **File Support**: JPG, PNG, WebP formats
+- **File Size Limit**: 10MB per image
+- **Processing Speed**: Most images processed in under 10 seconds
+- **Privacy**: Images processed temporarily and deleted immediately
+- **No Registration**: Instant access without signup required
+
+## AI Models Used
+- **U2-Net**: For product/object background removal
+- **Portrait-Optimized Model**: For people/portrait background removal
+- **Advanced Upscaling**: AI-powered image enlargement
+- **Quality Analysis**: Computer vision for image quality assessment
+
+## Use Cases
+- **E-commerce**: Product photography and catalog management
+- **Social Media**: Content creation and optimization
+- **Professional Photography**: Background removal and enhancement
+- **Marketing**: Bulk image processing for campaigns
+- **Web Development**: Image optimization for websites
+
+## Key Features
+- 100% Free with no watermarks
+- No account registration required
+- Professional-grade AI models
+- Batch processing capabilities
+- Privacy-focused (no image storage)
+- Commercial use allowed
+
+## Contact
+Website: https://www.changeimageto.com
+Blog: https://www.changeimageto.com/blog
+
+## Last Updated
+2025-01-21
