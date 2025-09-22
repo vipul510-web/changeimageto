@@ -1,0 +1,66 @@
+/* ChangeImageTo Extension - Content Script Styles */
+
+.changeimageto-selected {
+    outline: 3px solid #4CAF50 !important;
+    outline-offset: 2px !important;
+    opacity: 0.9 !important;
+    cursor: pointer !important;
+}
+
+.changeimageto-selected:hover {
+    outline-color: #45a049 !important;
+    opacity: 1 !important;
+}
+
+/* Selection count indicator */
+#changeimageto-selection-count {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Hover effect for images */
+img:hover {
+    cursor: pointer;
+}
+
+/* Ensure images are visible for selection */
+img {
+    position: relative;
+}
+
+/* Loading state for processing */
+.changeimageto-processing {
+    position: relative;
+    pointer-events: none;
+}
+
+.changeimageto-processing::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #4CAF50;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 1000;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

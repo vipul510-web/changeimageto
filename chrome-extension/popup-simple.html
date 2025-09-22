@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChangeImageTo</title>
+    <style>
+        body {
+            width: 350px;
+            height: 400px;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        
+        .header {
+            background: #0b0f13;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: #0b0f13;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background: #141a21;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>ChangeImageTo</h2>
+        <p>Image Editor Extension</p>
+        <a id="headerLink"
+           href="https://www.changeimageto.com"
+           style="color:#9ec5fe;text-decoration:underline; font-size:12px; display:inline-block; margin-top:6px;"
+           target="_blank" rel="noopener noreferrer">Visit changeimageto.com</a>
+    </div>
+    
+    <!-- Tabs -->
+    <div style="display:flex; gap:8px; padding:8px 12px; background:#fff; border-bottom:1px solid #e9ecef;">
+        <button class="btn" id="tabHome" style="padding:6px 10px;">Home</button>
+        <button class="btn" id="tabPicked" style="padding:6px 10px; background:#6c757d;">Picked from page</button>
+        <button class="btn" id="tabUploaded" style="padding:6px 10px; background:#6c757d;">Uploaded image</button>
+    </div>
+    
+    <div class="content" id="viewHome">
+        <div class="status" id="status">Ready to edit images</div>
+        
+        <input type="file" id="uploadInput" accept="image/*" style="display:none" />
+        
+        <button class="btn" id="pickFromPageBtn" style="background:#1e3a8a;margin-bottom:14px;">
+            Pick Images From Page
+        </button>
+
+        <button class="btn" id="uploadBtn" style="background:#1e3a8a;margin-bottom:18px;">
+            Upload Image
+        </button>
+        
+        <!-- Options grid -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:26px;">
+            <button class="btn" id="removeBackgroundBtn" style="margin:0;">
+                🎭 Remove Background
+            </button>
+            <button class="btn" id="blurBackgroundBtn" style="margin:0;">
+                🌫️ Blur Background
+            </button>
+            <button class="btn" id="enhanceImageBtn" style="margin:0;">
+                ✨ Enhance Image
+            </button>
+            <button class="btn" id="upscaleImageBtn" style="margin:0;">
+                🔍 Upscale Image
+            </button>
+            <button class="btn" id="changeBgColorBtn" style="margin:0; grid-column: span 2;">
+                🎨 Change Background Color
+            </button>
+        </div>
+        
+        <button class="btn" id="refreshBtn" style="background: #2196f3; margin-top: 18px;">
+            Refresh Selection
+        </button>
+        
+        <!-- Page images picker -->
+        <div id="pageImagesSection" style="display:none; margin-top:12px; max-height:200px; overflow:auto; border:1px solid #ddd; border-radius:6px; padding:8px; background:#fff;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="font-weight:600;">Images on this page</div>
+                <div style="display:flex; gap:8px;">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:12px;"><input type="checkbox" id="deepScanToggle"> Deep scan</label>
+                    <button class="btn" id="selectAllBtn" style="padding:6px 10px;">Select all</button>
+                    <button class="btn" id="clearAllBtn" style="padding:6px 10px; background:#6c757d;">Clear</button>
+                </div>
+            </div>
+            <div id="pageImagesGrid" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;"></div>
+            <div style="display:flex; justify-content:center; margin-top:8px;">
+                <button class="btn" id="showMoreBtn" style="padding:6px 12px;">Show more</button>
+            </div>
+        </div>
+
+        <!-- Result preview -->
+        <div id="resultSection" style="display:none; margin-top:16px; padding:12px; background:#fff; border:1px solid #ddd; border-radius:6px;">
+            <div style="font-weight:600; margin-bottom:8px;">Preview</div>
+            <img id="resultPreview" alt="Processed preview" style="max-width:100%; border-radius:4px; border:1px solid #eee;" />
+            <div style="display:flex; gap:8px; margin-top:10px;">
+                <button class="btn" id="downloadBtn">Download</button>
+                <button class="btn" id="clearPreviewBtn" style="background:#6c757d;">Clear</button>
+            </div>
+        </div>
+
+        <!-- Quick preview for context-menu actions (Home tab) -->
+        <div id="homeQuickPreviewSection" style="display:none; margin-top:12px; padding:12px; background:#fff; border:1px solid #ddd; border-radius:6px;">
+            <div style="font-weight:600; margin-bottom:8px;">Preview</div>
+            <img id="homeQuickPreview" alt="Processed preview" style="max-width:100%; border-radius:4px; border:1px solid #eee;" />
+            <div style="display:flex; gap:8px; margin-top:10px;">
+                <button class="btn" id="homeQuickDownloadBtn">Download</button>
+                <button class="btn" id="homeQuickClearBtn" style="background:#6c757d;">Clear</button>
+            </div>
+        </div>
+
+        <!-- Actions toolbar for selected images -->
+        <div id="actionsToolbar" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #ddd; border-radius:6px;">
+            <div style="font-weight:600; margin-bottom:8px;">Actions for selected images</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn" id="actRemoveBg">🎭 Remove Background</button>
+                <button class="btn" id="actBlurBg">🌫️ Blur</button>
+                <button class="btn" id="actEnhance">✨ Enhance</button>
+                <button class="btn" id="actUpscale">🔍 Upscale</button>
+                <button class="btn" id="actChangeBgColor">🎨 Change BG Color</button>
+                <button class="btn" id="actDownloadOriginal" style="background:#1e3a8a;">⬇️ Download Original</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+            <h4>How to Use:</h4>
+            <ol style="font-size: 12px; margin: 10px 0;">
+                
+                <li><strong>Upload images Or right-click</strong> any image and select "Edit with ChangeImageTo"</li>
+                <li>The processed image will appear on the webpage</li>
+            </ol>
+        </div>
+    </div>
+    
+    <!-- Picked view (reuses picker + actions) -->
+    <div class="content" id="viewPicked" style="display:none;">
+        <div id="emptyPicked" style="display:none; background:#fff; border:1px solid #e9ecef; border-radius:6px; padding:14px;">
+            <div style="font-size:14px; margin-bottom:8px;">No images picked from this page yet.</div>
+            <button class="btn" id="ctaPickFromPage">Pick Images From Page</button>
+        </div>
+        <!-- Inline preview for picked tab -->
+        <div id="pickedResultSection" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #ddd; border-radius:6px;">
+            <div style="font-weight:600; margin-bottom:8px;">Preview</div>
+            <img id="pickedResultPreview" alt="Processed preview" style="max-width:100%; border-radius:4px; border:1px solid #eee;" />
+            <div style="display:flex; gap:8px; margin-top:10px;">
+                <button class="btn" id="pickedDownloadBtn">Download</button>
+                <button class="btn" id="pickedClearBtn" style="background:#6c757d;">Clear</button>
+            </div>
+        </div>
+        <!-- Results gallery for bulk -->
+        <div id="pickedResultsGallery" style="display:none; margin-top:12px; background:#fff; border:1px solid #ddd; border-radius:6px; padding:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="font-weight:600;">Processed Results</div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn" id="pickedCloseGallery" style="margin:0; background:#6c757d;">Close</button>
+                    <div id="pickedProgress" style="font-size:12px; color:#555;"></div>
+                    <button class="btn" id="pickedDownloadAll" style="margin:0; background:#1e3a8a;">Download All</button>
+                </div>
+            </div>
+            <div id="pickedResultsGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;"></div>
+        </div>
+    </div>
+    
+    <!-- Uploaded view (preview + actions) -->
+    <div class="content" id="viewUploaded" style="display:none;">
+        <div id="emptyUploaded" style="display:none; background:#fff; border:1px solid #e9ecef; border-radius:6px; padding:14px;">
+            <div style="font-size:14px; margin-bottom:8px;">No image uploaded yet.</div>
+            <button class="btn" id="ctaUploadFromEmpty">Upload Image</button>
+        </div>
+        <!-- Preview will be inserted above this toolbar -->
+        <div id="uploadedActionsToolbar" style="display:none; margin-top:12px; padding:10px; background:#fff; border:1px solid #ddd; border-radius:6px;">
+            <div style="font-weight:600; margin-bottom:8px;">Actions for uploaded image</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn" id="uplRemoveBg">🎭 Remove Background</button>
+                <button class="btn" id="uplBlurBg">🌫️ Blur</button>
+                <button class="btn" id="uplEnhance">✨ Enhance</button>
+                <button class="btn" id="uplUpscale">🔍 Upscale</button>
+                <button class="btn" id="uplChangeBgColor">🎨 Change BG Color</button>
+                <button class="btn" id="uplDownloadOriginal" style="background:#1e3a8a;">⬇️ Download Original</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader overlay -->
+    <div id="loadingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:12px 16px; border-radius:8px; display:flex; align-items:center; gap:10px; box-shadow:0 2px 10px rgba(0,0,0,0.2);">
+            <div style="width:18px; height:18px; border:3px solid #e9ecef; border-top-color:#4CAF50; border-radius:50%; animation:spin 1s linear infinite;"></div>
+            <div id="loadingText" style="font-size:13px; color:#333;">Processing...</div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+        body.busy { cursor: progress; }
+        body.busy .btn { opacity: 0.6; pointer-events: none; }
+    </style>
+    
+    <script src="popup-simple.js"></script>
+</body>
+</html>
