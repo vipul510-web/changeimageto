@@ -203,13 +203,24 @@
                 break;
                 
             case 'getSelectedImages':
-                // Forward to content script
-                chrome.tabs.sendMessage(sender.tab.id, request, sendResponse);
+                // With content script removed, enumerate images via executeScript on demand
+                (async () => {
+                    try {
+                        const tabId = (sender && sender.tab && sender.tab.id != null) ? sender.tab.id : await getActiveTabId();
+                        if (tabId == null) { sendResponse({ images: [] }); return; }
+                        const results = await chrome.scripting.executeScript({
+                            target: { tabId, allFrames: true },
+                            func: () => Array.from(document.images || []).filter(im => (im.naturalWidth||im.width)>=50 && (im.naturalHeight||im.height)>=50).map(im => ({ src: im.currentSrc || im.src || '', alt: im.alt || '', width: im.naturalWidth||im.width||0, height: im.naturalHeight||im.height||0 }))
+                        });
+                        const images = (results || []).flatMap(r => r.result || []);
+                        sendResponse({ images });
+                    } catch (_) { try { sendResponse({ images: [] }); } catch {} }
+                })();
                 return true;
                 
             case 'clearSelection':
-                // Forward to content script
-                chrome.tabs.sendMessage(sender.tab.id, request, sendResponse);
+                // No-op without content script; respond success
+                try { sendResponse({ success: true }); } catch(_) {}
                 return true;
         }
     });
@@ -368,11 +379,13 @@
                 }
             } catch (_) {}
             
-            // Send error to content script
-            chrome.tabs.sendMessage(tabId, {
-                action: 'showError',
-                error: error.message
-            });
+            // Send error to content script (ignore if content script not present)
+            try {
+                chrome.tabs.sendMessage(tabId, {
+                    action: 'showError',
+                    error: error.message
+                }, () => { void chrome.runtime?.lastError; });
+            } catch (_) {}
             // Notify popup that processing ended (with error)
             try { chrome.runtime.sendMessage({ action: 'processingEnded', operation }); } catch (_) {}
             
