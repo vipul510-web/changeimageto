@@ -36,11 +36,6 @@ try:
 except Exception:
     pytesseract = None
 
-try:
-    import easyocr
-except Exception:
-    easyocr = None
-
 from rembg import remove, new_session
 
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
@@ -1966,18 +1961,18 @@ async def remove_text(
         text_mask = np.zeros(opencv_image.shape[:2], dtype=np.uint8)
         
         try:
-            if not easyocr:
+            if not pytesseract:
                 raise HTTPException(status_code=500, detail="Text detection not available")
                 
-            # Use EasyOCR for text detection
-            reader = easyocr.Reader(['en'])
-            results = reader.readtext(opencv_image)
+            # Use Tesseract for text detection (more memory efficient)
+            # Get text regions using Tesseract
+            data = pytesseract.image_to_data(proc_image, output_type=pytesseract.Output.DICT)
             
-            for (bbox, text, confidence) in results:
-                if confidence > 0.5:  # Only remove high-confidence text
-                    # Convert bbox to polygon points
-                    points = np.array(bbox, dtype=np.int32)
-                    cv2.fillPoly(text_mask, [points], 255)
+            for i in range(len(data['text'])):
+                if int(data['conf'][i]) > 50:  # Confidence threshold
+                    x, y, w, h = data['left'][i], data['top'][i], data['width'][i], data['height'][i]
+                    if w > 10 and h > 10:  # Filter out very small detections
+                        cv2.rectangle(text_mask, (x, y), (x + w, y + h), 255, -1)
                 
         except Exception as e:
             log_user_action("text_detection_error", {"error": str(e)})
