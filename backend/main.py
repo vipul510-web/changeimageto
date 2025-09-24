@@ -2072,6 +2072,16 @@ async def remove_painted_areas(
         # Create binary mask (white = remove, black = keep)
         binary_mask = (opencv_mask > 128).astype(np.uint8) * 255
         
+        # Debug logging
+        log_user_action("mask_debug", {
+            "mask_shape": opencv_mask.shape,
+            "mask_min": int(opencv_mask.min()),
+            "mask_max": int(opencv_mask.max()),
+            "mask_mean": float(opencv_mask.mean()),
+            "binary_mask_sum": int(np.sum(binary_mask)),
+            "binary_mask_pixels": int(np.sum(binary_mask > 0))
+        })
+        
         # Check if any areas are marked for removal
         if np.sum(binary_mask) == 0:
             log_user_action("no_areas_marked_for_removal", {})

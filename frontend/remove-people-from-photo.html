@@ -431,7 +431,24 @@
         }
         
         getMaskData() {
-          return this.maskCanvas.toDataURL('image/png');
+          const maskData = this.maskCanvas.toDataURL('image/png');
+          console.log('Mask data length:', maskData.length);
+          
+          // Check if mask has any content
+          const ctx = this.maskCanvas.getContext('2d');
+          const imageData = ctx.getImageData(0, 0, this.maskCanvas.width, this.maskCanvas.height);
+          const data = imageData.data;
+          let hasContent = false;
+          
+          for (let i = 0; i < data.length; i += 4) {
+            if (data[i] > 0 || data[i + 1] > 0 || data[i + 2] > 0) { // Check RGB channels
+              hasContent = true;
+              break;
+            }
+          }
+          
+          console.log('Mask has content:', hasContent);
+          return maskData;
         }
         
         loadImage(file) {
@@ -471,11 +488,22 @@
               // Clear mask and set up canvas
               this.clearMask();
               
+              // Set up canvas context for painting
+              this.ctx.globalCompositeOperation = 'source-over';
+              this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+              this.ctx.lineCap = 'round';
+              this.ctx.lineJoin = 'round';
+              
               // Show painting interface
               document.getElementById('painting-interface').style.display = 'block';
               document.getElementById('instructions').style.display = 'block';
               
-              console.log('Canvas setup complete:', { width, height });
+              console.log('Canvas setup complete:', { 
+                width, 
+                height, 
+                imageCanvas: { width: this.imageCanvas.width, height: this.imageCanvas.height },
+                maskCanvas: { width: this.maskCanvas.width, height: this.maskCanvas.height }
+              });
             };
             img.src = e.target.result;
           };
@@ -509,9 +537,17 @@
         processBtn.disabled = true;
         
         try {
+          const maskData = brushTool.getMaskData();
+          console.log('Sending mask data:', maskData.substring(0, 100) + '...');
+          
           const formData = new FormData();
           formData.append('file', brushTool.currentFile);
-          formData.append('mask_data', brushTool.getMaskData());
+          formData.append('mask_data', maskData);
+          
+          console.log('FormData entries:');
+          for (let [key, value] of formData.entries()) {
+            console.log(key, typeof value, value.length || value.size);
+          }
           
           const response = await fetch('/api/remove-painted-areas', {
             method: 'POST',
