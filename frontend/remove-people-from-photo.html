@@ -71,7 +71,7 @@
         background: #f8f9fa;
       }
       
-      #image-canvas, #mask-canvas {
+      #image-canvas {
         display: block;
         max-width: 100%;
         height: auto;
@@ -82,11 +82,12 @@
         position: absolute;
         top: 0;
         left: 0;
-        pointer-events: none;
-      }
-      
-      .canvas-container.painting #mask-canvas {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        cursor: crosshair;
         pointer-events: auto;
+        z-index: 10;
       }
       
       .brush-info {
@@ -220,6 +221,8 @@
 
       <!-- Result Section -->
       <div class="result-section" id="result-section">
+        <h3 style="text-align: center; margin-bottom: 20px;">Processing Complete!</h3>
+        
         <div class="comparison">
           <div class="comparison-item">
             <h4>Original</h4>
@@ -228,11 +231,13 @@
           <div class="comparison-item">
             <h4>Result</h4>
             <img id="result-img" src="" alt="Processed image" />
+            <div style="text-align: center; margin-top: 15px;">
+              <a id="download-link" class="download-btn" download="">Download Result</a>
+            </div>
           </div>
         </div>
         
         <div style="text-align: center; margin-top: 20px;">
-          <a id="download-link" class="download-btn" download="">Download Result</a>
           <button class="reset-btn" onclick="resetInterface()">Remove More People</button>
         </div>
       </div>
@@ -321,10 +326,31 @@
         }
         
         setupEventListeners() {
+          // Mouse events
           this.maskCanvas.addEventListener('mousedown', this.startPainting.bind(this));
           this.maskCanvas.addEventListener('mousemove', this.paint.bind(this));
           this.maskCanvas.addEventListener('mouseup', this.stopPainting.bind(this));
           this.maskCanvas.addEventListener('mouseleave', this.stopPainting.bind(this));
+          
+          // Touch events for mobile
+          this.maskCanvas.addEventListener('touchstart', this.handleTouch.bind(this));
+          this.maskCanvas.addEventListener('touchmove', this.handleTouch.bind(this));
+          this.maskCanvas.addEventListener('touchend', this.stopPainting.bind(this));
+        }
+        
+        handleTouch(e) {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+          });
+          
+          if (e.type === 'touchstart') {
+            this.startPainting(mouseEvent);
+          } else {
+            this.paint(mouseEvent);
+          }
         }
         
         startPainting(e) {
@@ -354,6 +380,8 @@
           this.ctx.beginPath();
           this.ctx.arc(x, y, this.brushSize, 0, Math.PI * 2);
           this.ctx.fill();
+          
+          console.log('Painting at:', { x, y, brushSize: this.brushSize, isErasing: this.isErasing });
         }
         
         stopPainting() {
@@ -424,21 +452,30 @@
                 height *= ratio;
               }
               
+              // Set canvas internal dimensions
               this.imageCanvas.width = width;
               this.imageCanvas.height = height;
               this.maskCanvas.width = width;
               this.maskCanvas.height = height;
               
+              // Set canvas display dimensions (CSS)
+              this.imageCanvas.style.width = width + 'px';
+              this.imageCanvas.style.height = height + 'px';
+              this.maskCanvas.style.width = width + 'px';
+              this.maskCanvas.style.height = height + 'px';
+              
               // Draw image
               const imgCtx = this.imageCanvas.getContext('2d');
               imgCtx.drawImage(img, 0, 0, width, height);
               
-              // Clear mask
+              // Clear mask and set up canvas
               this.clearMask();
               
               // Show painting interface
               document.getElementById('painting-interface').style.display = 'block';
               document.getElementById('instructions').style.display = 'block';
+              
+              console.log('Canvas setup complete:', { width, height });
             };
             img.src = e.target.result;
           };
