@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { href: '/enhance-image.html', label: 'Enhance Image' },
             { href: '/upscale-image.html', label: 'AI Image Upscaler' },
             { href: '/remove-text-from-image.html', label: 'Remove Text from Image' },
+            { href: '/remove-people-from-photo.html', label: 'Remove People from Photos' },
             { href: '/change-color-of-image.html', label: 'Change color of image online' },
             { href: '/change-image-background.html', label: 'Change image background' },
             { href: '/convert-image-format.html', label: 'Convert image format' },
@@ -86,6 +87,7 @@ function getPageType() {
     if (path === '/blur-background.html') return 'blur_background';
     if (path === '/enhance-image.html') return 'enhance_image';
     if (path === '/remove-text-from-image.html') return 'remove_text';
+    if (path === '/remove-people-from-photo.html') return 'remove_people';
     
     return 'unknown';
 }
@@ -98,6 +100,7 @@ function updateCtaText(){
   const isBlurPage = window.location.pathname === '/blur-background.html';
   const isEnhancePage = window.location.pathname === '/enhance-image.html';
   const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
+  const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
   const isDenoisePage = false;
   
   if (isColorChangePage) {
@@ -115,6 +118,9 @@ function updateCtaText(){
   } else if (isRemoveTextPage) {
     processBtn.textContent = 'Remove Text';
     processBtn.setAttribute('aria-label', 'Remove Text');
+  } else if (isRemovePeoplePage) {
+    processBtn.textContent = 'Remove Painted Areas';
+    processBtn.setAttribute('aria-label', 'Remove Painted Areas');
   } else if (isColorPage) {
     processBtn.textContent = 'Change image background';
     processBtn.setAttribute('aria-label', 'Change image background');
@@ -132,6 +138,7 @@ function updatePromptText(){
   const isBlurPage = window.location.pathname === '/blur-background.html';
   const isEnhancePage = window.location.pathname === '/enhance-image.html';
   const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
+  const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
   const isDenoisePage = false;
   
   if (isColorChangePage) {
@@ -144,6 +151,8 @@ function updatePromptText(){
     prompt.textContent = 'Press "Enhance Image" to process.';
   } else if (isRemoveTextPage) {
     prompt.textContent = 'Press "Remove Text" to process.';
+  } else if (isRemovePeoplePage) {
+    prompt.textContent = 'Paint over people to remove, then press "Remove Painted Areas".';
   } else if (isColorPage) {
     prompt.textContent = 'Press "Change image background" to process.';
   } else {

@@ -2021,6 +2021,94 @@ async def remove_text(
         raise HTTPException(status_code=500, detail=f"Text removal error: {str(e)}")
 
 
+@app.post("/api/remove-painted-areas")
+async def remove_painted_areas(
+    request: Request,
+    file: UploadFile = File(...),
+    mask_data: str = Form(...),
+):
+    """Remove areas painted by user using inpainting."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    log_user_action("painted_areas_removal_request", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "filename": file.filename,
+    })
+    
+    try:
+        import base64
+        
+        # Load original image
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        
+        # Decode mask from base64
+        try:
+            # Remove data URL prefix if present
+            if ',' in mask_data:
+                mask_data = mask_data.split(',')[1]
+            mask_bytes = base64.b64decode(mask_data)
+            mask = Image.open(io.BytesIO(mask_bytes)).convert("L")  # Grayscale
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid mask data: {str(e)}")
+        
+        # Ensure mask and image are same size
+        if mask.size != image.size:
+            mask = mask.resize(image.size, Image.LANCZOS)
+        
+        # Downscale for processing efficiency
+        proc_image = downscale_image_if_needed(image)
+        proc_mask = mask.resize(proc_image.size, Image.LANCZOS)
+        
+        # Convert to OpenCV format
+        opencv_image = cv2.cvtColor(np.array(proc_image), cv2.COLOR_RGB2BGR)
+        opencv_mask = np.array(proc_mask)
+        
+        # Create binary mask (white = remove, black = keep)
+        binary_mask = (opencv_mask > 128).astype(np.uint8) * 255
+        
+        # Check if any areas are marked for removal
+        if np.sum(binary_mask) == 0:
+            log_user_action("no_areas_marked_for_removal", {})
+            # Return original image if no areas marked
+            buf = io.BytesIO()
+            image.save(buf, format="PNG")
+            return Response(content=buf.getvalue(), media_type="image/png")
+        
+        # Dilate the mask slightly to ensure complete removal
+        kernel = np.ones((3, 3), np.uint8)
+        binary_mask = cv2.dilate(binary_mask, kernel, iterations=1)
+        
+        # Apply inpainting using TELEA algorithm (good for natural results)
+        result = cv2.inpaint(opencv_image, binary_mask, 3, cv2.INPAINT_TELEA)
+        
+        # Convert back to PIL
+        result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+        
+        # Resize back to original size if we downscaled
+        if result_image.size != image.size:
+            result_image = result_image.resize(image.size, Image.LANCZOS)
+        
+        log_user_action("painted_areas_removal_success", {
+            "painted_pixels_removed": int(np.sum(binary_mask > 0))
+        })
+        
+        buf = io.BytesIO()
+        result_image.save(buf, format="PNG")
+        return Response(content=buf.getvalue(), media_type="image/png")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("painted_areas_removal_error", {"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"Painted areas removal failed: {str(e)}")
+
+
 @app.post("/api/bulk-resize")
 async def bulk_resize(
     request: Request,

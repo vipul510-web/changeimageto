@@ -31,6 +31,7 @@ PRIORITY_RULES = [
     (r"^enhance-image\.html$", 0.9, "weekly"),
     (r"^upscale-image\.html$", 0.9, "weekly"),
     (r"^remove-text-from-image\.html$", 0.9, "weekly"),
+    (r"^remove-people-from-photo\.html$", 0.9, "weekly"),
     (r"^blur-background\.html$", 0.9, "weekly"),
     (r"^bulk-image-resizer\.html$", 0.9, "weekly"),
     (r"^image-quality-checker\.html$", 0.9, "weekly"),
