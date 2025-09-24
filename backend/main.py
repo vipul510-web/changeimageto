@@ -2070,7 +2070,8 @@ async def remove_painted_areas(
         opencv_mask = np.array(proc_mask)
         
         # Create binary mask (white = remove, black = keep)
-        binary_mask = (opencv_mask > 128).astype(np.uint8) * 255
+        # Lower threshold since our red overlay with 50% opacity becomes darker when converted to grayscale
+        binary_mask = (opencv_mask > 50).astype(np.uint8) * 255
         
         # Debug logging
         log_user_action("mask_debug", {

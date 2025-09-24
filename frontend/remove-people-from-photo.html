@@ -374,7 +374,7 @@
           } else {
             // Paint mode
             this.ctx.globalCompositeOperation = 'source-over';
-            this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; // Red overlay
+            this.ctx.fillStyle = 'rgba(255, 0, 0, 0.8)'; // More opaque red overlay
           }
           
           this.ctx.beginPath();
@@ -490,7 +490,7 @@
               
               // Set up canvas context for painting
               this.ctx.globalCompositeOperation = 'source-over';
-              this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+              this.ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
               this.ctx.lineCap = 'round';
               this.ctx.lineJoin = 'round';
               
