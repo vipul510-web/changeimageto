@@ -2003,7 +2003,6 @@ async def remove_text(
                 result_image = result_image.resize(image.size, Image.LANCZOS)
             
             log_user_action("text_removal_success", {
-                "method": method,
                 "text_pixels_removed": int(np.sum(text_mask > 0))
             })
             
