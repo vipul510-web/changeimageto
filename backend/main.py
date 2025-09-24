@@ -31,6 +31,16 @@ try:
 except Exception:
     TrendReq = None
 
+try:
+    import pytesseract
+except Exception:
+    pytesseract = None
+
+try:
+    import easyocr
+except Exception:
+    easyocr = None
+
 from rembg import remove, new_session
 
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
@@ -1922,6 +1932,99 @@ async def enhance_image(
     except Exception as e:
         log_user_action("enhance_image_error", {"message": str(e)})
         raise HTTPException(status_code=500, detail=f"Enhance image error: {str(e)}")
+
+
+@app.post("/api/remove-text")
+async def remove_text(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Remove text from images using OCR detection and inpainting."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    log_user_action("text_removal_request", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "filename": file.filename,
+    })
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        
+        # Downscale for processing efficiency
+        proc_image = downscale_image_if_needed(image)
+        
+        # Convert PIL to OpenCV format
+        opencv_image = cv2.cvtColor(np.array(proc_image), cv2.COLOR_RGB2BGR)
+        
+        # Create mask for text regions
+        text_mask = np.zeros(opencv_image.shape[:2], dtype=np.uint8)
+        
+        try:
+            if not easyocr:
+                raise HTTPException(status_code=500, detail="Text detection not available")
+                
+            # Use EasyOCR for text detection
+            reader = easyocr.Reader(['en'])
+            results = reader.readtext(opencv_image)
+            
+            for (bbox, text, confidence) in results:
+                if confidence > 0.5:  # Only remove high-confidence text
+                    # Convert bbox to polygon points
+                    points = np.array(bbox, dtype=np.int32)
+                    cv2.fillPoly(text_mask, [points], 255)
+                
+        except Exception as e:
+            log_user_action("text_detection_error", {"error": str(e)})
+            raise HTTPException(status_code=500, detail=f"Text detection failed: {str(e)}")
+        
+        # Check if any text was detected
+        if np.sum(text_mask) == 0:
+            log_user_action("no_text_detected", {})
+            # Return original image if no text detected
+            buf = io.BytesIO()
+            image.save(buf, format="PNG")
+            return Response(content=buf.getvalue(), media_type="image/png")
+        
+        # Dilate the mask slightly to ensure complete text removal
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        text_mask = cv2.dilate(text_mask, kernel, iterations=1)
+        
+        # Use OpenCV inpainting to remove text
+        try:
+            # Apply inpainting using Telea algorithm
+            inpainted = cv2.inpaint(opencv_image, text_mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
+            
+            # Convert back to PIL Image
+            result_image = Image.fromarray(cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB))
+            
+            # Resize back to original size if we downscaled
+            if result_image.size != image.size:
+                result_image = result_image.resize(image.size, Image.LANCZOS)
+            
+            log_user_action("text_removal_success", {
+                "method": method,
+                "text_pixels_removed": int(np.sum(text_mask > 0))
+            })
+            
+            buf = io.BytesIO()
+            result_image.save(buf, format="PNG")
+            return Response(content=buf.getvalue(), media_type="image/png")
+            
+        except Exception as e:
+            log_user_action("inpainting_error", {"error": str(e)})
+            raise HTTPException(status_code=500, detail=f"Text removal failed: {str(e)}")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("text_removal_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Text removal error: {str(e)}")
 
 
 @app.post("/api/bulk-resize")
