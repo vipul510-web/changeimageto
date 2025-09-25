@@ -141,6 +141,34 @@ def log_user_action(action: str, details: dict):
     logger.info(f"USER_ACTION: {json.dumps(log_entry)}")
 
 
+# -----------------------------
+# Inpainting helpers (exemplar + blending)
+# -----------------------------
+def _mask_center(binary_mask: np.ndarray) -> tuple:
+    try:
+        m = cv2.moments(binary_mask, binaryImage=True)
+        if m["m00"] > 0:
+            cx = int(m["m10"] / m["m00"])
+            cy = int(m["m01"] / m["m00"]) 
+            return (cx, cy)
+    except Exception:
+        pass
+    h, w = binary_mask.shape[:2]
+    return (w // 2, h // 2)
+
+def exemplar_inpaint_patchmatch(bgr_image: np.ndarray, binary_mask: np.ndarray) -> np.ndarray:
+    """Try exemplar-based inpainting using OpenCV contrib xphoto Shift-Map.
+    If unavailable, returns original image unchanged.
+    """
+    try:
+        if hasattr(cv2, 'xphoto') and hasattr(cv2.xphoto, 'inpaint'):
+            dst = bgr_image.copy()
+            cv2.xphoto.inpaint(bgr_image, binary_mask, dst, cv2.xphoto.INPAINT_SHIFTMAP)
+            return dst
+    except Exception as e:
+        logger.warning(f"PatchMatch inpaint failed: {e}")
+    return bgr_image
+
 # -----------------
 # Blog helper utils
 # -----------------
@@ -2124,6 +2152,8 @@ async def remove_painted_areas(
         result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
         # Second pass: NS for structural continuity
         result_ns = cv2.inpaint(result_telea, binary_mask, dynamic_radius, cv2.INPAINT_NS)
+        # Third pass: exemplar-based PatchMatch (if available) to improve textures on larger holes
+        result_pm = exemplar_inpaint_patchmatch(result_ns, binary_mask)
 
         # Feather edge to reduce halos
         soft = binary_mask.astype(np.float32) / 255.0
@@ -2132,7 +2162,17 @@ async def remove_painted_areas(
         soft[inner == 255] = 1.0
         soft = np.clip(soft, 0.0, 1.0)
         soft3 = np.repeat(soft[:, :, None], 3, axis=2)
-        result = (soft3 * result_ns.astype(np.float32) + (1.0 - soft3) * opencv_image.astype(np.float32)).astype(np.uint8)
+        # Poisson-like seamless cloning along the boundary when available
+        try:
+            # Build a tight fill region around mask boundary
+            boundary = cv2.dilate(binary_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7)), iterations=1)
+            center = _mask_center(binary_mask)
+            mixed = cv2.seamlessClone(result_pm, result_ns, boundary, center, cv2.MIXED_CLONE)
+            base_for_blend = mixed
+        except Exception:
+            base_for_blend = result_pm
+
+        result = (soft3 * base_for_blend.astype(np.float32) + (1.0 - soft3) * opencv_image.astype(np.float32)).astype(np.uint8)
         
         # Convert back to PIL
         result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
