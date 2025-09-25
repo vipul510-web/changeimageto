@@ -237,6 +237,42 @@ def lama_inpaint_onnx(bgr_image: np.ndarray, binary_mask: np.ndarray) -> np.ndar
     sess = _get_lama_session()
     if sess is None:
         return bgr_image
+    
+    try:
+        # Store original size
+        orig_h, orig_w = bgr_image.shape[:2]
+        
+        # Resize to 512x512 as required by the model
+        img_resized = cv2.resize(bgr_image, (512, 512))
+        mask_resized = cv2.resize(binary_mask, (512, 512))
+        
+        # Convert to RGB and normalize to [0,1]
+        img_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+        mask_norm = mask_resized.astype(np.float32) / 255.0
+        
+        # Prepare inputs - the Hugging Face model expects specific input names
+        img_input = np.expand_dims(img_rgb.transpose(2, 0, 1), axis=0)  # (1, 3, 512, 512)
+        mask_input = np.expand_dims(mask_norm, axis=(0, 1))  # (1, 1, 512, 512)
+        
+        # Run inference
+        outputs = sess.run(None, {
+            "image": img_input,
+            "mask": mask_input
+        })
+        
+        # Convert output back to image
+        result = outputs[0][0].transpose(1, 2, 0)  # (512, 512, 3)
+        result = np.clip(result * 255, 0, 255).astype(np.uint8)
+        result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+        
+        # Resize back to original size
+        result_final = cv2.resize(result_bgr, (orig_w, orig_h))
+        
+        return result_final
+        
+    except Exception as e:
+        logger.warning(f"LaMa ONNX inference failed: {e}")
+        return bgr_image
 
 # -----------------------------
 # LaMa PyTorch (lama-cleaner) integration (lazy)

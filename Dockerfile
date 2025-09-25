@@ -30,11 +30,11 @@ COPY backend/ ./backend/
 ENV DEFAULT_MODEL=u2netp
 ENV MAX_IMAGE_SIDE=1600
 ENV MAX_CONCURRENCY=2
-ENV USE_LAMA=false
+ENV USE_LAMA=true
 ENV LAMA_MASK_THRESHOLD=0.03
 ENV MODEL_WARMUP=false
 ENV LAMA_ONNX_PATH=/workspace/models/lama.onnx
-ENV LAMA_ONNX_URL=https://github.com/saic-mdal/lama/releases/download/v1.0/big-lama.onnx
+ENV LAMA_ONNX_URL=https://huggingface.co/Carve/LaMa-ONNX/resolve/main/lama_fp32.onnx
 
 # Expose port
 EXPOSE 8080
