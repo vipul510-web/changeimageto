@@ -2256,7 +2256,11 @@ async def remove_painted_areas(
             "mask_max": int(opencv_mask.max()),
             "mask_mean": float(opencv_mask.mean()),
             "binary_mask_sum": int(np.sum(binary_mask)),
-            "binary_mask_pixels": int(np.sum(binary_mask > 0))
+            "binary_mask_pixels": int(np.sum(binary_mask > 0)),
+            "use_lama": use_lama,
+            "large_hole": large_hole,
+            "area_ratio": area_ratio,
+            "lama_available": _get_lama_session() is not None
         })
         
         # Check if any areas are marked for removal
