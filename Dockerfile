@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -9,8 +9,6 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     libjpeg62-turbo \
     libpng16-16 \
-    build-essential \
-    git \
     tesseract-ocr \
     tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
@@ -36,7 +34,7 @@ ENV USE_LAMA=true
 ENV LAMA_IMPL=torch
 ENV LAMA_MASK_THRESHOLD=0.03
 ENV MODEL_WARMUP=true
-ENV PORT=8080
+ENV CUDA_VISIBLE_DEVICES=""
 
 # Expose port
 EXPOSE 8080
