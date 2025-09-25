@@ -7,6 +7,10 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender-dev \
     libgomp1 \
+    libjpeg62-turbo \
+    libpng16-16 \
+    build-essential \
+    git \
     tesseract-ocr \
     tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
@@ -28,6 +32,10 @@ COPY backend/ ./backend/
 ENV DEFAULT_MODEL=u2netp
 ENV MAX_IMAGE_SIDE=1600
 ENV MAX_CONCURRENCY=2
+ENV USE_LAMA=true
+ENV LAMA_IMPL=torch
+ENV LAMA_MASK_THRESHOLD=0.03
+ENV MODEL_WARMUP=true
 ENV PORT=8080
 
 # Expose port
