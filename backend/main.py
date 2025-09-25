@@ -37,6 +37,10 @@ except Exception:
     pytesseract = None
 
 from rembg import remove, new_session
+try:
+    import onnxruntime as ort
+except Exception:
+    ort = None
 
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
 
@@ -168,6 +172,64 @@ def exemplar_inpaint_patchmatch(bgr_image: np.ndarray, binary_mask: np.ndarray) 
     except Exception as e:
         logger.warning(f"PatchMatch inpaint failed: {e}")
     return bgr_image
+
+# -----------------------------
+# LaMa ONNX integration (optional)
+# -----------------------------
+_LAMA_SESSION = None
+_LAMA_PROVIDERS = None
+
+def _get_lama_session():
+    global _LAMA_SESSION, _LAMA_PROVIDERS
+    if _LAMA_SESSION is not None:
+        return _LAMA_SESSION
+    model_path = os.getenv("LAMA_ONNX_PATH", "").strip()
+    if not model_path or not os.path.exists(model_path) or ort is None:
+        return None
+    try:
+        # Prefer CPUExecutionProvider; enable OpenVINO or TensorRT if present
+        providers = ["CPUExecutionProvider"]
+        _LAMA_PROVIDERS = providers
+        _LAMA_SESSION = ort.InferenceSession(model_path, providers=providers)
+        logger.info(f"LaMa ONNX loaded with providers: {_LAMA_SESSION.get_providers()}")
+        return _LAMA_SESSION
+    except Exception as e:
+        logger.warning(f"Failed to load LaMa ONNX: {e}")
+        return None
+
+def lama_inpaint_onnx(bgr_image: np.ndarray, binary_mask: np.ndarray) -> np.ndarray:
+    """Attempt LaMa ONNX inference. Returns original on failure."""
+    sess = _get_lama_session()
+    if sess is None:
+        return bgr_image
+    try:
+        img = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+        mask = (binary_mask > 0).astype(np.uint8) * 255
+        h, w = img.shape[:2]
+        # LaMa prefers multiples of 8
+        pad_h = (8 - h % 8) % 8
+        pad_w = (8 - w % 8) % 8
+        if pad_h or pad_w:
+            img = cv2.copyMakeBorder(img, 0, pad_h, 0, pad_w, cv2.BORDER_REFLECT)
+            mask = cv2.copyMakeBorder(mask, 0, pad_h, 0, pad_w, cv2.BORDER_CONSTANT, value=0)
+        inp = img.astype(np.float32) / 255.0
+        m = (mask.astype(np.float32) / 255.0)
+        # BCHW
+        inp = np.transpose(inp, (2, 0, 1))[None, ...]
+        m = m[None, None, ...]
+        # Find input names heuristically
+        inputs = {sess.get_inputs()[0].name: inp, sess.get_inputs()[1].name: m}
+        out = sess.run(None, inputs)[0]
+        # CHW -> HWC
+        out = np.squeeze(out, axis=0)
+        out = np.transpose(out, (1, 2, 0))
+        out = np.clip(out * 255.0, 0, 255).astype(np.uint8)
+        if pad_h or pad_w:
+            out = out[:h, :w]
+        return cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
+    except Exception as e:
+        logger.warning(f"LaMa ONNX inference failed, falling back: {e}")
+        return bgr_image
 
 # -----------------
 # Blog helper utils
@@ -2148,12 +2210,17 @@ async def remove_painted_areas(
         # If very large region, increase radius slightly
         dynamic_radius = int(max(base_radius, 8 if area_ratio > 0.08 else base_radius))
 
-        # First pass: Telea
-        result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
-        # Second pass: NS for structural continuity
-        result_ns = cv2.inpaint(result_telea, binary_mask, dynamic_radius, cv2.INPAINT_NS)
-        # Third pass: exemplar-based PatchMatch (if available) to improve textures on larger holes
-        result_pm = exemplar_inpaint_patchmatch(result_ns, binary_mask)
+        use_lama = os.getenv("USE_LAMA", "true").lower() in ("1","true","yes")
+        large_hole = area_ratio > float(os.getenv("LAMA_MASK_THRESHOLD", "0.03"))
+        if use_lama and large_hole and _get_lama_session() is not None:
+            result_base = lama_inpaint_onnx(opencv_image, binary_mask)
+        else:
+            # First pass: Telea
+            result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
+            # Second pass: NS for structural continuity
+            result_ns = cv2.inpaint(result_telea, binary_mask, dynamic_radius, cv2.INPAINT_NS)
+            # Third pass: exemplar-based PatchMatch (if available) to improve textures on larger holes
+            result_base = exemplar_inpaint_patchmatch(result_ns, binary_mask)
 
         # Feather edge to reduce halos
         soft = binary_mask.astype(np.float32) / 255.0
@@ -2167,10 +2234,10 @@ async def remove_painted_areas(
             # Build a tight fill region around mask boundary
             boundary = cv2.dilate(binary_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7)), iterations=1)
             center = _mask_center(binary_mask)
-            mixed = cv2.seamlessClone(result_pm, result_ns, boundary, center, cv2.MIXED_CLONE)
+            mixed = cv2.seamlessClone(result_base, opencv_image, boundary, center, cv2.MIXED_CLONE)
             base_for_blend = mixed
         except Exception:
-            base_for_blend = result_pm
+            base_for_blend = result_base
 
         result = (soft3 * base_for_blend.astype(np.float32) + (1.0 - soft3) * opencv_image.astype(np.float32)).astype(np.uint8)
         
