@@ -33,6 +33,8 @@ ENV MAX_CONCURRENCY=2
 ENV USE_LAMA=true
 ENV LAMA_MASK_THRESHOLD=0.03
 ENV MODEL_WARMUP=false
+ENV LAMA_ONNX_PATH=/workspace/models/lama.onnx
+ENV LAMA_ONNX_URL=https://github.com/saic-mdal/lama/releases/download/v1.0/big-lama.onnx
 
 # Expose port
 EXPOSE 8080

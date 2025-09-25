@@ -2288,6 +2288,7 @@ async def remove_painted_areas(
         })
         if use_lama and large_hole and _get_lama_session() is not None:
             result_base = lama_inpaint_onnx(opencv_image, binary_mask)
+            log_user_action("inpaint_method", {"method": "lama_onnx"})
         else:
             # First pass: Telea
             result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
@@ -2295,6 +2296,7 @@ async def remove_painted_areas(
             result_ns = cv2.inpaint(result_telea, binary_mask, dynamic_radius, cv2.INPAINT_NS)
             # Third pass: exemplar-based PatchMatch (if available) to improve textures on larger holes
             result_base = exemplar_inpaint_patchmatch(result_ns, binary_mask)
+            log_user_action("inpaint_method", {"method": "opencv_fallback", "radius": dynamic_radius})
 
         # Feather edge to reduce halos
         soft = binary_mask.astype(np.float32) / 255.0
