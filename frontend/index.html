@@ -61,6 +61,12 @@
       .feature-btn{display:inline-block;background:var(--accent);color:#001633;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;transition:all 0.2s ease}
       .feature-card .stretched-link{position:absolute;inset:0;z-index:1;border-radius:16px;font-size:0;line-height:0;color:transparent;text-decoration:none}
       .feature-card .feature-btn{position:relative;z-index:2}
+      .announcement-hero{background:linear-gradient(135deg,#14324b,#0b0f13);border:1px solid var(--border);border-radius:16px;padding:24px 28px;margin:12px 0 36px;display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+      .announcement-hero h2{margin:0;font-size:22px}
+      .announcement-hero p{margin:0;color:var(--muted)}
+      .announcement-actions{display:flex;gap:12px;margin-left:auto}
+      .btn{display:inline-block;background:var(--accent);color:#001633;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600}
+      .btn.secondary{background:#233142;color:#eaf0f6}
       .quick-colors{margin:60px 0}
       .quick-colors h2{text-align:center;margin-bottom:32px;font-size:28px;color:var(--fg)}
       .color-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;max-width:800px;margin:0 auto}
@@ -110,6 +116,18 @@
     </header>
 
     <main class="container">
+      <!-- New Feature Announcement -->
+      <section class="announcement-hero" aria-label="New feature announcement">
+        <div>
+          <h2>New: Edit result and remove more in one flow</h2>
+          <p>Not satisfied after the first pass? Reuse the output as input and keep removing until it’s perfect.</p>
+        </div>
+        <div class="announcement-actions">
+          <a href="/remove-people-from-photo.html" class="btn">Try Remove More</a>
+          <a href="/remove-text-from-image.html" class="btn secondary">Remove More Text</a>
+        </div>
+      </section>
+
       <!-- Hero Section with Main Features -->
       <section class="hero-features">
         <div class="feature-grid">
