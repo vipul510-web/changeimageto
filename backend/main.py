@@ -179,15 +179,32 @@ def exemplar_inpaint_patchmatch(bgr_image: np.ndarray, binary_mask: np.ndarray) 
 _LAMA_SESSION = None
 _LAMA_PROVIDERS = None
 
+def _maybe_download_lama(model_path: str) -> None:
+    try:
+        url = os.getenv("LAMA_ONNX_URL", "").strip()
+        if not url or os.path.exists(model_path):
+            return
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        import requests
+        r = requests.get(url, timeout=60)
+        r.raise_for_status()
+        with open(model_path, "wb") as f:
+            f.write(r.content)
+    except Exception as e:
+        logger.warning(f"LaMa ONNX download skipped/failed: {e}")
+
 def _get_lama_session():
     global _LAMA_SESSION, _LAMA_PROVIDERS
     if _LAMA_SESSION is not None:
         return _LAMA_SESSION
     model_path = os.getenv("LAMA_ONNX_PATH", "").strip()
-    if not model_path or not os.path.exists(model_path) or ort is None:
+    if not model_path or ort is None:
+        return None
+    if not os.path.exists(model_path):
+        _maybe_download_lama(model_path)
+    if not os.path.exists(model_path):
         return None
     try:
-        # Prefer CPUExecutionProvider; enable OpenVINO or TensorRT if present
         providers = ["CPUExecutionProvider"]
         _LAMA_PROVIDERS = providers
         _LAMA_SESSION = ort.InferenceSession(model_path, providers=providers)
