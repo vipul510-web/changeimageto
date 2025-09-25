@@ -41,6 +41,12 @@ try:
     import onnxruntime as ort
 except Exception:
     ort = None
+try:
+    # LaMa via lama-cleaner (PyTorch)
+    from lama_cleaner.model_manager import ModelManager
+    from lama_cleaner.schema import HDStrategy
+except Exception:
+    ModelManager = None
 
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
 
@@ -144,6 +150,24 @@ def log_user_action(action: str, details: dict):
     }
     logger.info(f"USER_ACTION: {json.dumps(log_entry)}")
 
+# Background warmup for LaMa to reduce first-hit latency on Remove People
+@app.on_event("startup")
+async def _warmup_lama_background():
+    try:
+        if os.getenv("MODEL_WARMUP", "true").lower() not in ("1","true","yes"):
+            return
+        # Warm in a thread to avoid blocking startup
+        loop = asyncio.get_event_loop()
+        def init_models():
+            try:
+                if os.getenv("USE_LAMA", "true").lower() in ("1","true","yes") and os.getenv("LAMA_IMPL", "torch").lower() == "torch":
+                    _ = _get_lama_manager()
+            except Exception as e:
+                logger.warning(f"Warmup failed: {e}")
+        loop.run_in_executor(None, init_models)
+    except Exception as e:
+        logger.warning(f"Warmup scheduling failed: {e}")
+
 
 # -----------------------------
 # Inpainting helpers (exemplar + blending)
@@ -178,6 +202,7 @@ def exemplar_inpaint_patchmatch(bgr_image: np.ndarray, binary_mask: np.ndarray) 
 # -----------------------------
 _LAMA_SESSION = None
 _LAMA_PROVIDERS = None
+_LAMA_MANAGER = None
 
 def _maybe_download_lama(model_path: str) -> None:
     try:
@@ -218,6 +243,41 @@ def lama_inpaint_onnx(bgr_image: np.ndarray, binary_mask: np.ndarray) -> np.ndar
     """Attempt LaMa ONNX inference. Returns original on failure."""
     sess = _get_lama_session()
     if sess is None:
+        return bgr_image
+
+# -----------------------------
+# LaMa PyTorch (lama-cleaner) integration (lazy)
+# -----------------------------
+def _get_lama_manager():
+    global _LAMA_MANAGER
+    if _LAMA_MANAGER is not None:
+        return _LAMA_MANAGER
+    if ModelManager is None:
+        return None
+    try:
+        # Minimal config for CPU
+        device = "cpu"
+        sd = os.getenv("LAMA_SD", "lama")
+        # Lazy download on first init handled by ModelManager
+        _LAMA_MANAGER = ModelManager(name=sd, device=device)
+        logger.info("LaMa PyTorch (lama-cleaner) initialized")
+        return _LAMA_MANAGER
+    except Exception as e:
+        logger.warning(f"Failed to init LaMa (lama-cleaner): {e}")
+        return None
+
+def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray) -> np.ndarray:
+    mgr = _get_lama_manager()
+    if mgr is None:
+        return bgr_image
+    try:
+        img = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+        mask = (binary_mask > 0).astype(np.uint8) * 255
+        # Use resize strategy to control memory/time
+        res = mgr.inpaint(img, mask, hd_strategy=HDStrategy.ORIGINAL)
+        return cv2.cvtColor(res, cv2.COLOR_RGB2BGR)
+    except Exception as e:
+        logger.warning(f"LaMa torch inpaint failed, fallback: {e}")
         return bgr_image
     try:
         img = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
@@ -2229,8 +2289,17 @@ async def remove_painted_areas(
 
         use_lama = os.getenv("USE_LAMA", "true").lower() in ("1","true","yes")
         large_hole = area_ratio > float(os.getenv("LAMA_MASK_THRESHOLD", "0.03"))
-        if use_lama and large_hole and _get_lama_session() is not None:
-            result_base = lama_inpaint_onnx(opencv_image, binary_mask)
+        prefer_torch = os.getenv("LAMA_IMPL", "torch").lower() == "torch"
+        if use_lama and large_hole:
+            if prefer_torch and _get_lama_manager() is not None:
+                result_base = lama_inpaint_torch(opencv_image, binary_mask)
+            elif _get_lama_session() is not None:
+                result_base = lama_inpaint_onnx(opencv_image, binary_mask)
+            else:
+                # fallback to OpenCV path below
+                result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
+                result_ns = cv2.inpaint(result_telea, binary_mask, dynamic_radius, cv2.INPAINT_NS)
+                result_base = exemplar_inpaint_patchmatch(result_ns, binary_mask)
         else:
             # First pass: Telea
             result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
