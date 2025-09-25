@@ -1986,14 +1986,15 @@ async def remove_text(
             image.save(buf, format="PNG")
             return Response(content=buf.getvalue(), media_type="image/png")
         
-        # Dilate the mask slightly to ensure complete text removal
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-        text_mask = cv2.dilate(text_mask, kernel, iterations=1)
+        # Gently expand and smooth the mask to avoid hard edges
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        text_mask = cv2.dilate(text_mask, kernel, iterations=2)
+        text_mask = cv2.morphologyEx(text_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
         
-        # Use OpenCV inpainting to remove text
+        # Use OpenCV inpainting to remove text with a larger radius for better blending
         try:
             # Apply inpainting using Telea algorithm
-            inpainted = cv2.inpaint(opencv_image, text_mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
+            inpainted = cv2.inpaint(opencv_image, text_mask, inpaintRadius=7, flags=cv2.INPAINT_TELEA)
             
             # Convert back to PIL Image
             result_image = Image.fromarray(cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB))
@@ -2091,12 +2092,13 @@ async def remove_painted_areas(
             image.save(buf, format="PNG")
             return Response(content=buf.getvalue(), media_type="image/png")
         
-        # Dilate the mask slightly to ensure complete removal
-        kernel = np.ones((3, 3), np.uint8)
-        binary_mask = cv2.dilate(binary_mask, kernel, iterations=1)
+        # Expand and smooth the mask to avoid harsh seams
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        binary_mask = cv2.dilate(binary_mask, kernel, iterations=2)
+        binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
         
-        # Apply inpainting using TELEA algorithm (good for natural results)
-        result = cv2.inpaint(opencv_image, binary_mask, 3, cv2.INPAINT_TELEA)
+        # Apply inpainting using TELEA algorithm with a larger radius for smoother blends
+        result = cv2.inpaint(opencv_image, binary_mask, 7, cv2.INPAINT_TELEA)
         
         # Convert back to PIL
         result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
