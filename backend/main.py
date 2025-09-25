@@ -2249,20 +2249,6 @@ async def remove_painted_areas(
         # Lower threshold since our red overlay with 50% opacity becomes darker when converted to grayscale
         binary_mask = (opencv_mask > 50).astype(np.uint8) * 255
         
-        # Debug logging
-        log_user_action("mask_debug", {
-            "mask_shape": opencv_mask.shape,
-            "mask_min": int(opencv_mask.min()),
-            "mask_max": int(opencv_mask.max()),
-            "mask_mean": float(opencv_mask.mean()),
-            "binary_mask_sum": int(np.sum(binary_mask)),
-            "binary_mask_pixels": int(np.sum(binary_mask > 0)),
-            "use_lama": use_lama,
-            "large_hole": large_hole,
-            "area_ratio": area_ratio,
-            "lama_available": _get_lama_session() is not None
-        })
-        
         # Check if any areas are marked for removal
         if np.sum(binary_mask) == 0:
             log_user_action("no_areas_marked_for_removal", {})
@@ -2286,6 +2272,20 @@ async def remove_painted_areas(
 
         use_lama = os.getenv("USE_LAMA", "true").lower() in ("1","true","yes")
         large_hole = area_ratio > float(os.getenv("LAMA_MASK_THRESHOLD", "0.03"))
+        
+        # Debug logging
+        log_user_action("mask_debug", {
+            "mask_shape": opencv_mask.shape,
+            "mask_min": int(opencv_mask.min()),
+            "mask_max": int(opencv_mask.max()),
+            "mask_mean": float(opencv_mask.mean()),
+            "binary_mask_sum": int(np.sum(binary_mask)),
+            "binary_mask_pixels": int(np.sum(binary_mask > 0)),
+            "use_lama": use_lama,
+            "large_hole": large_hole,
+            "area_ratio": area_ratio,
+            "lama_available": _get_lama_session() is not None
+        })
         if use_lama and large_hole and _get_lama_session() is not None:
             result_base = lama_inpaint_onnx(opencv_image, binary_mask)
         else:
