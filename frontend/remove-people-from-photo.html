@@ -585,8 +585,23 @@
       }
       
       function resetInterface() {
-        document.getElementById('result-section').style.display = 'none';
-        brushTool.clearMask();
+        const resultSection = document.getElementById('result-section');
+        resultSection.style.display = 'none';
+        try {
+          // If a result exists, load it back into the canvas so user can remove more
+          const resultImgEl = document.getElementById('result-img');
+          const href = document.getElementById('download-link')?.href || resultImgEl?.src;
+          if (href) {
+            fetch(href).then(r=>r.blob()).then(b=>{
+              const f = new File([b], `people-removed-${Date.now()}.png`, { type: b.type || 'image/png' });
+              brushTool.loadImage(f);
+            }).catch(()=>{ brushTool.clearMask(); });
+          } else {
+            brushTool.clearMask();
+          }
+        } catch(_) {
+          brushTool.clearMask();
+        }
       }
       
       // File upload handling

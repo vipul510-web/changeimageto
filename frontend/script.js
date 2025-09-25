@@ -624,6 +624,47 @@ if (form) form.addEventListener('submit', async (e) => {
     })();
     const resultWrap = document.getElementById('result-wrapper');
     if(resultWrap) resultWrap.hidden = false;
+
+    // Inject or show an "Edit Result (Remove more)" button to allow iterative processing
+    try {
+      var actions = document.querySelector('.actions');
+      if (actions) {
+        var editBtn = document.getElementById('edit-result-btn');
+        if (!editBtn) {
+          editBtn = document.createElement('button');
+          editBtn.id = 'edit-result-btn';
+          editBtn.type = 'button';
+          editBtn.className = 'btn secondary';
+          editBtn.textContent = 'Edit result (remove more)';
+          actions.insertBefore(editBtn, document.getElementById('reset-btn'));
+        }
+        editBtn.style.display = 'inline-block';
+
+        // Handler: use the processed image as new input and reset UI for another pass
+        editBtn.onclick = async function(){
+          try {
+            var href = downloadLink.href;
+            if (!href) return;
+            const res = await fetch(href);
+            const b = await res.blob();
+            const name = (downloadLink.download || 'image.png');
+            const f = new File([b], name, { type: b.type || 'image/png' });
+            currentFile = f;
+            setOriginalPreview(currentFile);
+
+            // Hide result and prompt to process again
+            if (resultWrap) resultWrap.hidden = true;
+            var promptEl = document.getElementById('process-prompt');
+            if (promptEl) { promptEl.hidden = false; promptEl.style.display = 'block'; }
+            enableProcess(true);
+            updateCtaText();
+            updatePromptText();
+          } catch (e) {
+            console.warn('Failed to reload result as input', e);
+          }
+        };
+      }
+    } catch(_){}
   }catch(err){
     // Log processing error
     let errorLogDetails = {
