@@ -2290,32 +2290,15 @@ async def remove_painted_areas(
             result_base = lama_inpaint_onnx(opencv_image, binary_mask)
             log_user_action("inpaint_method", {"method": "lama_onnx"})
         else:
-            # First pass: Telea
-            result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
-            # Second pass: NS for structural continuity
-            result_ns = cv2.inpaint(result_telea, binary_mask, dynamic_radius, cv2.INPAINT_NS)
-            # Third pass: exemplar-based PatchMatch (if available) to improve textures on larger holes
-            result_base = exemplar_inpaint_patchmatch(result_ns, binary_mask)
-            log_user_action("inpaint_method", {"method": "opencv_fallback", "radius": dynamic_radius})
+            # Simplified OpenCV inpainting - just Telea with larger radius
+            result_base = cv2.inpaint(opencv_image, binary_mask, dynamic_radius * 2, cv2.INPAINT_TELEA)
+            log_user_action("inpaint_method", {"method": "opencv_simple", "radius": dynamic_radius * 2})
 
-        # Feather edge to reduce halos
+        # Simple blending
         soft = binary_mask.astype(np.float32) / 255.0
-        soft = cv2.GaussianBlur(soft, (0, 0), sigmaX=4, sigmaY=4)
-        inner = cv2.erode(binary_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)), iterations=1)
-        soft[inner == 255] = 1.0
-        soft = np.clip(soft, 0.0, 1.0)
+        soft = cv2.GaussianBlur(soft, (0, 0), sigmaX=8, sigmaY=8)
         soft3 = np.repeat(soft[:, :, None], 3, axis=2)
-        # Poisson-like seamless cloning along the boundary when available
-        try:
-            # Build a tight fill region around mask boundary
-            boundary = cv2.dilate(binary_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7)), iterations=1)
-            center = _mask_center(binary_mask)
-            mixed = cv2.seamlessClone(result_base, opencv_image, boundary, center, cv2.MIXED_CLONE)
-            base_for_blend = mixed
-        except Exception:
-            base_for_blend = result_base
-
-        result = (soft3 * base_for_blend.astype(np.float32) + (1.0 - soft3) * opencv_image.astype(np.float32)).astype(np.uint8)
+        result = (soft3 * result_base.astype(np.float32) + (1.0 - soft3) * opencv_image.astype(np.float32)).astype(np.uint8)
         
         # Convert back to PIL
         result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
