@@ -1994,7 +1994,22 @@ async def remove_text(
         # Use OpenCV inpainting to remove text with a larger radius for better blending
         try:
             # Apply inpainting using Telea algorithm
-            inpainted = cv2.inpaint(opencv_image, text_mask, inpaintRadius=7, flags=cv2.INPAINT_TELEA)
+            # Radius scaled to image size to avoid under/over inpainting
+            max_side = max(opencv_image.shape[:2])
+            dynamic_radius = int(max(5, min(15, max_side / 200)))
+            inpainted = cv2.inpaint(opencv_image, text_mask, inpaintRadius=dynamic_radius, flags=cv2.INPAINT_TELEA)
+            # Optional refinement pass with NS to improve structure continuity
+            inpainted = cv2.inpaint(inpainted, text_mask, dynamic_radius, cv2.INPAINT_NS)
+
+            # Feathered edge blend to reduce seams
+            soft_mask = text_mask.copy().astype(np.float32) / 255.0
+            soft_mask = cv2.GaussianBlur(soft_mask, (0, 0), sigmaX=3, sigmaY=3)
+            inner = cv2.erode(text_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)), iterations=1)
+            soft_mask[inner == 255] = 1.0
+            soft_mask = np.clip(soft_mask, 0.0, 1.0)
+            soft_mask_3 = np.repeat(soft_mask[:, :, None], 3, axis=2)
+            blended = (soft_mask_3 * inpainted.astype(np.float32) + (1.0 - soft_mask_3) * opencv_image.astype(np.float32)).astype(np.uint8)
+            inpainted = blended
             
             # Convert back to PIL Image
             result_image = Image.fromarray(cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB))
@@ -2097,8 +2112,27 @@ async def remove_painted_areas(
         binary_mask = cv2.dilate(binary_mask, kernel, iterations=2)
         binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
         
-        # Apply inpainting using TELEA algorithm with a larger radius for smoother blends
-        result = cv2.inpaint(opencv_image, binary_mask, 7, cv2.INPAINT_TELEA)
+        # Radius scaled to image size and mask size
+        max_side = max(opencv_image.shape[:2])
+        mask_area = float(np.sum(binary_mask > 0))
+        area_ratio = mask_area / float(binary_mask.shape[0] * binary_mask.shape[1] + 1e-6)
+        base_radius = max(5, min(18, max_side / 180))
+        # If very large region, increase radius slightly
+        dynamic_radius = int(max(base_radius, 8 if area_ratio > 0.08 else base_radius))
+
+        # First pass: Telea
+        result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
+        # Second pass: NS for structural continuity
+        result_ns = cv2.inpaint(result_telea, binary_mask, dynamic_radius, cv2.INPAINT_NS)
+
+        # Feather edge to reduce halos
+        soft = binary_mask.astype(np.float32) / 255.0
+        soft = cv2.GaussianBlur(soft, (0, 0), sigmaX=4, sigmaY=4)
+        inner = cv2.erode(binary_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)), iterations=1)
+        soft[inner == 255] = 1.0
+        soft = np.clip(soft, 0.0, 1.0)
+        soft3 = np.repeat(soft[:, :, None], 3, axis=2)
+        result = (soft3 * result_ns.astype(np.float32) + (1.0 - soft3) * opencv_image.astype(np.float32)).astype(np.uint8)
         
         # Convert back to PIL
         result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
