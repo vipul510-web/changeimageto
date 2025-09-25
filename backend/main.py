@@ -41,12 +41,6 @@ try:
     import onnxruntime as ort
 except Exception:
     ort = None
-try:
-    # LaMa via lama-cleaner (PyTorch)
-    from lama_cleaner.model_manager import ModelManager
-    from lama_cleaner.schema import HDStrategy
-except Exception:
-    ModelManager = None
 
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
 
@@ -160,8 +154,8 @@ async def _warmup_lama_background():
         loop = asyncio.get_event_loop()
         def init_models():
             try:
-                if os.getenv("USE_LAMA", "true").lower() in ("1","true","yes") and os.getenv("LAMA_IMPL", "torch").lower() == "torch":
-                    _ = _get_lama_manager()
+                if os.getenv("USE_LAMA", "true").lower() in ("1","true","yes"):
+                    _ = _get_lama_session()
             except Exception as e:
                 logger.warning(f"Warmup failed: {e}")
         loop.run_in_executor(None, init_models)
@@ -202,7 +196,6 @@ def exemplar_inpaint_patchmatch(bgr_image: np.ndarray, binary_mask: np.ndarray) 
 # -----------------------------
 _LAMA_SESSION = None
 _LAMA_PROVIDERS = None
-_LAMA_MANAGER = None
 
 def _maybe_download_lama(model_path: str) -> None:
     try:
@@ -2289,17 +2282,8 @@ async def remove_painted_areas(
 
         use_lama = os.getenv("USE_LAMA", "true").lower() in ("1","true","yes")
         large_hole = area_ratio > float(os.getenv("LAMA_MASK_THRESHOLD", "0.03"))
-        prefer_torch = os.getenv("LAMA_IMPL", "torch").lower() == "torch"
-        if use_lama and large_hole:
-            if prefer_torch and _get_lama_manager() is not None:
-                result_base = lama_inpaint_torch(opencv_image, binary_mask)
-            elif _get_lama_session() is not None:
-                result_base = lama_inpaint_onnx(opencv_image, binary_mask)
-            else:
-                # fallback to OpenCV path below
-                result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
-                result_ns = cv2.inpaint(result_telea, binary_mask, dynamic_radius, cv2.INPAINT_NS)
-                result_base = exemplar_inpaint_patchmatch(result_ns, binary_mask)
+        if use_lama and large_hole and _get_lama_session() is not None:
+            result_base = lama_inpaint_onnx(opencv_image, binary_mask)
         else:
             # First pass: Telea
             result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)

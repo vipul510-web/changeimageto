@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime
+FROM python:3.11-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -30,11 +30,9 @@ COPY backend/ ./backend/
 ENV DEFAULT_MODEL=u2netp
 ENV MAX_IMAGE_SIDE=1600
 ENV MAX_CONCURRENCY=2
-ENV USE_LAMA=true
-ENV LAMA_IMPL=torch
+ENV USE_LAMA=false
 ENV LAMA_MASK_THRESHOLD=0.03
-ENV MODEL_WARMUP=true
-ENV CUDA_VISIBLE_DEVICES=""
+ENV MODEL_WARMUP=false
 
 # Expose port
 EXPOSE 8080
