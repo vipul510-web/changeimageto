@@ -255,14 +255,16 @@ def lama_inpaint_onnx(bgr_image: np.ndarray, binary_mask: np.ndarray) -> np.ndar
         mask_input = np.expand_dims(mask_norm, axis=(0, 1))  # (1, 1, 512, 512)
         
         # Run inference
+        logger.info(f"LaMa input shapes: image={img_input.shape}, mask={mask_input.shape}")
         outputs = sess.run(None, {
             "image": img_input,
             "mask": mask_input
         })
+        logger.info(f"LaMa output shape: {outputs[0].shape}")
         
-        # Convert output back to image
+        # Convert output back to image - model already outputs [0,255] range
         result = outputs[0][0].transpose(1, 2, 0)  # (512, 512, 3)
-        result = np.clip(result * 255, 0, 255).astype(np.uint8)
+        result = np.clip(result, 0, 255).astype(np.uint8)
         result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
         
         # Resize back to original size
