@@ -911,8 +911,13 @@ async def remove_bg(
             canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
             result = canvas
         else:
-            # For transparent output, use the trimmed result
-            result = trimmed_result
+            # Keep original dimensions for transparent output as well
+            # Create a transparent canvas of the original size and center the trimmed subject
+            canvas = Image.new('RGBA', original_size, (0, 0, 0, 0))
+            offset_x = (original_size[0] - trimmed_result.width) // 2
+            offset_y = (original_size[1] - trimmed_result.height) // 2
+            canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
+            result = canvas
             
         output_io = io.BytesIO()
         result.save(output_io, format="PNG")
