@@ -156,6 +156,41 @@
             <priority>0.7</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/blog/photopea-vs-canva.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/capcut-vs-davinci-resolve.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/canva-vs-photopea.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/free-photoshop-alternatives.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/ai-background-removers.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/contact.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.6</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/about.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.6</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/blog-admin.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.5</priority>
