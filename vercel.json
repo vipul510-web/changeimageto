@@ -11,5 +11,34 @@
     { "source": "/blog", "destination": "/frontend/blog/index.html" },
     { "source": "/blog/", "destination": "/frontend/blog/index.html" },
     { "source": "/(.*)", "destination": "/frontend/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/frontend/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    }
   ]
 }
