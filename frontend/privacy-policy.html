@@ -1,87 +1,296 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy | ChangeImageTo</title>
-  <meta name="description" content="Privacy policy for ChangeImageTo website and Chrome extension. We do not sell personal data and only process images you choose.">
-  <link rel="icon" href="/logo.png">
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 0; color: #0b0f13; background: #f7f7f7; }
-    header { background:#0b0f13; color:#fff; padding:18px; }
-    header a { color:#9ec5fe; text-decoration: underline; }
-    main { max-width: 920px; margin: 24px auto; background:#fff; padding: 24px; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
-    h1 { margin: 0 0 8px; font-size: 28px; }
-    h2 { margin-top: 24px; font-size: 20px; }
-    ul { padding-left: 18px; }
-    .muted { color:#6b7280; font-size: 14px; }
-  </style>
-  <meta name="robots" content="index,follow">
-  <link rel="canonical" href="https://www.changeimageto.com/privacy-policy.html">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Privacy Policy | ChangeImageTo","url":"https://www.changeimageto.com/privacy-policy.html"}</script>
-  
-</head>
-<body>
-  <header>
-    <div style="max-width:920px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <img src="/logo.png" alt="ChangeImageTo" style="width:28px;height:28px;object-fit:contain;border-radius:4px;">
-        <strong>ChangeImageTo</strong>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy - ChangeImageTo.com</title>
+    <meta name="description" content="Privacy Policy for ChangeImageTo.com - Learn how we protect your privacy when using our free online image editing tools. No data storage, secure processing.">
+    <meta name="keywords" content="privacy policy, data protection, image editing privacy, secure processing, no data storage">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/privacy-policy.html" />
+
+    <meta property="og:title" content="Privacy Policy - ChangeImageTo.com" />
+    <meta property="og:description" content="Learn how we protect your privacy when using our free online image editing tools." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.changeimageto.com/privacy-policy.html" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Privacy Policy - ChangeImageTo.com",
+      "description": "Privacy Policy for ChangeImageTo.com - Learn how we protect your privacy when using our free online image editing tools.",
+      "url": "https://www.changeimageto.com/privacy-policy.html"
+    }
+    </script>
+
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    
+    <!-- Preconnect to critical external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Load fonts with optimized technique -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+    
+    <!-- Critical CSS for above-the-fold content -->
+    <style>
+      :root{--bg:#0b0f13;--fg:#eaf0f6;--muted:#9aa7b2;--accent:#6aa7ff;--card:#12171d;--border:#1e2630}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+      .container{max-width:1000px;margin:0 auto;padding:16px}
+      .header h1{margin:0 0 8px}
+      .header p{margin:0;color:var(--muted)}
+      .logo-link{display:inline-flex;align-items:center;gap:10px;margin-bottom:16px;text-decoration:none;color:inherit}
+      .logo-img{height:28px;width:auto;display:block}
+      @media(min-width:768px){.container{padding:24px}.logo-img{height:36px}}
+      .top-nav a{color:#fff;text-decoration:none;font-weight:600;margin-left:16px}
+      .top-nav a:hover{text-decoration:underline}
+      .content-section{margin:40px 0;padding:32px;background:var(--card);border:1px solid var(--border);border-radius:16px}
+      .content-section h2{font-size:28px;margin:0 0 24px;color:var(--fg)}
+      .content-section h3{font-size:22px;margin:32px 0 16px;color:var(--fg)}
+      .content-section p{color:var(--muted);margin-bottom:20px;line-height:1.7}
+      .content-section ul{color:var(--muted);margin-bottom:20px;padding-left:20px}
+      .content-section li{margin-bottom:8px}
+      .highlight{color:var(--accent);font-weight:600}
+      .privacy-highlight{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:24px;margin:24px 0}
+      .privacy-highlight h4{color:var(--accent);margin:0 0 12px;font-size:18px}
+      .privacy-highlight p{margin:0;color:var(--fg);font-weight:500}
+      .last-updated{color:var(--muted);font-size:14px;font-style:italic;margin-bottom:32px}
+      @media(max-width:768px){.content-section{padding:24px;margin:24px 0}.content-section h2{font-size:24px}.content-section h3{font-size:20px}}
+    </style>
+    
+    <!-- Load main stylesheet asynchronously -->
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="./styles.css?v=20250916-3"></noscript>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link">
+        <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" class="logo-img" loading="eager" width="200" height="68" />
+      </a>
+      <nav class="top-nav">
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="content-section">
+        <h1 style="font-size:36px;margin:0 0 16px;color:var(--fg)">Privacy Policy</h1>
+        <p class="last-updated">Last updated: January 2024</p>
+
+        <div class="privacy-highlight">
+          <h4>🔒 Privacy First</h4>
+          <p>We don't store your images, require registration, or collect personal data. Your privacy is our top priority.</p>
+        </div>
+
+        <h2>Introduction</h2>
+        <p>
+          At <span class="highlight">ChangeImageTo.com</span>, we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, and safeguard information when you use our free online image editing tools.
+        </p>
+
+        <h2>Information We Collect</h2>
+        
+        <h3>Images You Upload</h3>
+        <p>
+          <strong>We do not store your images permanently.</strong> When you upload images to our platform for processing:
+        </p>
+        <ul>
+          <li>Images are temporarily stored in memory during processing only</li>
+          <li>Images are automatically deleted immediately after processing</li>
+          <li>We do not save, backup, or archive your images</li>
+          <li>Images are never shared with third parties</li>
+        </ul>
+
+        <h3>Usage Analytics</h3>
+        <p>We collect anonymous usage statistics to improve our services:</p>
+        <ul>
+          <li>Page views and user interactions</li>
+          <li>Processing times and success rates</li>
+          <li>Browser type and device information</li>
+          <li>General geographic location (country level)</li>
+        </ul>
+
+        <h3>No Personal Information Required</h3>
+        <p>
+          Our platform does not require registration, account creation, or personal information submission. You can use all our tools anonymously.
+        </p>
+
+        <h2>How We Use Information</h2>
+        
+        <h3>Image Processing</h3>
+        <ul>
+          <li>Process your images using AI algorithms</li>
+          <li>Return processed images to your browser</li>
+          <li>Immediately delete original and processed images</li>
+        </ul>
+
+        <h3>Service Improvement</h3>
+        <ul>
+          <li>Analyze usage patterns to optimize performance</li>
+          <li>Identify and fix technical issues</li>
+          <li>Develop new features and tools</li>
+          <li>Monitor system security and reliability</li>
+        </ul>
+
+        <h2>Information Sharing</h2>
+        <p>
+          <strong>We do not sell, trade, or share your personal information with third parties.</strong> We may share anonymous, aggregated usage statistics with service providers who help us improve our platform, but this data cannot be used to identify individual users.
+        </p>
+
+        <h2>Data Security</h2>
+        <p>We implement industry-standard security measures to protect your information:</p>
+        <ul>
+          <li>Secure HTTPS encryption for all data transmission</li>
+          <li>Automatic deletion of uploaded images after processing</li>
+          <li>Regular security audits and updates</li>
+          <li>Limited access to systems and data</li>
+        </ul>
+
+        <h2>Cookies and Tracking</h2>
+        <p>We use minimal cookies for essential functionality:</p>
+        <ul>
+          <li><strong>Essential Cookies:</strong> Required for basic site functionality</li>
+          <li><strong>Analytics Cookies:</strong> Anonymous usage statistics (Google Analytics)</li>
+          <li><strong>No Advertising Cookies:</strong> We don't use advertising or tracking cookies</li>
+        </ul>
+        <p>You can disable cookies in your browser settings, though this may affect site functionality.</p>
+
+        <h2>Third-Party Services</h2>
+        <p>We use the following third-party services:</p>
+        <ul>
+          <li><strong>Google Analytics:</strong> Anonymous usage statistics</li>
+          <li><strong>Vercel:</strong> Website hosting and CDN services</li>
+          <li><strong>Cloud Run:</strong> Image processing backend</li>
+        </ul>
+        <p>These services may have their own privacy policies, but they do not have access to your uploaded images.</p>
+
+        <h2>Data Retention</h2>
+        <ul>
+          <li><strong>Images:</strong> Deleted immediately after processing (no retention)</li>
+          <li><strong>Analytics Data:</strong> Anonymous data retained for up to 26 months</li>
+          <li><strong>Server Logs:</strong> Automatically purged after 30 days</li>
+        </ul>
+
+        <h2>Your Rights</h2>
+        <p>You have the following rights regarding your data:</p>
+        <ul>
+          <li><strong>No Data Collection:</strong> We don't collect personal data, so there's nothing to access or delete</li>
+          <li><strong>Opt-out:</strong> Disable cookies or JavaScript to limit tracking</li>
+          <li><strong>Contact Us:</strong> Reach out with any privacy concerns</li>
+        </ul>
+
+        <h2>Children's Privacy</h2>
+        <p>
+          Our service is designed for general audiences and does not knowingly collect personal information from children under 13. Since we don't require registration or collect personal data, this is inherently protected.
+        </p>
+
+        <h2>International Users</h2>
+        <p>
+          Our services are available globally. By using our platform, you consent to the processing of anonymous usage data as described in this policy, regardless of your location.
+        </p>
+
+        <h2>Changes to This Policy</h2>
+        <p>
+          We may update this Privacy Policy occasionally. Changes will be posted on this page with an updated "Last modified" date. Continued use of our services after changes constitutes acceptance of the updated policy.
+        </p>
+
+        <h2>Contact Us</h2>
+        <p>
+          If you have questions about this Privacy Policy or our data practices, please contact us at:
+        </p>
+        <ul>
+          <li>Email: <a href="mailto:privacy@changeimageto.com" style="color:var(--accent)">privacy@changeimageto.com</a></li>
+          <li>General Contact: <a href="/contact.html" style="color:var(--accent)">Contact Us Page</a></li>
+        </ul>
+
+        <div class="privacy-highlight">
+          <h4>✅ Summary</h4>
+          <p>We process your images, delete them immediately, and don't store or share your data. Your privacy is protected by design.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <!-- Brand Section -->
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+          </div>
+
+          <!-- Tools Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+              <li><a href="/blur-background.html">Blur Background</a></li>
+            </ul>
+          </div>
+
+          <!-- Background Colors Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Background Colors</h3>
+            <ul class="footer-links">
+              <li><a href="/change-image-background-to-white.html">White Background</a></li>
+              <li><a href="/change-image-background-to-black.html">Black Background</a></li>
+              <li><a href="/change-image-background-to-blue.html">Blue Background</a></li>
+              <li><a href="/change-image-background-to-yellow.html">Yellow Background</a></li>
+              <li><a href="/change-image-background-to-orange.html">Orange Background</a></li>
+              <li><a href="/bulk-image-resizer.html">Bulk Resize</a></li>
+            </ul>
+          </div>
+
+          <!-- Resources Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Resources</h3>
+            <ul class="footer-links">
+              <li><a href="/blog">Blog</a></li>
+              <li><a href="/blog/remove-background-from-image.html">Remove Background Guide</a></li>
+              <li><a href="/blog/change-image-background-color.html">Background Color Guide</a></li>
+              <li><a href="/blog/upscale-image.html">Image Upscaling Guide</a></li>
+              <li><a href="/image-quality-checker.html">Quality Checker</a></li>
+              <li><a href="/convert-image-format.html">Format Converter</a></li>
+            </ul>
+          </div>
+
+          <!-- Company Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+          </div>
+        </div>
       </div>
-      <div><a href="/" rel="home">Back to Home</a></div>
-    </div>
-  </header>
+    </footer>
 
-  <main>
-    <h1>Privacy Policy</h1>
-    <div class="muted">Last updated: <span id="updated"></span></div>
-
-    <p>ChangeImageTo ("we", "us") provides a website and a Chrome extension that help you edit images (remove background, blur, enhance, upscale, and change background color). We respect your privacy and design our products to minimize data collection.</p>
-
-    <h2>What data we collect</h2>
-    <ul>
-      <li><strong>Images you choose to process</strong>: When you use our tools, your selected image is processed either locally or sent securely to our backend to generate the output. We do not use these images for any other purpose.</li>
-      <li><strong>Basic diagnostic logs</strong>: Our backend may log non-personal diagnostics such as request time, file type, and processing outcome to maintain reliability. We do not store images after processing completes.</li>
-      <li><strong>No personal profile</strong>: We do not sell, rent, or share personal data. We do not build user profiles.</li>
-    </ul>
-
-    <h2>How we use your data</h2>
-    <ul>
-      <li>Provide and improve the image processing features you request.</li>
-      <li>Ensure service reliability and prevent abuse.</li>
-    </ul>
-
-    <h2>Retention</h2>
-    <p>Processed images are generated on demand. We do not store your images on our servers after processing is complete. Temporary in‑memory retention may occur only for the duration necessary to return results.</p>
-
-    <h2>Cookies and tracking</h2>
-    <p>Our website may use minimal, non-identifying cookies strictly to operate the site. We do not use third‑party advertising trackers.</p>
-
-    <h2>Third‑party services</h2>
-    <p>Our backend is hosted on reputable cloud infrastructure. These providers may process data on our behalf only to deliver the service and are bound by their own security and privacy commitments.</p>
-
-    <h2>Your choices</h2>
-    <ul>
-      <li>You can remove the Chrome extension at any time from your browser.</li>
-      <li>You can delete any generated files from your device at any time.</li>
-    </ul>
-
-    <h2>Children’s privacy</h2>
-    <p>Our services are not directed to children under 13 and we do not knowingly collect personal information from children.</p>
-
-    <h2>Changes</h2>
-    <p>We may update this policy to reflect improvements or legal requirements. Material changes will be posted on this page with a new “Last updated” date.</p>
-
-    <h2>Contact</h2>
-    <p>If you have questions about this policy or our data practices, contact us at <a href="mailto:hello@changeimageto.com">hello@changeimageto.com</a>.</p>
-  </main>
-
-  <script>
-    (function(){
-      try{ document.getElementById('updated').textContent = new Date().toISOString().slice(0,10); }catch(_){ }
-    })();
-  </script>
-</body>
+    <script src="./script.js?v=20250916-3" defer></script>
+  </body>
 </html>
-
-
