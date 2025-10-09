@@ -4,3 +4,25 @@ body:not([data-target-color]) .image-container { min-height: 0 !important; }
 body:not([data-target-color]) #result-img { min-height: 0 !important; height: auto !important; }
 body:not([data-target-color]) #result-wrapper { height: auto !important; }
 body:not([data-target-color]) #result-wrapper img { min-height: 0 !important; height: auto !important; }
+/* Comprehensive Footer Styles */
+.comprehensive-footer{background:var(--card);border-top:1px solid var(--border);margin-top:60px;padding:48px 0 24px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-brand{max-width:300px}
+.footer-description{color:var(--muted);line-height:1.6;margin-bottom:24px;font-size:14px}
+.footer-social{display:flex;gap:12px}
+.social-link{display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:var(--border);border-radius:8px;color:var(--muted);transition:all 0.2s ease;text-decoration:none}
+.social-link:hover{background:var(--accent);color:#001633;transform:translateY(-2px)}
+.footer-section h3{color:var(--fg);font-size:16px;font-weight:600;margin:0 0 20px}
+.footer-links{list-style:none;padding:0;margin:0}
+.footer-links li{margin-bottom:12px}
+.footer-links a{color:var(--muted);text-decoration:none;font-size:14px;transition:color 0.2s ease}
+.footer-links a:hover{color:var(--accent)}
+.footer-bottom{border-top:1px solid var(--border);padding-top:24px}
+.footer-bottom-content{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.footer-copyright{color:var(--muted);font-size:14px;margin:0}
+.footer-bottom-links{display:flex;gap:24px}
+.footer-bottom-links a{color:var(--muted);text-decoration:none;font-size:14px;transition:color 0.2s ease}
+.footer-bottom-links a:hover{color:var(--accent)}
+@media(max-width:1024px){.footer-grid{grid-template-columns:1fr 1fr 1fr;gap:32px}}
+@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:24px}.comprehensive-footer{padding:32px 0 20px}.footer-bottom-content{flex-direction:column;text-align:center;gap:12px}.footer-bottom-links{justify-content:center}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr;gap:20px}}
