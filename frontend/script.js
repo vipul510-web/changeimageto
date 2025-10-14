@@ -74,6 +74,35 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {
       console.warn('Footer injection failed:', e);
     }
+
+    // Ensure the footer "Image Tools" list is consistent across all pages
+    try {
+      const toolLinks = [
+        { href: '/remove-background-from-image.html', label: 'Remove Background' },
+        { href: '/change-image-background.html', label: 'Change Background' },
+        { href: '/change-color-of-image.html', label: 'Change Image Colors' },
+        { href: '/upscale-image.html', label: 'Upscale Image' },
+        { href: '/enhance-image.html', label: 'Enhance Image' },
+        { href: '/blur-background.html', label: 'Blur Background' },
+        { href: '/convert-image-format.html', label: 'Convert Image Format' },
+        { href: '/remove-people-from-photo.html', label: 'Remove People / Objects' },
+        { href: '/remove-text-from-image.html', label: 'Remove Text / Watermark' },
+        { href: '/bulk-image-resizer.html', label: 'Bulk Image Resizer' },
+        { href: '/image-quality-checker.html', label: 'Image Quality Checker' }
+      ];
+
+      // Find any footer section with heading "Image Tools" and update the following UL
+      const headings = Array.from(document.querySelectorAll('footer .footer-heading'));
+      const imgToolsHeading = headings.find(h => (h.textContent || '').trim().toLowerCase() === 'image tools');
+      if (imgToolsHeading) {
+        const ul = imgToolsHeading.nextElementSibling;
+        if (ul && ul.classList && ul.classList.contains('footer-links')) {
+          ul.innerHTML = toolLinks.map(l => `<li><a href="${l.href}">${l.label}</a></li>`).join('');
+        }
+      }
+    } catch (e) {
+      console.warn('Footer tools update failed:', e);
+    }
 });
 
 function getPageType() {
