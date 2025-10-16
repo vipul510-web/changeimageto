@@ -42,6 +42,16 @@ try:
 except Exception:
     ort = None
 
+# LaMa PyTorch imports (lama-cleaner)
+try:
+    from lama_cleaner.model_manager import ModelManager
+    from lama_cleaner.schema import HDStrategy
+except Exception:
+    ModelManager = None
+    HDStrategy = None
+
+_LAMA_MANAGER = None
+
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
 
 @app.get("/")
@@ -145,6 +155,14 @@ def log_user_action(action: str, details: dict):
     logger.info(f"USER_ACTION: {json.dumps(log_entry)}")
 
 # Background warmup for LaMa to reduce first-hit latency on Remove People
+# 
+# IMPROVEMENTS MADE TO PERSON REMOVAL QUALITY:
+# 1. Upgraded LaMa model to 'big-lama' for better quality
+# 2. Added mask preprocessing with Gaussian blur and morphological operations
+# 3. Implemented post-processing for better edge blending and color matching
+# 4. Enhanced OpenCV fallback with dual algorithm approach (Telea + Navier-Stokes)
+# 5. Reduced LaMa threshold to use AI for smaller areas (better quality)
+# 6. Added smart blending that adapts based on inpainting method used
 @app.on_event("startup")
 async def _warmup_lama_background():
     try:
@@ -190,6 +208,85 @@ def exemplar_inpaint_patchmatch(bgr_image: np.ndarray, binary_mask: np.ndarray) 
     except Exception as e:
         logger.warning(f"PatchMatch inpaint failed: {e}")
     return bgr_image
+
+# -----------------------------
+# Enhanced mask preprocessing
+# -----------------------------
+def improve_mask_quality(binary_mask: np.ndarray) -> np.ndarray:
+    """Improve mask quality for better inpainting results."""
+    try:
+        # Convert to uint8 if needed
+        if binary_mask.dtype != np.uint8:
+            binary_mask = (binary_mask > 0).astype(np.uint8) * 255
+        
+        # Smooth the mask edges with Gaussian blur
+        kernel_size = 5
+        smoothed_mask = cv2.GaussianBlur(binary_mask, (kernel_size, kernel_size), 0)
+        
+        # Use morphological operations to clean up the mask
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        
+        # Close small gaps
+        smoothed_mask = cv2.morphologyEx(smoothed_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+        
+        # Dilate slightly to ensure complete coverage
+        smoothed_mask = cv2.dilate(smoothed_mask, kernel, iterations=1)
+        
+        # Final smoothing pass
+        smoothed_mask = cv2.GaussianBlur(smoothed_mask, (3, 3), 0)
+        
+        return smoothed_mask
+    except Exception as e:
+        logger.warning(f"Mask improvement failed: {e}")
+        return binary_mask
+
+def post_process_inpainted_result(original: np.ndarray, inpainted: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """Post-process inpainting result for better blending."""
+    try:
+        # Create a soft mask for blending
+        soft_mask = cv2.GaussianBlur(mask, (15, 15), 0) / 255.0
+        
+        # Blend the inpainted result with original at edges
+        result = inpainted.copy()
+        
+        # For edge pixels, blend with original to reduce artifacts
+        edge_mask = cv2.Canny(mask, 50, 150)
+        edge_dilated = cv2.dilate(edge_mask, np.ones((3, 3), np.uint8), iterations=1)
+        
+        # Smooth blending at edges
+        for c in range(3):  # For each color channel
+            result[:, :, c] = np.where(
+                edge_dilated > 0,
+                original[:, :, c] * 0.3 + inpainted[:, :, c] * 0.7,
+                inpainted[:, :, c]
+            )
+        
+        # Final color matching with surrounding areas
+        # Get border pixels from original image
+        border_pixels = []
+        h, w = mask.shape
+        for i in range(h):
+            for j in range(w):
+                if mask[i, j] > 0 and (
+                    i == 0 or i == h-1 or j == 0 or j == w-1 or
+                    mask[i-1, j] == 0 or mask[i+1, j] == 0 or
+                    mask[i, j-1] == 0 or mask[i, j+1] == 0
+                ):
+                    border_pixels.append((i, j))
+        
+        if border_pixels:
+            # Calculate average color of border area in original
+            border_colors = [original[y, x] for y, x in border_pixels]
+            avg_border_color = np.mean(border_colors, axis=0)
+            
+            # Adjust inpainted area colors to match
+            for y, x in border_pixels:
+                result[y, x] = 0.8 * result[y, x] + 0.2 * avg_border_color
+        
+        return result.astype(np.uint8)
+    except Exception as e:
+        logger.warning(f"Post-processing failed: {e}")
+        return inpainted
 
 # -----------------------------
 # LaMa ONNX integration (optional)
@@ -286,9 +383,9 @@ def _get_lama_manager():
     if ModelManager is None:
         return None
     try:
-        # Minimal config for CPU
+        # Improved config for better quality
         device = "cpu"
-        sd = os.getenv("LAMA_SD", "lama")
+        sd = os.getenv("LAMA_SD", "big-lama")  # Use big-lama for better quality
         # Lazy download on first init handled by ModelManager
         _LAMA_MANAGER = ModelManager(name=sd, device=device)
         logger.info("LaMa PyTorch (lama-cleaner) initialized")
@@ -302,11 +399,23 @@ def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray) -> np.nda
     if mgr is None:
         return bgr_image
     try:
+        # Improve mask quality before processing
+        improved_mask = improve_mask_quality(binary_mask)
+        
         img = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
-        mask = (binary_mask > 0).astype(np.uint8) * 255
-        # Use resize strategy to control memory/time
-        res = mgr.inpaint(img, mask, hd_strategy=HDStrategy.ORIGINAL)
-        return cv2.cvtColor(res, cv2.COLOR_RGB2BGR)
+        mask = (improved_mask > 0).astype(np.uint8) * 255
+        
+        # Use CROP strategy for better quality on large images
+        # This crops to the mask area and then resizes back
+        hd_strategy = HDStrategy.CROP if improved_mask.shape[0] * improved_mask.shape[1] > 1024*1024 else HDStrategy.ORIGINAL
+        
+        # Perform inpainting with improved parameters
+        res = mgr.inpaint(img, mask, hd_strategy=hd_strategy)
+        
+        # Post-process for better blending
+        result = post_process_inpainted_result(bgr_image, cv2.cvtColor(res, cv2.COLOR_RGB2BGR), improved_mask)
+        
+        return result
     except Exception as e:
         logger.warning(f"LaMa torch inpaint failed, fallback: {e}")
         return bgr_image
@@ -2300,10 +2409,8 @@ async def remove_painted_areas(
             image.save(buf, format="PNG")
             return Response(content=buf.getvalue(), media_type="image/png")
         
-        # Expand and smooth the mask to avoid harsh seams
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-        binary_mask = cv2.dilate(binary_mask, kernel, iterations=2)
-        binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+        # Use improved mask preprocessing
+        binary_mask = improve_mask_quality(binary_mask)
         
         # Radius scaled to image size and mask size
         max_side = max(opencv_image.shape[:2])
@@ -2314,7 +2421,8 @@ async def remove_painted_areas(
         dynamic_radius = int(max(base_radius, 8 if area_ratio > 0.08 else base_radius))
 
         use_lama = os.getenv("USE_LAMA", "true").lower() in ("1","true","yes")
-        large_hole = area_ratio > float(os.getenv("LAMA_MASK_THRESHOLD", "0.03"))
+        # More aggressive LaMa usage - use it for smaller areas too for better quality
+        large_hole = area_ratio > float(os.getenv("LAMA_MASK_THRESHOLD", "0.01"))  # Reduced from 0.03 to 0.01
         
         # Debug logging
         log_user_action("mask_debug", {
@@ -2329,19 +2437,37 @@ async def remove_painted_areas(
             "area_ratio": area_ratio,
             "lama_available": _get_lama_session() is not None
         })
-        if use_lama and large_hole and _get_lama_session() is not None:
+        # Try LaMa PyTorch first (best quality)
+        if use_lama and large_hole and _get_lama_manager() is not None:
+            result_base = lama_inpaint_torch(opencv_image, binary_mask)
+            log_user_action("inpaint_method", {"method": "lama_torch"})
+        # Fallback to LaMa ONNX if available
+        elif use_lama and large_hole and _get_lama_session() is not None:
             result_base = lama_inpaint_onnx(opencv_image, binary_mask)
             log_user_action("inpaint_method", {"method": "lama_onnx"})
         else:
-            # Simplified OpenCV inpainting - just Telea with larger radius
-            result_base = cv2.inpaint(opencv_image, binary_mask, dynamic_radius * 2, cv2.INPAINT_TELEA)
-            log_user_action("inpaint_method", {"method": "opencv_simple", "radius": dynamic_radius * 2})
+            # Enhanced OpenCV inpainting with dual algorithm approach
+            # First pass: Telea algorithm
+            result_telea = cv2.inpaint(opencv_image, binary_mask, dynamic_radius, cv2.INPAINT_TELEA)
+            # Second pass: Navier-Stokes for structure preservation
+            result_ns = cv2.inpaint(result_telea, binary_mask, dynamic_radius, cv2.INPAINT_NS)
+            # Blend the results
+            result_base = cv2.addWeighted(result_telea, 0.6, result_ns, 0.4, 0)
+            log_user_action("inpaint_method", {"method": "opencv_enhanced", "radius": dynamic_radius})
 
-        # Simple blending
-        soft = binary_mask.astype(np.float32) / 255.0
-        soft = cv2.GaussianBlur(soft, (0, 0), sigmaX=8, sigmaY=8)
-        soft3 = np.repeat(soft[:, :, None], 3, axis=2)
-        result = (soft3 * result_base.astype(np.float32) + (1.0 - soft3) * opencv_image.astype(np.float32)).astype(np.uint8)
+        # Enhanced blending with post-processing
+        # Only apply additional post-processing if we used LaMa (already post-processed)
+        if use_lama and (_get_lama_manager() is not None or _get_lama_session() is not None):
+            result = result_base  # LaMa result is already post-processed
+        else:
+            # For OpenCV results, apply post-processing
+            result = post_process_inpainted_result(opencv_image, result_base, binary_mask)
+            
+            # Additional soft blending for OpenCV results
+            soft = binary_mask.astype(np.float32) / 255.0
+            soft = cv2.GaussianBlur(soft, (0, 0), sigmaX=6, sigmaY=6)  # Reduced blur for sharper edges
+            soft3 = np.repeat(soft[:, :, None], 3, axis=2)
+            result = (soft3 * result.astype(np.float32) + (1.0 - soft3) * opencv_image.astype(np.float32)).astype(np.uint8)
         
         # Convert back to PIL
         result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
