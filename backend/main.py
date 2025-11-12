@@ -42,6 +42,14 @@ try:
 except Exception:
     ort = None
 
+# IndexNow integration
+try:
+    from indexnow import submit_blog_post
+    INDEXNOW_AVAILABLE = True
+except Exception:
+    INDEXNOW_AVAILABLE = False
+    submit_blog_post = None
+
 # LaMa PyTorch imports (lama-cleaner)
 try:
     from lama_cleaner.model_manager import ModelManager
@@ -97,6 +105,10 @@ MODEL_NAME_FOR_CATEGORY = {
 
 BLOG_BUCKET = os.getenv("BLOG_BUCKET", "")
 CRON_TOKEN = os.getenv("CRON_TOKEN", "")
+
+# IndexNow configuration
+INDEXNOW_KEY = os.getenv("INDEXNOW_KEY", "")
+INDEXNOW_SITE_DOMAIN = os.getenv("INDEXNOW_SITE_DOMAIN", "")
 
 # Resolve path to static frontend assets so blog pages can use site-wide styles in local/dev
 FRONTEND_DIR = os.getenv(
@@ -1790,6 +1802,15 @@ async def publish_blog_post(post_id: int):
             
             conn.commit()
             conn.close()
+            
+            # Submit to IndexNow if configured
+            if INDEXNOW_AVAILABLE and INDEXNOW_KEY and INDEXNOW_SITE_DOMAIN:
+                try:
+                    submit_blog_post(INDEXNOW_SITE_DOMAIN, slug, INDEXNOW_KEY)
+                    logger.info(f"Submitted blog post {slug} to IndexNow")
+                except Exception as e:
+                    logger.warning(f"Failed to submit to IndexNow: {str(e)}")
+                    # Don't fail the publish if IndexNow fails
             
             return {"success": True, "message": "Post published successfully"}
         except Exception as e:
