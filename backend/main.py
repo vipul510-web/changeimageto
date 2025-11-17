@@ -77,15 +77,32 @@ async def root():
     }
 
 # Setup logging
+# Determine log file path based on environment
+log_file_path = os.getenv('LOG_FILE', 'app.log')
+# If running in Cloud Run or production, use absolute path in /tmp or current directory
+if os.getenv("K_SERVICE") or os.getenv("ENVIRONMENT") == "production":
+    # In Cloud Run, logs go to stdout/stderr (Cloud Logging), but also log to file if needed
+    # Use /tmp for Cloud Run (ephemeral storage) or current directory
+    log_file_path = os.path.join(os.getcwd(), 'app.log')
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(log_file_path) if os.path.dirname(log_file_path) else '.', exist_ok=True)
+
+handlers = [logging.StreamHandler()]  # Always log to stdout/stderr (Cloud Logging in production)
+# Add file handler for local development or if explicitly requested
+# In Cloud Run, we still log to file if LOG_TO_FILE env var is set (for debugging)
+if not os.getenv("K_SERVICE") or os.getenv("LOG_TO_FILE") == "true":
+    try:
+        handlers.append(logging.FileHandler(log_file_path))
+    except Exception as e:
+        print(f"Warning: Could not create file handler for {log_file_path}: {e}")
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('app.log'),
-        logging.StreamHandler()
-    ]
+    handlers=handlers
 )
 logger = logging.getLogger(__name__)
+logger.info(f"Logging initialized. Log file: {log_file_path}, K_SERVICE: {os.getenv('K_SERVICE')}, ENVIRONMENT: {os.getenv('ENVIRONMENT')}")
 
 # Limit heavy CPU tasks to protect memory/CPU. Override via env MAX_CONCURRENCY
 PROCESS_SEM = asyncio.Semaphore(int(os.getenv("MAX_CONCURRENCY", "2")))
@@ -549,14 +566,116 @@ def render_article_html(title: str, slug: str, body_sections: list) -> str:
         "author": {"@type": "Organization", "name": "ChangeImageTo.com Team"},
     }
     sections_html = "\n".join(body_sections)
+    comprehensive_footer = """<footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <!-- Brand Section -->
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+            <div class="footer-social">
+              <a href="https://x.com/vipulawl" aria-label="Follow us on Twitter" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+              <a href="https://www.youtube.com/@changeimageto" aria-label="Subscribe on YouTube" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+              </a>
+              <a href="https://linkedin.com/company/make-a-video/" aria-label="Connect on LinkedIn" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tools Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+              <li><a href="/blur-background.html">Blur Background</a></li>
+              <li><a href="/convert-image-format.html">Convert Image Format</a></li>
+              <li><a href="/remove-people-from-photo.html">Remove People / Objects</a></li>
+              <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
+              <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
+              <li><a href="/image-quality-checker.html">Image Quality Checker</a></li>
+              <li><a href="/real-estate-photo-enhancement.html">Real Estate Photo Enhancement</a></li>
+            </ul>
+          </div>
+
+          <!-- Blog Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Latest Blog Posts</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/remove-background-from-image.html">Remove Background from Image</a></li>
+              <li><a href="/blog/upscale-image.html">Upscale Image Quality</a></li>
+              <li><a href="/blog/change-image-background-color.html">Change Image Background Color</a></li>
+              <li><a href="/blog/remove-background-from-image-photoshop.html">Remove Background in Photoshop</a></li>
+              <li><a href="/blog/change-image-background-color-online.html">Change Background Color Online</a></li>
+              <li><a href="/blog/remove-background-from-image-canva.html">Remove Background in Canva</a></li>
+              <li><a href="/blog/change-image-background-color-photoshop.html">Change Background in Photoshop</a></li>
+              <li><a href="/blog/remove-background-from-image-android.html">Remove Background on Android</a></li>
+            </ul>
+          </div>
+
+          <!-- Alternatives Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Tool Alternatives</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/photopea-vs-canva.html">Photopea vs Canva</a></li>
+              <li><a href="/blog/canva-vs-photopea.html">Canva vs Photopea</a></li>
+              <li><a href="/blog/capcut-vs-davinci-resolve.html">CapCut vs DaVinci Resolve</a></li>
+              <li><a href="/blog/free-photoshop-alternatives.html">Free Photoshop Alternatives</a></li>
+              <li><a href="/blog/ai-background-removers.html">AI Background Removers</a></li>
+            </ul>
+          </div>
+
+          <!-- Company Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+            <div class="footer-bottom-links">
+              <a href="/privacy-policy.html">Privacy</a>
+              <a href="#terms">Terms</a>
+              <a href="#cookies">Cookies</a>
+              <a href="#security">Security</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>"""
     return f"""<!doctype html><html lang=\"en\"><head>
 <meta charset=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>
 <title>{title}</title>
 <meta name=\"description\" content=\"{title} – practical guide and tips.\"/>
 <link rel=\"canonical\" href=\"https://www.changeimageto.com/blog/{slug}.html\"/>
 <script type=\"application/ld+json\">{json.dumps(json_ld)}</script>
-<link rel=\"preload\" as=\"style\" href=\"/styles.css?v=20250916-3\"/><link rel=\"stylesheet\" href=\"/styles.css?v=20250916-3\"/>
-<link rel=\"stylesheet\" href=\"https://www.changeimageto.com/styles.css?v=20250916-3\"/>
+<link rel=\"preload\" as=\"style\" href=\"/styles.css?v=20250921-1\"/><link rel=\"stylesheet\" href=\"/styles.css?v=20250921-1\"/>
 <style>
   /* Force readable white text on blog articles */
   body, .main, main.container.main, .seo, .seo p, .seo li, .seo h2, .seo h3, .seo details, .seo summary {{ color: #ffffff; }}
@@ -564,13 +683,14 @@ def render_article_html(title: str, slug: str, body_sections: list) -> str:
   .seo a:hover {{ text-decoration: underline; }}
   .seo-links a {{ color: #ffffff; }}
   .header h1 {{ color: #ffffff; }}
+  .header p {{ color: var(--muted); }}
+  .top-nav a {{ color: #ffffff; }}
 </style>
 </head><body>
-<header class=\"container header\"><a href=\"https://www.changeimageto.com/\" class=\"logo-link\"><img src=\"https://www.changeimageto.com/logo.png?v=20250916-2\" alt=\"ChangeImageTo\" class=\"logo-img\"/></a><div style=\"display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%\"><h1 style=\"margin:0\">{title}</h1><nav class=\"top-nav\"><a href=\"https://www.changeimageto.com/blog\" aria-label=\"Read our blog\">Blog</a></nav></div></header>
+<header class=\"container header\"><a href=\"https://www.changeimageto.com/\" class=\"logo-link\"><img src=\"https://www.changeimageto.com/logo.png?v=20250921-1\" alt=\"ChangeImageTo\" class=\"logo-img\" loading=\"eager\" width=\"200\" height=\"68\" /></a><div style=\"display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%\"><h1 style=\"margin:0\">{title}</h1><nav class=\"top-nav\"><a href=\"https://www.changeimageto.com/blog\" aria-label=\"Read our blog\">Blog</a></nav></div></header>
 <main class=\"container main\">\n  <p class=\"seo\" style=\"margin:0 0 16px\"><strong>By:</strong> ChangeImageTo.com Team · <time datetime=\"{now_iso}\">{now_iso.replace('T',' ')[:19]} UTC</time></p>\n  {sections_html}\n  <p class=\"seo\" style=\"margin-top:24px\"><a href=\"https://www.changeimageto.com/blog\" style=\"color:#fff\">← Back to blog</a></p>\n</main>
-<nav class=\"seo-links\"><a href=\"https://www.changeimageto.com/remove-background-from-image.html\">Remove Background from Image</a><a href=\"https://www.changeimageto.com/change-color-of-image.html\">Change color of image online</a><a href=\"https://www.changeimageto.com/change-image-background.html\">Change image background</a><a href=\"https://www.changeimageto.com/convert-image-format.html\">Convert image format</a><a href=\"https://www.changeimageto.com/upscale-image.html\">AI Image Upscaler</a><a href=\"https://www.changeimageto.com/blur-background.html\">Blur Background</a><a href=\"https://www.changeimageto.com/enhance-image.html\">Enhance Image</a></nav>
-<footer class=\"container footer\"><p>Built for speed and quality. <a href=\"https://www.changeimageto.com/#\" rel=\"nofollow\">Contact</a></p></footer>
-<script src=\"/script.js?v=20250916-3\" defer></script>
+{comprehensive_footer}
+<script src=\"/script.js?v=20250921-1\" defer></script>
 </body></html>"""
 
 def build_sections(keyword: str) -> list:
