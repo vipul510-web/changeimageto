@@ -41,19 +41,9 @@
             <priority>0.9</priority>
         </url>
         <url>
-            <loc>https://www.changeimageto.com/real-estate-photo-enhancement.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.95</priority>
-        </url>
-        <url>
             <loc>https://www.changeimageto.com/remove-background-from-image.html</loc>
             <changefreq>daily</changefreq>
             <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/remove-background-for-shopify.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.8</priority>
         </url>
         <url>
             <loc>https://www.changeimageto.com/remove-people-from-photo.html</loc>
@@ -96,6 +86,16 @@
             <priority>0.8</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/blog/best-online-background-removers-free-no-signup.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/capcut-vs-davinci-resolve.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/blog/change-image-background-color-online.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.7</priority>
@@ -121,7 +121,37 @@
             <priority>0.7</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/blog/change-photo-background-white-amazon-listings.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/free-photoshop-alternatives.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/free-tool-resize-multiple-images-shopify-stores.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/free-tools-make-photo-background-transparent.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-resize-images-without-losing-quality.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/blog/index.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/photopea-vs-canva.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.7</priority>
         </url>
@@ -161,39 +191,9 @@
             <priority>0.7</priority>
         </url>
         <url>
-            <loc>https://www.changeimageto.com/blog/photopea-vs-canva.html</loc>
-            <changefreq>monthly</changefreq>
-            <priority>0.7</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/blog/capcut-vs-davinci-resolve.html</loc>
-            <changefreq>monthly</changefreq>
-            <priority>0.7</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/blog/canva-vs-photopea.html</loc>
-            <changefreq>monthly</changefreq>
-            <priority>0.7</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/blog/free-photoshop-alternatives.html</loc>
-            <changefreq>monthly</changefreq>
-            <priority>0.7</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/blog/ai-background-removers.html</loc>
-            <changefreq>monthly</changefreq>
-            <priority>0.7</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/contact.html</loc>
-            <changefreq>monthly</changefreq>
-            <priority>0.6</priority>
-        </url>
-        <url>
             <loc>https://www.changeimageto.com/about.html</loc>
             <changefreq>monthly</changefreq>
-            <priority>0.6</priority>
+            <priority>0.5</priority>
         </url>
         <url>
             <loc>https://www.changeimageto.com/blog-admin.html</loc>
@@ -201,7 +201,67 @@
             <priority>0.5</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/blur-background-for-portraits.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/change-background-to-green.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/change-background-to-purple.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/change-background-to-red.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/contact.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/enhance-image-for-ecommerce.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/privacy-policy.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/real-estate-photo-enhancement.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/remove-background-for-amazon.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/remove-background-for-shopify.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/remove-text-from-image-for-shopify.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/upscale-image-for-print.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/upscale-image-for-real-estate.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.5</priority>
         </url>
