@@ -8,6 +8,7 @@
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/api/$1" },
+    { "source": "/blog/(.*)", "destination": "/frontend/blog/$1" },
     { "source": "/blog", "destination": "/frontend/blog/index.html" },
     { "source": "/blog/", "destination": "/frontend/blog/index.html" },
     { "source": "/(.*\\.txt)", "destination": "/frontend/$1" },
