@@ -27,7 +27,19 @@
       body, .main-content, .blog-post, .blog-content, .blog-content p, .blog-content li, .blog-content h1, .blog-content h2, .blog-content h3, .blog-content h4, .blog-content strong, .blog-content em, .blog-header h1, .lead, .faq-item, .faq-item h3, .faq-item p { color: #ffffff !important; }
       
       /* White cards need black text for readability */
-      .benefit-card, .benefit-card h4, .benefit-card p, .format-card, .format-card h4, .format-card p, .format-card .feature, .tool-card, .tool-card h3, .tool-card p, .tool-card .tool-description, .step-card, .step-card h3, .step-card p { color: #2c3e50 !important; }
+      .benefit-card, .benefit-card h4, .benefit-card p, 
+      .format-card, .format-card h4, .format-card p, .format-card .feature, 
+      .tool-card, .tool-card *, .tool-card h3, .tool-card h4, .tool-card h5, .tool-card p, 
+      .tool-card .tool-description, .tool-card .tool-header, .tool-card .tool-rating, 
+      .tool-card .rating, .tool-card .tool-features, .tool-card .feature-tag,
+      .tool-card .pros, .tool-card .pros h5, .tool-card .pros li,
+      .tool-card .cons, .tool-card .cons h5, .tool-card .cons li,
+      .step-card, .step-card h3, .step-card p, .step, .step * { color: #2c3e50 !important; }
+      
+      /* Pros and cons headings keep their colors but list items are dark */
+      .tool-card .pros h5 { color: #27ae60 !important; }
+      .tool-card .cons h5 { color: #e74c3c !important; }
+      .tool-card .pros li, .tool-card .cons li { color: #2c3e50 !important; }
       
       .blog-content a { color: #9ccfff !important; }
       .blog-content a:hover { text-decoration: underline; }
