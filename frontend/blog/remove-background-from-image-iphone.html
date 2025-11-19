@@ -14,6 +14,41 @@
   .seo-links a { color: #ffffff; }
   .header h1 { color: #ffffff; }
 </style>
+
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    // Check if gtag is already available
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      // If gtag is not available yet, wait for it (for dynamic loading pattern)
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      // Stop checking after 10 seconds
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
 </head><body>
 <header class="container header"><a href="https://www.changeimageto.com/" class="logo-link"><img src="https://www.changeimageto.com/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img"/></a><div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%"><h1 style="margin:0">Remove Background From Image Iphone</h1><nav class="top-nav"><a href="https://www.changeimageto.com/blog" aria-label="Read our blog">Blog</a></nav></div></header>
 <main class="container main">

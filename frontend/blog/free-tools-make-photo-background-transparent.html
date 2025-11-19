@@ -58,6 +58,41 @@
       .blog-header h1 { color: #ffffff !important; }
       .blog-meta, .blog-date, .blog-category { color: var(--muted) !important; }
     </style>
+
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    // Check if gtag is already available
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      // If gtag is not available yet, wait for it (for dynamic loading pattern)
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      // Stop checking after 10 seconds
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
 </head>
 <body>
     <header class="header">
