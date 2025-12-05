@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Resize Image for Facebook | Free Online Tool</title>
+    <meta name="description" content="Resize images for Facebook posts, cover photos, and profile pictures. Optimize your photos for Facebook's recommended dimensions (1200x630, 820x312, 400x400). Free, no login required.">
+    <meta name="keywords" content="resize image for facebook, facebook image size, facebook photo dimensions, resize photo for facebook, facebook image resizer">
+    <link rel="canonical" href="https://www.changeimageto.com/resize-image-for-facebook.html" />
+
+    <meta property="og:title" content="Resize Image for Facebook | Free Online Tool" />
+    <meta property="og:description" content="Resize images for Facebook posts, cover photos, and profile pictures. Optimize your photos for Facebook's recommended dimensions. Free, no login required." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.changeimageto.com/resize-image-for-facebook.html" />
+
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"Service","name":"Resize Image for Facebook","description":"Free online tool to resize images for Facebook posts, cover photos, and profile pictures. Fast, no login, no watermark.","url":"https://www.changeimageto.com/resize-image-for-facebook.html","provider":{"@type":"Organization","name":"ChangeImageTo.com"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Resize Image for Facebook (Free)</h1>
+        <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
+      </div>
+      <p>Resize images for Facebook posts, cover photos, and profile pictures. Optimize your photos for perfect Facebook display.</p>
+    </header>
+
+    <main class="container main">
+      <div class="upload-section">
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7,10 12,15 17,10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <h3>Drop images here or click to browse</h3>
+            <p>Upload up to 50 images (JPG, PNG, WebP)</p>
+            <p class="file-limit">Max 10MB per file</p>
+          </div>
+          <input type="file" id="fileInput" multiple accept="image/*" style="display:none" />
+        </div>
+        
+        <div class="file-list" id="fileList" style="display:none">
+          <h3>Selected Files:</h3>
+          <ul id="fileItems"></ul>
+        </div>
+      </div>
+
+      <div class="controls-section">
+        <div class="control-group">
+          <label for="facebookType">Facebook Format:</label>
+          <select id="facebookType">
+            <option value="post">Post (1200×630)</option>
+            <option value="cover">Cover Photo (820×312)</option>
+            <option value="profile">Profile Picture (400×400)</option>
+            <option value="event">Event Cover (1920×1080)</option>
+          </select>
+        </div>
+        
+        <input type="hidden" id="width" value="1200" />
+        <input type="hidden" id="height" value="630" />
+        <input type="hidden" id="maintainAspect" value="true" />
+        
+        <div class="control-group">
+          <div style="background:#12171d;border:1px solid #1e2630;border-radius:8px;padding:12px;color:var(--muted);">
+            <strong style="color:var(--fg);">Target Size:</strong> <span id="sizeDisplay">1200 × 630 pixels</span>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label for="quality">Quality:</label>
+          <input type="range" id="quality" min="1" max="100" value="90" />
+          <span id="qualityValue">90%</span>
+        </div>
+      </div>
+
+      <div class="action-section">
+        <button id="resizeBtn" class="btn btn-primary" disabled>
+          <span class="btn-text">Resize for Facebook</span>
+          <span class="btn-loading" style="display:none">Processing...</span>
+        </button>
+        <button id="clearBtn" class="btn btn-secondary" style="display:none">Clear All</button>
+      </div>
+
+      <div class="result-section" id="resultSection" style="display:none">
+        <h3>Processing Complete!</h3>
+        <div class="result-info">
+          <p id="resultText"></p>
+          <a id="downloadBtn" class="btn btn-success" download="facebook_images.zip">
+            Download ZIP File
+          </a>
+        </div>
+      </div>
+
+      <div class="error-section" id="errorSection" style="display:none">
+        <h3>Error</h3>
+        <p id="errorText"></p>
+      </div>
+
+      <section class="seo">
+        <h2>How to Resize Images for Facebook</h2>
+        <p>Our free online tool makes it easy to resize images for Facebook. Simply upload your images above, choose your Facebook format, and click resize. No signup required, no watermarks, completely free.</p>
+        
+        <h3>Facebook Image Size Requirements</h3>
+        <ul>
+          <li><strong>Posts (1.91:1)</strong>: 1200×630 pixels - Recommended for link previews and shared posts</li>
+          <li><strong>Cover Photo (2.63:1)</strong>: 820×312 pixels - Perfect for Facebook page and profile cover photos</li>
+          <li><strong>Profile Picture (1:1)</strong>: 400×400 pixels - Square format for profile pictures (displays as 170×170)</li>
+          <li><strong>Event Cover (16:9)</strong>: 1920×1080 pixels - Wide format for event cover photos</li>
+        </ul>
+        
+        <h3>Why Resize Images for Facebook?</h3>
+        <ul>
+          <li><strong>Better Quality</strong>: Using Facebook's recommended dimensions ensures your images display at maximum quality without compression.</li>
+          <li><strong>Faster Loading</strong>: Properly sized images load faster, improving user experience and engagement.</li>
+          <li><strong>Professional Appearance</strong>: Correctly sized images look more professional and polished on Facebook.</li>
+          <li><strong>Algorithm Benefits</strong>: Well-optimized images may perform better in Facebook's algorithm, potentially increasing reach.</li>
+        </ul>
+        
+        <h3>Step-by-Step Guide</h3>
+        <ol>
+          <li><strong>Upload Your Images</strong>: Click the upload area above or drag and drop up to 50 images at once.</li>
+          <li><strong>Choose Facebook Format</strong>: Select the format that matches your content (Post, Cover Photo, Profile Picture, or Event Cover).</li>
+          <li><strong>Adjust Quality</strong>: Set quality to 90% for best results (recommended for Facebook).</li>
+          <li><strong>Resize</strong>: Click "Resize for Facebook" and wait a few seconds for processing.</li>
+          <li><strong>Download</strong>: Get all resized images in a ZIP file, ready to upload to Facebook.</li>
+        </ol>
+        
+        <h3>Tips for Best Facebook Results</h3>
+        <ul>
+          <li>Use Post format (1200×630) for shared links and general posts</li>
+          <li>Cover Photo format (820×312) is perfect for page headers</li>
+          <li>Profile Picture format (400×400) ensures crisp profile images</li>
+          <li>Event Cover format (1920×1080) works great for event pages</li>
+          <li>Maintain aspect ratio to prevent distortion - our tool does this automatically</li>
+          <li>Use 90% quality for the best balance between file size and image quality</li>
+        </ul>
+        
+        <h3>Frequently Asked Questions</h3>
+        <details>
+          <summary>What are Facebook's recommended image dimensions?</summary>
+          <p>Facebook recommends 1200×630 for posts, 820×312 for cover photos, 400×400 for profile pictures, and 1920×1080 for event covers.</p>
+        </details>
+        <details>
+          <summary>Will my images be cropped?</summary>
+          <p>No, our tool maintains aspect ratio by default. Images will be resized to fit within the target dimensions while preserving their original proportions.</p>
+        </details>
+        <details>
+          <summary>Is this tool free to use?</summary>
+          <p>Yes, our tool is completely free with no signup required and no watermarks.</p>
+        </details>
+        <details>
+          <summary>How many images can I resize at once?</summary>
+          <p>You can resize up to 50 images at once. All images will be resized to the same Facebook format you select.</p>
+        </details>
+        <details>
+          <summary>What file format will I get?</summary>
+          <p>All resized images are output as optimized JPEG files, perfect for Facebook uploads.</p>
+        </details>
+        
+        <h3>Related Tools</h3>
+        <ul>
+          <li><a href="/resize-image-for-instagram.html">Resize Image for Instagram</a></li>
+          <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
+          <li><a href="/remove-background-from-image.html">Remove Background from Image</a></li>
+          <li><a href="/enhance-image.html">Enhance Image</a></li>
+          <li><a href="/convert-image-format.html">Convert Image Format</a></li>
+          <li><a href="/upscale-image.html">Upscale Image</a></li>
+        </ul>
+      </section>
+    </main>
+
+    <nav class="seo-links">
+      <a href="/remove-background-from-image.html">Remove Background from Image</a>
+      <a href="/change-color-of-image.html">Change color of image online</a>
+      <a href="/change-image-background.html">Change image background</a>
+      <a href="/convert-image-format.html">Convert image format</a>
+      <a href="/upscale-image.html">AI Image Upscaler</a>
+      <a href="/blur-background.html">Blur Background</a>
+      <a href="/enhance-image.html">Enhance Image</a>
+    </nav>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+              <li><a href="/blur-background.html">Blur Background</a></li>
+              <li><a href="/convert-image-format.html">Convert Image Format</a></li>
+              <li><a href="/remove-people-from-photo.html">Remove People / Objects</a></li>
+              <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
+              <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
+              <li><a href="/image-quality-checker.html">Image Quality Checker</a></li>
+              <li><a href="/real-estate-photo-enhancement.html">Real Estate Photo Enhancement</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Latest Blog Posts</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/remove-background-from-image.html">Remove Background from Image</a></li>
+              <li><a href="/blog/upscale-image.html">Upscale Image Quality</a></li>
+              <li><a href="/blog/change-image-background-color.html">Change Image Background Color</a></li>
+              <li><a href="/blog/remove-background-from-image-photoshop.html">Remove Background in Photoshop</a></li>
+              <li><a href="/blog/change-image-background-color-online.html">Change Background Color Online</a></li>
+              <li><a href="/blog/remove-background-from-image-canva.html">Remove Background in Canva</a></li>
+              <li><a href="/blog/change-image-background-color-photoshop.html">Change Background in Photoshop</a></li>
+              <li><a href="/blog/remove-background-from-image-android.html">Remove Background on Android</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Tool Alternatives</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/photopea-vs-canva.html">Photopea vs Canva</a></li>
+              <li><a href="/blog/capcut-vs-davinci-resolve.html">CapCut vs DaVinci Resolve</a></li>
+              <li><a href="/blog/canva-vs-photopea.html">Canva vs Photopea</a></li>
+              <li><a href="/blog/free-photoshop-alternatives.html">Free Photoshop Alternatives</a></li>
+              <li><a href="/blog/ai-background-removers.html">AI Background Removers</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+            <div class="footer-bottom-links">
+              <a href="/privacy-policy.html">Privacy</a>
+              <a href="#terms">Terms</a>
+              <a href="#cookies">Cookies</a>
+              <a href="#security">Security</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileItems = document.getElementById('fileItems');
+        const resizeBtn = document.getElementById('resizeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultSection = document.getElementById('resultSection');
+        const errorSection = document.getElementById('errorSection');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const facebookType = document.getElementById('facebookType');
+        const widthInput = document.getElementById('width');
+        const heightInput = document.getElementById('height');
+        const qualitySlider = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const sizeDisplay = document.getElementById('sizeDisplay');
+
+        let selectedFiles = [];
+        let zipBlob = null;
+
+        const facebookSizes = {
+          post: { width: 1200, height: 630 },
+          cover: { width: 820, height: 312 },
+          profile: { width: 400, height: 400 },
+          event: { width: 1920, height: 1080 }
+        };
+
+        function updateDimensions() {
+          const type = facebookType.value;
+          const size = facebookSizes[type];
+          widthInput.value = size.width;
+          heightInput.value = size.height;
+          sizeDisplay.textContent = `${size.width} × ${size.height} pixels`;
+        }
+
+        facebookType.addEventListener('change', updateDimensions);
+        updateDimensions();
+
+        qualitySlider.addEventListener('input', function() {
+          qualityValue.textContent = this.value + '%';
+        });
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
+        uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', (e) => { handleFiles(e.target.files); });
+
+        function handleFiles(files) {
+          const newFiles = Array.from(files).filter(file => file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024);
+          if (selectedFiles.length + newFiles.length > 50) {
+            alert('Maximum 50 images allowed. Please select fewer images.');
+            return;
+          }
+          selectedFiles = [...selectedFiles, ...newFiles];
+          updateFileList();
+          updateButtons();
+        }
+
+        function updateFileList() {
+          if (selectedFiles.length === 0) {
+            fileList.style.display = 'none';
+            return;
+          }
+          fileList.style.display = 'block';
+          fileItems.innerHTML = '';
+          selectedFiles.forEach((file, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${file.name}</span> <span class="file-size">(${(file.size / 1024 / 1024).toFixed(1)}MB)</span> <button class="remove-file" data-index="${index}">×</button>`;
+            fileItems.appendChild(li);
+          });
+          document.querySelectorAll('.remove-file').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const index = parseInt(e.target.dataset.index);
+              selectedFiles.splice(index, 1);
+              updateFileList();
+              updateButtons();
+            });
+          });
+        }
+
+        function updateButtons() {
+          resizeBtn.disabled = selectedFiles.length === 0;
+          clearBtn.style.display = selectedFiles.length > 0 ? 'inline-block' : 'none';
+        }
+
+        clearBtn.addEventListener('click', () => {
+          selectedFiles = [];
+          fileInput.value = '';
+          updateFileList();
+          updateButtons();
+          hideResults();
+        });
+
+        resizeBtn.addEventListener('click', async () => {
+          if (selectedFiles.length === 0) return;
+          const formData = new FormData();
+          selectedFiles.forEach(file => formData.append('files', file));
+          formData.append('width', widthInput.value);
+          formData.append('height', heightInput.value);
+          formData.append('maintain_aspect', 'true');
+          formData.append('quality', qualitySlider.value);
+          resizeBtn.disabled = true;
+          resizeBtn.querySelector('.btn-text').style.display = 'none';
+          resizeBtn.querySelector('.btn-loading').style.display = 'inline';
+          try {
+            const response = await fetch('/api/bulk-resize', { method: 'POST', body: formData });
+            if (!response.ok) throw new Error(await response.text() || 'Processing failed');
+            zipBlob = await response.blob();
+            showResult(selectedFiles.length);
+            downloadBtn.href = URL.createObjectURL(zipBlob);
+          } catch (error) {
+            showError(error.message);
+          } finally {
+            resizeBtn.disabled = false;
+            resizeBtn.querySelector('.btn-text').style.display = 'inline';
+            resizeBtn.querySelector('.btn-loading').style.display = 'none';
+          }
+        });
+
+        function showResult(count) {
+          hideResults();
+          resultSection.style.display = 'block';
+          document.getElementById('resultText').textContent = `Successfully resized ${count} image${count !== 1 ? 's' : ''} for Facebook. Click download to get your ZIP file.`;
+        }
+
+        function showError(message) {
+          hideResults();
+          errorSection.style.display = 'block';
+          document.getElementById('errorText').textContent = message;
+        }
+
+        function hideResults() {
+          resultSection.style.display = 'none';
+          errorSection.style.display = 'none';
+        }
+      });
+    </script>
+
+    <style>
+      .upload-section { margin-bottom: 2rem; }
+      .upload-area { border: 2px dashed #ccc; border-radius: 8px; padding: 3rem 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: #f9f9f9; }
+      .upload-area:hover, .upload-area.dragover { border-color: #007bff; background: #f0f8ff; }
+      .upload-content svg { color: #666; margin-bottom: 1rem; }
+      .upload-content h3 { margin: 0 0 0.5rem 0; color: #333; }
+      .upload-content p { margin: 0.25rem 0; color: #666; }
+      .file-limit { font-size: 0.9rem; color: #999; }
+      .file-list { margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; }
+      .file-list h3 { margin: 0 0 1rem 0; font-size: 1.1rem; }
+      .file-list ul { list-style: none; padding: 0; margin: 0; }
+      .file-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; margin-bottom: 0.5rem; border-radius: 4px; border: 1px solid #ddd; }
+      .file-size { color: #666; font-size: 0.9rem; }
+      .remove-file { background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 16px; line-height: 1; }
+      .controls-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; }
+      .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
+      .control-group label { font-weight: 600; color: #333; }
+      .control-group select, .control-group input[type="range"] { padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
+      .action-section { text-align: center; margin-bottom: 2rem; }
+      .result-section, .error-section { text-align: center; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; }
+      .result-section { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+      .error-section { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+      .comprehensive-footer{background:var(--card);border-top:1px solid var(--border);margin-top:60px;padding:48px 0 24px}
+      .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+      .footer-brand{max-width:300px}
+      .footer-description{color:var(--muted);line-height:1.6;margin-bottom:24px;font-size:14px}
+      .footer-section h3{color:var(--fg);font-size:16px;font-weight:600;margin:0 0 20px}
+      .footer-links{list-style:none;padding:0;margin:0}
+      .footer-links li{margin-bottom:12px}
+      .footer-links a{color:var(--muted);text-decoration:none;font-size:14px;transition:color 0.2s ease}
+      .footer-links a:hover{color:var(--accent)}
+      .footer-bottom{border-top:1px solid var(--border);padding-top:24px}
+      .footer-bottom-content{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+      .footer-copyright{color:var(--muted);font-size:14px;margin:0}
+      .footer-bottom-links{display:flex;gap:24px}
+      .footer-bottom-links a{color:var(--muted);text-decoration:none;font-size:14px;transition:color 0.2s ease}
+      .footer-bottom-links a:hover{color:var(--accent)}
+      @media(max-width:1024px){.footer-grid{grid-template-columns:1fr 1fr 1fr;gap:32px}}
+      @media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:24px}.comprehensive-footer{padding:32px 0 20px}.footer-bottom-content{flex-direction:column;text-align:center;gap:12px}.footer-bottom-links{justify-content:center}}
+      @media(max-width:480px){.footer-grid{grid-template-columns:1fr;gap:20px}}
+    </style>
+  </body>
+</html>
+

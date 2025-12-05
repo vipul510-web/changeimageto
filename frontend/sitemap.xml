@@ -16,6 +16,16 @@
             <priority>0.9</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/resize-image-for-instagram.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/resize-image-for-facebook.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/change-color-of-image.html</loc>
             <changefreq>daily</changefreq>
             <priority>0.9</priority>
@@ -27,6 +37,36 @@
         </url>
         <url>
             <loc>https://www.changeimageto.com/convert-image-format.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-png-to-jpg.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-jpg-to-png.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-png-to-webp.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-jpg-to-webp.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-webp-to-png.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-webp-to-jpg.html</loc>
             <changefreq>weekly</changefreq>
             <priority>0.9</priority>
         </url>
