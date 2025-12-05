@@ -315,4 +315,29 @@
             <changefreq>monthly</changefreq>
             <priority>0.5</priority>
         </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-online.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-size.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-without-losing-quality.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-free.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-to-200kb.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
 </urlset>
