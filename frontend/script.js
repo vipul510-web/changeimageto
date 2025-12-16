@@ -626,7 +626,7 @@ if (form) form.addEventListener('submit', async (e) => {
       if (typeof window.showFeedbackPopup === 'function') {
         window.showFeedbackPopup();
       }
-    }, 1500);
+    }, 5000); // 5 second delay to let user see the result first
     
     // make checkerboard solid and edge-to-edge on landing page
     (function(){
@@ -821,7 +821,7 @@ if (window.location.pathname === '/convert-image-format.html') {
           if (typeof window.showFeedbackPopup === 'function') {
             window.showFeedbackPopup();
           }
-        }, 1500);
+        }, 5000); // 5 second delay to let user see the result first
       } catch (err) {
         alert('Error: ' + (err.message || err));
         logUserAction('convert_error', { message: err.message || String(err) });
