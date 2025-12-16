@@ -572,6 +572,361 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <script src="./script.js?v=20250916-3" defer></script>
     
+    <!-- What's Missing Chat Bubble -->
+    <div id="whats-missing-bubble" class="whats-missing-bubble">
+      <button class="whats-missing-button" aria-label="What's missing?">
+        <span class="whats-missing-icon">💬</span>
+        <span class="whats-missing-text">What's missing?</span>
+      </button>
+    </div>
+
+    <!-- What's Missing Side Modal -->
+    <div id="whats-missing-modal" class="whats-missing-modal">
+      <div class="whats-missing-modal-overlay"></div>
+      <div class="whats-missing-modal-content">
+        <div class="whats-missing-modal-header">
+          <h3>We'd love your feedback!</h3>
+          <button class="whats-missing-close" id="whats-missing-close-btn" aria-label="Close">&times;</button>
+        </div>
+        <div class="whats-missing-modal-body">
+          <p class="whats-missing-question">Is anything missing for you or can be done better?</p>
+          <textarea 
+            id="whats-missing-input" 
+            class="whats-missing-input" 
+            placeholder="Tell us what you think... (e.g., features you'd like to see, improvements, issues you've encountered)"
+            rows="6"
+            maxlength="2000"
+          ></textarea>
+          <div class="whats-missing-char-count"><span id="whats-missing-char-count">0</span>/2000</div>
+        </div>
+        <div class="whats-missing-modal-footer">
+          <button class="whats-missing-submit" id="whats-missing-submit-btn">Submit Feedback</button>
+          <button class="whats-missing-cancel" id="whats-missing-cancel-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      /* What's Missing Chat Bubble */
+      .whats-missing-bubble {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+      }
+
+      .whats-missing-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--accent, #6aa7ff);
+        color: #001633;
+        border: none;
+        border-radius: 28px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(106, 167, 255, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .whats-missing-button:hover {
+        background: #4f46e5;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(106, 167, 255, 0.4);
+      }
+
+      .whats-missing-icon {
+        font-size: 20px;
+      }
+
+      .whats-missing-text {
+        white-space: nowrap;
+      }
+
+      /* What's Missing Side Modal */
+      .whats-missing-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10000;
+        display: none;
+      }
+
+      .whats-missing-modal.active {
+        display: flex;
+      }
+
+      .whats-missing-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+      }
+
+      .whats-missing-modal-content {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        max-width: 500px;
+        height: 100%;
+        background: var(--card, #12171d);
+        border-left: 1px solid var(--border, #1e2630);
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        animation: slideInRight 0.3s ease;
+        overflow-y: auto;
+      }
+
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+
+      .whats-missing-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px;
+        border-bottom: 1px solid var(--border, #1e2630);
+      }
+
+      .whats-missing-modal-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--fg, #eaf0f6);
+      }
+
+      .whats-missing-close {
+        background: transparent;
+        border: none;
+        color: var(--muted, #9aa7b2);
+        font-size: 28px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+      }
+
+      .whats-missing-close:hover {
+        color: var(--fg, #eaf0f6);
+        background: var(--border, #1e2630);
+      }
+
+      .whats-missing-modal-body {
+        flex: 1;
+        padding: 24px;
+      }
+
+      .whats-missing-question {
+        font-size: 16px;
+        color: var(--fg, #eaf0f6);
+        margin: 0 0 20px;
+        line-height: 1.6;
+      }
+
+      .whats-missing-input {
+        width: 100%;
+        padding: 12px;
+        background: var(--bg, #0b0f13);
+        border: 1px solid var(--border, #1e2630);
+        border-radius: 8px;
+        color: var(--fg, #eaf0f6);
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+        box-sizing: border-box;
+        line-height: 1.5;
+      }
+
+      .whats-missing-input:focus {
+        outline: none;
+        border-color: var(--accent, #6aa7ff);
+        box-shadow: 0 0 0 3px rgba(106, 167, 255, 0.1);
+      }
+
+      .whats-missing-char-count {
+        font-size: 12px;
+        color: var(--muted, #9aa7b2);
+        text-align: right;
+        margin-top: 8px;
+      }
+
+      .whats-missing-modal-footer {
+        padding: 24px;
+        border-top: 1px solid var(--border, #1e2630);
+        display: flex;
+        gap: 12px;
+      }
+
+      .whats-missing-submit,
+      .whats-missing-cancel {
+        flex: 1;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .whats-missing-submit {
+        background: var(--accent, #6aa7ff);
+        color: #001633;
+      }
+
+      .whats-missing-submit:hover {
+        background: #4f46e5;
+        color: white;
+        transform: translateY(-1px);
+      }
+
+      .whats-missing-cancel {
+        background: transparent;
+        color: var(--muted, #9aa7b2);
+        border: 1px solid var(--border, #1e2630);
+      }
+
+      .whats-missing-cancel:hover {
+        background: var(--border, #1e2630);
+        color: var(--fg, #eaf0f6);
+      }
+
+      @media (max-width: 600px) {
+        .whats-missing-modal-content {
+          max-width: 100%;
+        }
+
+        .whats-missing-text {
+          display: none;
+        }
+
+        .whats-missing-button {
+          padding: 12px;
+          border-radius: 50%;
+          width: 56px;
+          height: 56px;
+          justify-content: center;
+        }
+      }
+    </style>
+
+    <script>
+      // What's Missing Chat Bubble Functionality
+      (function() {
+        const bubble = document.getElementById('whats-missing-bubble');
+        const modal = document.getElementById('whats-missing-modal');
+        const openBtn = bubble?.querySelector('.whats-missing-button');
+        const closeBtn = document.getElementById('whats-missing-close-btn');
+        const cancelBtn = document.getElementById('whats-missing-cancel-btn');
+        const submitBtn = document.getElementById('whats-missing-submit-btn');
+        const input = document.getElementById('whats-missing-input');
+        const charCount = document.getElementById('whats-missing-char-count');
+
+        if (!bubble || !modal) return;
+
+        function openModal() {
+          modal.classList.add('active');
+          document.body.style.overflow = 'hidden';
+          // Focus on input after animation
+          setTimeout(() => input?.focus(), 300);
+        }
+
+        function closeModal() {
+          modal.classList.remove('active');
+          document.body.style.overflow = '';
+          // Clear input
+          if (input) {
+            input.value = '';
+            if (charCount) charCount.textContent = '0';
+          }
+        }
+
+        function submitFeedback() {
+          const feedbackText = input?.value.trim();
+          if (!feedbackText) {
+            alert('Please enter your feedback');
+            return;
+          }
+
+          const feedbackData = {
+            feedback: feedbackText,
+            page: window.location.pathname,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+          };
+
+          // Send to backend
+          const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+          const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
+
+          fetch(apiBase + '/api/whats-missing', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(feedbackData)
+          }).then(response => response.json())
+            .then(data => {
+              // Show thank you message
+              const thankYou = document.createElement('div');
+              thankYou.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--accent,#6aa7ff);color:#001633;padding:16px 24px;border-radius:8px;z-index:10001;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+              thankYou.textContent = 'Thank you for your feedback! 🙏';
+              document.body.appendChild(thankYou);
+
+              setTimeout(() => {
+                thankYou.style.opacity = '0';
+                thankYou.style.transition = 'opacity 0.3s';
+                setTimeout(() => thankYou.remove(), 300);
+              }, 2000);
+
+              closeModal();
+            })
+            .catch(err => {
+              console.warn('Failed to submit feedback:', err);
+              alert('Failed to submit feedback. Please try again.');
+            });
+        }
+
+        // Event listeners
+        openBtn?.addEventListener('click', openModal);
+        closeBtn?.addEventListener('click', closeModal);
+        cancelBtn?.addEventListener('click', closeModal);
+        submitBtn?.addEventListener('click', submitFeedback);
+
+        // Close on overlay click
+        modal.querySelector('.whats-missing-modal-overlay')?.addEventListener('click', closeModal);
+
+        // Character count
+        input?.addEventListener('input', function() {
+          if (charCount) charCount.textContent = this.value.length;
+        });
+
+        // ESC key to close
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+          }
+        });
+      })();
+    </script>
+    
     <!-- Load non-critical JavaScript after page load -->
     <script>
       // Defer non-critical JavaScript execution

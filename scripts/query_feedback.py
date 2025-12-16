@@ -84,6 +84,58 @@ def query_feedback(db_path='blog_management.db', limit=50):
             bar = "█" * row[1]
             print(f"  {row[0]} stars: {bar} ({row[1]})")
         
+        # Get impression statistics if table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='feedback_impressions'")
+        if cursor.fetchone():
+            print("\n📊 Feedback Modal Impressions:")
+            cursor.execute("SELECT COUNT(*) FROM feedback_impressions WHERE action='shown'")
+            shown = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM feedback_impressions WHERE action='submitted'")
+            submitted = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM feedback_impressions WHERE action='skipped'")
+            skipped = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM feedback_impressions WHERE action='closed'")
+            closed = cursor.fetchone()[0]
+            
+            print(f"  Shown: {shown}")
+            print(f"  Submitted: {submitted}")
+            print(f"  Skipped: {skipped}")
+            print(f"  Closed: {closed}")
+            
+            if shown > 0:
+                conversion_rate = (submitted / shown) * 100
+                print(f"\n  Conversion Rate: {conversion_rate:.2f}% ({submitted}/{shown})")
+        
+        # Get "what's missing" feedback if table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='whats_missing_feedback'")
+        if cursor.fetchone():
+            cursor.execute("SELECT COUNT(*) FROM whats_missing_feedback")
+            whats_missing_count = cursor.fetchone()[0]
+            
+            if whats_missing_count > 0:
+                print(f"\n💬 'What's Missing' Feedback: {whats_missing_count} entries\n")
+                print("=" * 80)
+                
+                cursor.execute('''
+                    SELECT id, feedback_text, page, created_at
+                    FROM whats_missing_feedback
+                    ORDER BY created_at DESC
+                    LIMIT 10
+                ''')
+                
+                for row in cursor.fetchall():
+                    print(f"\nID: {row[0]}")
+                    print(f"Page: {row[2] or '(unknown)'}")
+                    print(f"Date: {row[3]}")
+                    feedback = row[1]
+                    if len(feedback) > 300:
+                        feedback = feedback[:300] + "..."
+                    print(f"Feedback: {feedback}")
+                    print("-" * 80)
+        
         conn.close()
         
     except Exception as e:

@@ -1372,6 +1372,18 @@ async def submit_feedback(request: Request):
         conn.commit()
         conn.close()
         
+        # Log impression as submitted
+        try:
+            cursor.execute('''
+                INSERT INTO feedback_impressions (page, operation, user_agent, action)
+                VALUES (?, ?, ?, 'submitted')
+            ''', (page, operation, user_agent))
+            conn.commit()
+        except Exception as e:
+            logger.warning(f"Failed to log feedback impression: {e}")
+        
+        conn.close()
+        
         # Also log for analytics
         log_user_action("user_feedback", {
             "rating": rating,
@@ -1386,19 +1398,135 @@ async def submit_feedback(request: Request):
         logger.error(f"Feedback submission error: {str(e)}")
         return {"status": "error", "message": str(e)}
 
-@app.get("/api/feedback")
-async def get_feedback(limit: int = 50):
-    """Get user feedback entries"""
+@app.post("/api/whats-missing")
+async def submit_whats_missing(request: Request):
+    """Store 'what's missing' feedback from users"""
+    try:
+        data = await request.json()
+        feedback_text = data.get('feedback', '').strip()
+        page = data.get('page', '')
+        user_agent = data.get('userAgent', '')
+        
+        if not feedback_text:
+            raise HTTPException(status_code=400, detail="Feedback text is required")
+        
+        # Store in database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO whats_missing_feedback (feedback_text, page, user_agent)
+            VALUES (?, ?, ?)
+        ''', (feedback_text, page, user_agent))
+        conn.commit()
+        conn.close()
+        
+        # Also log for analytics
+        log_user_action("whats_missing_feedback", {
+            "has_feedback": bool(feedback_text),
+            "feedback_length": len(feedback_text),
+            "page": page
+        })
+        
+        return {"status": "success", "message": "Feedback submitted"}
+    except Exception as e:
+        logger.error(f"What's missing feedback error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/whats-missing")
+async def get_whats_missing(limit: int = 50):
+    """Get 'what's missing' feedback entries"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
         # Check if table exists
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_feedback'")
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='whats_missing_feedback'")
         if not cursor.fetchone():
             conn.close()
             return {"count": 0, "feedback": [], "message": "No feedback table found yet"}
         
+        cursor.execute('''
+            SELECT id, feedback_text, page, user_agent, created_at
+            FROM whats_missing_feedback
+            ORDER BY created_at DESC
+            LIMIT ?
+        ''', (limit,))
+        
+        feedback_list = []
+        for row in cursor.fetchall():
+            feedback_list.append({
+                "id": row[0],
+                "feedback": row[1],
+                "page": row[2] or "",
+                "user_agent": row[3] or "",
+                "created_at": row[4]
+            })
+        
+        cursor.execute("SELECT COUNT(*) FROM whats_missing_feedback")
+        total_count = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return {
+            "count": total_count,
+            "returned": len(feedback_list),
+            "feedback": feedback_list
+        }
+    except Exception as e:
+        logger.error(f"What's missing retrieval error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/feedback/impression")
+async def log_feedback_impression(request: Request):
+    """Log when feedback modal is shown or interacted with"""
+    try:
+        data = await request.json()
+        page = data.get('page', '')
+        operation = data.get('operation', '')
+        user_agent = data.get('userAgent', '')
+        action = data.get('action', 'shown')  # 'shown', 'submitted', 'skipped', 'closed'
+        
+        # Store impression
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO feedback_impressions (page, operation, user_agent, action)
+            VALUES (?, ?, ?, ?)
+        ''', (page, operation, user_agent, action))
+        conn.commit()
+        conn.close()
+        
+        # Also log for analytics
+        log_user_action("feedback_impression", {
+            "action": action,
+            "page": page,
+            "operation": operation
+        })
+        
+        return {"status": "success", "message": "Impression logged"}
+    except Exception as e:
+        logger.error(f"Feedback impression logging error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/feedback")
+async def get_feedback(limit: int = 50, include_stats: bool = True):
+    """Get user feedback entries and statistics"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if tables exist
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_feedback'")
+        feedback_table_exists = cursor.fetchone() is not None
+        
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='feedback_impressions'")
+        impressions_table_exists = cursor.fetchone() is not None
+        
+        if not feedback_table_exists:
+            conn.close()
+            return {"count": 0, "feedback": [], "message": "No feedback table found yet"}
+        
+        # Get feedback entries
         cursor.execute('''
             SELECT id, rating, comment, page, operation, user_agent, created_at
             FROM user_feedback
@@ -1421,13 +1549,44 @@ async def get_feedback(limit: int = 50):
         cursor.execute("SELECT COUNT(*) FROM user_feedback")
         total_count = cursor.fetchone()[0]
         
+        stats = {}
+        if include_stats and impressions_table_exists:
+            # Get impression statistics
+            cursor.execute("SELECT COUNT(*) FROM feedback_impressions WHERE action='shown'")
+            impressions_shown = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM feedback_impressions WHERE action='submitted'")
+            impressions_submitted = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM feedback_impressions WHERE action='skipped'")
+            impressions_skipped = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM feedback_impressions WHERE action='closed'")
+            impressions_closed = cursor.fetchone()[0]
+            
+            # Calculate conversion rate
+            conversion_rate = (impressions_submitted / impressions_shown * 100) if impressions_shown > 0 else 0
+            
+            stats = {
+                "impressions_shown": impressions_shown,
+                "impressions_submitted": impressions_submitted,
+                "impressions_skipped": impressions_skipped,
+                "impressions_closed": impressions_closed,
+                "conversion_rate": round(conversion_rate, 2)
+            }
+        
         conn.close()
         
-        return {
+        result = {
             "count": total_count,
             "returned": len(feedback_list),
             "feedback": feedback_list
         }
+        
+        if stats:
+            result["stats"] = stats
+        
+        return result
     except Exception as e:
         logger.error(f"Feedback retrieval error: {str(e)}")
         return {"status": "error", "message": str(e)}
@@ -1810,6 +1969,29 @@ def init_blog_db():
             comment TEXT,
             page TEXT,
             operation TEXT,
+            user_agent TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Create feedback impressions table to track modal views
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS feedback_impressions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            page TEXT,
+            operation TEXT,
+            user_agent TEXT,
+            action TEXT DEFAULT 'shown',  -- 'shown', 'submitted', 'skipped', 'closed'
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Create "what's missing" feedback table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS whats_missing_feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            feedback_text TEXT NOT NULL,
+            page TEXT,
             user_agent TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )

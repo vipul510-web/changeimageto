@@ -962,6 +962,33 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
     hasShownFeedback = true;
   }
   
+  function logImpression(action) {
+    const pageType = window.location.pathname;
+    const operation = getOperationType();
+    
+    const impressionData = {
+      page: pageType,
+      operation: operation,
+      action: action, // 'shown', 'submitted', 'skipped', 'closed'
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Send to backend
+    const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+    const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
+    
+    fetch(apiBase + '/api/feedback/impression', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(impressionData)
+    }).catch(err => {
+      console.warn('Failed to log feedback impression:', err);
+    });
+  }
+  
   function showFeedbackPopup() {
     // Don't show if already shown in this session
     if (hasShownFeedback) {
@@ -970,6 +997,9 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
     
     const popupEl = document.getElementById('feedback-popup');
     if (!popupEl) return;
+    
+    // Log impression when modal is shown
+    logImpression('shown');
     
     // Reset state
     selectedRating = 0;
@@ -994,9 +1024,13 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
     document.body.style.overflow = 'hidden';
   }
   
-  function hideFeedbackPopup() {
+  function hideFeedbackPopup(action = 'closed') {
     const popupEl = document.getElementById('feedback-popup');
     if (popupEl) {
+      // Log impression if closing without submitting
+      if (action === 'closed' && !hasShownFeedback) {
+        logImpression('closed');
+      }
       popupEl.style.display = 'none';
       document.body.style.overflow = '';
     }
@@ -1047,11 +1081,14 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
       console.warn('Failed to submit feedback:', err);
     });
     
+    // Log impression as submitted
+    logImpression('submitted');
+    
     // Mark as shown
     hasShownFeedback = true;
     sessionStorage.setItem('feedbackShown', 'true');
     
-    hideFeedbackPopup();
+    hideFeedbackPopup('submitted');
     
     // Show thank you message briefly
     const thankYou = document.createElement('div');
@@ -1074,7 +1111,10 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
     // Close button
     const closeBtn = document.getElementById('feedback-close-btn');
     if (closeBtn) {
-      closeBtn.addEventListener('click', hideFeedbackPopup);
+      closeBtn.addEventListener('click', function() {
+        logImpression('closed');
+        hideFeedbackPopup('closed');
+      });
       closeBtn.addEventListener('mouseenter', function() {
         this.style.color = 'var(--fg, #eaf0f6)';
         this.style.background = 'var(--border, #1e2630)';
@@ -1088,7 +1128,10 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
     // Overlay click
     const overlay = popupEl.querySelector('.feedback-popup-overlay');
     if (overlay) {
-      overlay.addEventListener('click', hideFeedbackPopup);
+      overlay.addEventListener('click', function() {
+        logImpression('closed');
+        hideFeedbackPopup('closed');
+      });
     }
     
     // Star ratings
@@ -1186,9 +1229,11 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
     const skipBtn = document.getElementById('feedback-skip-btn');
     if (skipBtn) {
       skipBtn.addEventListener('click', function() {
+        // Log impression as skipped
+        logImpression('skipped');
         hasShownFeedback = true;
         sessionStorage.setItem('feedbackShown', 'true');
-        hideFeedbackPopup();
+        hideFeedbackPopup('skipped');
       });
       skipBtn.addEventListener('mouseenter', function() {
         this.style.background = 'var(--border, #1e2630)';
@@ -1203,7 +1248,8 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
     // ESC key to close
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' && popupEl.style.display !== 'none') {
-        hideFeedbackPopup();
+        logImpression('closed');
+        hideFeedbackPopup('closed');
       }
     });
   }
