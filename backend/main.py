@@ -1386,6 +1386,52 @@ async def submit_feedback(request: Request):
         logger.error(f"Feedback submission error: {str(e)}")
         return {"status": "error", "message": str(e)}
 
+@app.get("/api/feedback")
+async def get_feedback(limit: int = 50):
+    """Get user feedback entries"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_feedback'")
+        if not cursor.fetchone():
+            conn.close()
+            return {"count": 0, "feedback": [], "message": "No feedback table found yet"}
+        
+        cursor.execute('''
+            SELECT id, rating, comment, page, operation, user_agent, created_at
+            FROM user_feedback
+            ORDER BY created_at DESC
+            LIMIT ?
+        ''', (limit,))
+        
+        feedback_list = []
+        for row in cursor.fetchall():
+            feedback_list.append({
+                "id": row[0],
+                "rating": row[1],
+                "comment": row[2] or "",
+                "page": row[3] or "",
+                "operation": row[4] or "",
+                "user_agent": row[5] or "",
+                "created_at": row[6]
+            })
+        
+        cursor.execute("SELECT COUNT(*) FROM user_feedback")
+        total_count = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return {
+            "count": total_count,
+            "returned": len(feedback_list),
+            "feedback": feedback_list
+        }
+    except Exception as e:
+        logger.error(f"Feedback retrieval error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
 
 @app.get("/")
 async def healthcheck():
