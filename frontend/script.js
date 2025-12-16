@@ -621,6 +621,13 @@ if (form) form.addEventListener('submit', async (e) => {
     
     logUserAction('processing_completed', successLogDetails);
     
+    // Show feedback popup after successful processing (with delay for better UX)
+    setTimeout(() => {
+      if (typeof window.showFeedbackPopup === 'function') {
+        window.showFeedbackPopup();
+      }
+    }, 1500);
+    
     // make checkerboard solid and edge-to-edge on landing page
     (function(){
       var palette = document.getElementById('color-palette');
@@ -808,6 +815,13 @@ if (window.location.pathname === '/convert-image-format.html') {
         }
         if (openA){ openA.href = url; openA.target = '_blank'; openA.style.display = 'inline-block'; }
         logUserAction('convert_completed', { target_format: target.value, transparent: keepT.checked, size: blob.size });
+        
+        // Show feedback popup after successful conversion
+        setTimeout(() => {
+          if (typeof window.showFeedbackPopup === 'function') {
+            window.showFeedbackPopup();
+          }
+        }, 1500);
       } catch (err) {
         alert('Error: ' + (err.message || err));
         logUserAction('convert_error', { message: err.message || String(err) });
@@ -890,6 +904,320 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
 } catch (e) {
   console.error('script.js init error:', e);
 }
+
+// ============================================
+// Feedback Popup System
+// ============================================
+(function() {
+  'use strict';
+  
+  // Check if feedback popup already exists
+  if (document.getElementById('feedback-popup')) {
+    return;
+  }
+  
+  // Create popup element
+  const popup = document.createElement('div');
+  popup.id = 'feedback-popup';
+  popup.className = 'feedback-popup';
+  popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;display:none;align-items:center;justify-content:center;';
+  popup.innerHTML = `
+    <div class="feedback-popup-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);"></div>
+    <div class="feedback-popup-content" style="position:relative;background:var(--card,#12171d);border:1px solid var(--border,#1e2630);border-radius:16px;padding:32px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:1;">
+      <button class="feedback-popup-close" id="feedback-close-btn" aria-label="Close feedback popup" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--muted,#9aa7b2);font-size:28px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all 0.2s ease;">&times;</button>
+      <h3 class="feedback-popup-title" style="font-size:24px;font-weight:700;color:var(--fg,#eaf0f6);margin:0 0 8px;">How was your experience?</h3>
+      <p class="feedback-popup-subtitle" style="font-size:14px;color:var(--muted,#9aa7b2);margin:0 0 24px;">We'd love to hear your feedback!</p>
+      
+      <div class="feedback-rating" style="margin:24px 0;text-align:center;">
+        <div class="feedback-stars" style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;">
+          <button class="feedback-star" data-rating="1" aria-label="1 star" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button>
+          <button class="feedback-star" data-rating="2" aria-label="2 stars" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button>
+          <button class="feedback-star" data-rating="3" aria-label="3 stars" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button>
+          <button class="feedback-star" data-rating="4" aria-label="4 stars" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button>
+          <button class="feedback-star" data-rating="5" aria-label="5 stars" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button>
+        </div>
+        <p class="feedback-rating-text" id="feedback-rating-text" style="font-size:14px;color:var(--muted,#9aa7b2);margin:0;">Tap a star to rate</p>
+      </div>
+      
+      <div class="feedback-comment-section" style="margin:24px 0;">
+        <label for="feedback-comment" class="feedback-comment-label" style="display:block;font-size:14px;font-weight:600;color:var(--fg,#eaf0f6);margin-bottom:8px;">Your feedback (optional)</label>
+        <textarea id="feedback-comment" class="feedback-comment-input" placeholder="Tell us what you think..." rows="4" maxlength="1000" style="width:100%;padding:12px;background:var(--bg,#0b0f13);border:1px solid var(--border,#1e2630);border-radius:8px;color:var(--fg,#eaf0f6);font-family:inherit;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea>
+        <div class="feedback-char-count" style="font-size:12px;color:var(--muted,#9aa7b2);text-align:right;margin-top:4px;"><span id="feedback-char-count">0</span>/1000</div>
+      </div>
+      
+      <div class="feedback-actions" style="display:flex;gap:12px;margin-top:24px;">
+        <button class="feedback-btn feedback-btn-submit" id="feedback-submit-btn" disabled style="flex:1;padding:12px 24px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s ease;background:var(--accent,#6aa7ff);color:#001633;opacity:0.5;">Submit Feedback</button>
+        <button class="feedback-btn feedback-btn-skip" id="feedback-skip-btn" style="flex:1;padding:12px 24px;border:1px solid var(--border,#1e2630);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s ease;background:transparent;color:var(--muted,#9aa7b2);">Skip</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(popup);
+  
+  let selectedRating = 0;
+  let hasShownFeedback = false;
+  
+  // Check if user has already submitted feedback in this session
+  const feedbackShown = sessionStorage.getItem('feedbackShown');
+  if (feedbackShown === 'true') {
+    hasShownFeedback = true;
+  }
+  
+  function showFeedbackPopup() {
+    // Don't show if already shown in this session
+    if (hasShownFeedback) {
+      return;
+    }
+    
+    const popupEl = document.getElementById('feedback-popup');
+    if (!popupEl) return;
+    
+    // Reset state
+    selectedRating = 0;
+    const commentEl = document.getElementById('feedback-comment');
+    if (commentEl) {
+      commentEl.value = '';
+    }
+    const charCountEl = document.getElementById('feedback-char-count');
+    if (charCountEl) charCountEl.textContent = '0';
+    const ratingTextEl = document.getElementById('feedback-rating-text');
+    if (ratingTextEl) ratingTextEl.textContent = 'Tap a star to rate';
+    const submitBtn = document.getElementById('feedback-submit-btn');
+    if (submitBtn) submitBtn.disabled = true;
+    
+    // Reset stars
+    document.querySelectorAll('.feedback-star').forEach(star => {
+      star.classList.remove('active');
+      star.style.filter = 'grayscale(100%) opacity(0.5)';
+    });
+    
+    popupEl.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  
+  function hideFeedbackPopup() {
+    const popupEl = document.getElementById('feedback-popup');
+    if (popupEl) {
+      popupEl.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+  
+  function getOperationType() {
+    const path = window.location.pathname;
+    if (path === '/' || path === '/index.html' || path.includes('remove-background')) return 'remove_background';
+    if (path.includes('change-image-background')) return 'change_background';
+    if (path === '/change-color-of-image.html') return 'change_color';
+    if (path === '/upscale-image.html') return 'upscale';
+    if (path === '/blur-background.html') return 'blur_background';
+    if (path === '/enhance-image.html') return 'enhance';
+    if (path === '/remove-text-from-image.html') return 'remove_text';
+    if (path === '/remove-people-from-photo.html') return 'remove_people';
+    if (path === '/convert-image-format.html') return 'convert_format';
+    return 'unknown';
+  }
+  
+  function submitFeedback() {
+    if (selectedRating === 0) return;
+    
+    const commentEl = document.getElementById('feedback-comment');
+    const comment = commentEl ? commentEl.value.trim() : '';
+    const pageType = window.location.pathname;
+    const operation = getOperationType();
+    
+    const feedbackData = {
+      rating: selectedRating,
+      comment: comment,
+      page: pageType,
+      operation: operation,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent
+    };
+    
+    // Send to backend
+    const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+    const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
+    
+    fetch(apiBase + '/api/feedback', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(feedbackData)
+    }).catch(err => {
+      console.warn('Failed to submit feedback:', err);
+    });
+    
+    // Mark as shown
+    hasShownFeedback = true;
+    sessionStorage.setItem('feedbackShown', 'true');
+    
+    hideFeedbackPopup();
+    
+    // Show thank you message briefly
+    const thankYou = document.createElement('div');
+    thankYou.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--accent,#6aa7ff);color:#001633;padding:16px 24px;border-radius:8px;z-index:10001;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+    thankYou.textContent = 'Thank you for your feedback! 🙏';
+    document.body.appendChild(thankYou);
+    
+    setTimeout(() => {
+      thankYou.style.opacity = '0';
+      thankYou.style.transition = 'opacity 0.3s';
+      setTimeout(() => thankYou.remove(), 300);
+    }, 2000);
+  }
+  
+  // Initialize event listeners when DOM is ready
+  function initFeedbackPopup() {
+    const popupEl = document.getElementById('feedback-popup');
+    if (!popupEl) return;
+    
+    // Close button
+    const closeBtn = document.getElementById('feedback-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', hideFeedbackPopup);
+      closeBtn.addEventListener('mouseenter', function() {
+        this.style.color = 'var(--fg, #eaf0f6)';
+        this.style.background = 'var(--border, #1e2630)';
+      });
+      closeBtn.addEventListener('mouseleave', function() {
+        this.style.color = 'var(--muted, #9aa7b2)';
+        this.style.background = 'transparent';
+      });
+    }
+    
+    // Overlay click
+    const overlay = popupEl.querySelector('.feedback-popup-overlay');
+    if (overlay) {
+      overlay.addEventListener('click', hideFeedbackPopup);
+    }
+    
+    // Star ratings
+    document.querySelectorAll('.feedback-star').forEach(star => {
+      star.addEventListener('click', function() {
+        selectedRating = parseInt(this.dataset.rating);
+        
+        // Update star display
+        document.querySelectorAll('.feedback-star').forEach((s, index) => {
+          if (index < selectedRating) {
+            s.classList.add('active');
+            s.style.filter = 'grayscale(0%) opacity(1)';
+          } else {
+            s.classList.remove('active');
+            s.style.filter = 'grayscale(100%) opacity(0.5)';
+          }
+        });
+        
+        // Update rating text
+        const ratingTexts = {
+          1: 'Poor',
+          2: 'Fair',
+          3: 'Good',
+          4: 'Very Good',
+          5: 'Excellent'
+        };
+        const ratingTextEl = document.getElementById('feedback-rating-text');
+        if (ratingTextEl) {
+          ratingTextEl.textContent = ratingTexts[selectedRating] || 'Tap a star to rate';
+        }
+        
+        // Enable submit button
+        const submitBtn = document.getElementById('feedback-submit-btn');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          submitBtn.style.cursor = 'pointer';
+        }
+      });
+      
+      star.addEventListener('mouseenter', function() {
+        if (!this.classList.contains('active')) {
+          this.style.filter = 'grayscale(0%) opacity(1)';
+          this.style.transform = 'scale(1.1)';
+        }
+      });
+      
+      star.addEventListener('mouseleave', function() {
+        if (!this.classList.contains('active')) {
+          this.style.filter = 'grayscale(100%) opacity(0.5)';
+          this.style.transform = 'scale(1)';
+        }
+      });
+    });
+    
+    // Comment character count
+    const commentEl = document.getElementById('feedback-comment');
+    if (commentEl) {
+      commentEl.addEventListener('input', function() {
+        const count = this.value.length;
+        const charCountEl = document.getElementById('feedback-char-count');
+        if (charCountEl) charCountEl.textContent = count;
+      });
+      
+      commentEl.addEventListener('focus', function() {
+        this.style.borderColor = 'var(--accent, #6aa7ff)';
+        this.style.boxShadow = '0 0 0 3px rgba(106, 167, 255, 0.1)';
+      });
+      
+      commentEl.addEventListener('blur', function() {
+        this.style.borderColor = 'var(--border, #1e2630)';
+        this.style.boxShadow = 'none';
+      });
+    }
+    
+    // Submit button
+    const submitBtn = document.getElementById('feedback-submit-btn');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', submitFeedback);
+      submitBtn.addEventListener('mouseenter', function() {
+        if (!this.disabled) {
+          this.style.background = '#4f46e5';
+          this.style.transform = 'translateY(-1px)';
+        }
+      });
+      submitBtn.addEventListener('mouseleave', function() {
+        if (!this.disabled) {
+          this.style.background = 'var(--accent, #6aa7ff)';
+          this.style.transform = 'translateY(0)';
+        }
+      });
+    }
+    
+    // Skip button
+    const skipBtn = document.getElementById('feedback-skip-btn');
+    if (skipBtn) {
+      skipBtn.addEventListener('click', function() {
+        hasShownFeedback = true;
+        sessionStorage.setItem('feedbackShown', 'true');
+        hideFeedbackPopup();
+      });
+      skipBtn.addEventListener('mouseenter', function() {
+        this.style.background = 'var(--border, #1e2630)';
+        this.style.color = 'var(--fg, #eaf0f6)';
+      });
+      skipBtn.addEventListener('mouseleave', function() {
+        this.style.background = 'transparent';
+        this.style.color = 'var(--muted, #9aa7b2)';
+      });
+    }
+    
+    // ESC key to close
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && popupEl.style.display !== 'none') {
+        hideFeedbackPopup();
+      }
+    });
+  }
+  
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFeedbackPopup);
+  } else {
+    initFeedbackPopup();
+  }
+  
+  // Export function to show popup
+  window.showFeedbackPopup = showFeedbackPopup;
+})();
 
 
 // Color-page composition: if body has data-target-color, render solid background

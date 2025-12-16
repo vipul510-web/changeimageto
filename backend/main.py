@@ -1348,6 +1348,44 @@ async def log_analytics(request: Request):
         logger.error(f"Analytics logging error: {str(e)}")
         return {"status": "error", "message": str(e)}
 
+@app.post("/api/feedback")
+async def submit_feedback(request: Request):
+    """Store user feedback"""
+    try:
+        data = await request.json()
+        rating = data.get('rating')
+        comment = data.get('comment', '')
+        page = data.get('page', '')
+        operation = data.get('operation', '')
+        user_agent = data.get('userAgent', '')
+        
+        if not rating or rating < 1 or rating > 5:
+            raise HTTPException(status_code=400, detail="Invalid rating")
+        
+        # Store in database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO user_feedback (rating, comment, page, operation, user_agent)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (rating, comment, page, operation, user_agent))
+        conn.commit()
+        conn.close()
+        
+        # Also log for analytics
+        log_user_action("user_feedback", {
+            "rating": rating,
+            "has_comment": bool(comment),
+            "comment_length": len(comment) if comment else 0,
+            "page": page,
+            "operation": operation
+        })
+        
+        return {"status": "success", "message": "Feedback submitted"}
+    except Exception as e:
+        logger.error(f"Feedback submission error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
 
 @app.get("/")
 async def healthcheck():
@@ -1715,6 +1753,19 @@ def init_blog_db():
             notes TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (post_id) REFERENCES blog_posts (id)
+        )
+    ''')
+    
+    # Create feedback table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rating INTEGER NOT NULL,
+            comment TEXT,
+            page TEXT,
+            operation TEXT,
+            user_agent TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     

@@ -3,36 +3,31 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>About ChangeImageTo.com - Free Online Image Editing Tools</title>
-    <meta name="description" content="Learn about ChangeImageTo.com - the leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos with AI-powered tools.">
-    <meta name="keywords" content="about changeimageto, free image tools, online photo editor, AI image processing, background removal">
+    <title>ChangeImageTo Videos - Tutorials & Demos</title>
+    <meta name="description" content="Watch video tutorials and demonstrations of ChangeImageTo's image editing tools. Learn how to remove backgrounds, enhance images, and use our Chrome extension.">
+    <meta name="keywords" content="changeimageto videos, image editing tutorials, background removal tutorial, photo editing demo, chrome extension tutorial">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://www.changeimageto.com/about.html" />
+    <link rel="canonical" href="https://www.changeimageto.com/videos.html" />
 
-    <meta property="og:title" content="About ChangeImageTo.com - Free Online Image Editing Tools" />
-    <meta property="og:description" content="Learn about our mission to provide free, professional-grade image editing tools powered by AI technology." />
+    <meta property="og:title" content="ChangeImageTo Videos - Tutorials & Demos" />
+    <meta property="og:description" content="Watch video tutorials and demonstrations of our image editing tools." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.changeimageto.com/about.html" />
+    <meta property="og:url" content="https://www.changeimageto.com/videos.html" />
 
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "AboutPage",
-      "name": "About ChangeImageTo.com",
-      "description": "Learn about our mission to provide free, professional-grade image editing tools powered by AI technology.",
-      "url": "https://www.changeimageto.com/about.html",
-      "mainEntity": {
-        "@type": "Organization",
-        "name": "ChangeImageTo.com",
-        "description": "Free online image editing tools for background removal, color changes, and more.",
-        "url": "https://www.changeimageto.com"
-      }
+      "@type": "CollectionPage",
+      "name": "ChangeImageTo Videos",
+      "description": "Video tutorials and demonstrations of ChangeImageTo image editing tools",
+      "url": "https://www.changeimageto.com/videos.html"
     }
     </script>
 
     <!-- DNS prefetch for external resources -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="dns-prefetch" href="//www.youtube.com">
     
     <!-- Preconnect to critical external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,14 +53,16 @@
       .content-section{margin:40px 0;padding:32px;background:var(--card);border:1px solid var(--border);border-radius:16px}
       .content-section h2{font-size:28px;margin:0 0 24px;color:var(--fg)}
       .content-section p{color:var(--muted);margin-bottom:20px;line-height:1.7}
-      .content-section ul{color:var(--muted);margin-bottom:20px;padding-left:20px}
-      .content-section li{margin-bottom:8px}
-      .highlight{color:var(--accent);font-weight:600}
-      .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;margin:32px 0}
-      .stat-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center}
-      .stat-number{font-size:32px;font-weight:700;color:var(--accent);margin-bottom:8px}
-      .stat-label{color:var(--muted);font-size:14px}
-      @media(max-width:768px){.content-section{padding:24px;margin:24px 0}.content-section h2{font-size:24px}}
+      .video-grid{display:grid;grid-template-columns:1fr;gap:32px;margin:32px 0}
+      @media(min-width:768px){.video-grid{grid-template-columns:repeat(2,1fr);gap:40px}}
+      .video-item{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all 0.3s ease}
+      .video-item:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.2);border-color:var(--accent)}
+      .video-wrapper{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000}
+      .video-wrapper iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+      .video-info{padding:20px}
+      .video-info h3{font-size:20px;font-weight:600;color:var(--fg);margin:0 0 12px}
+      .video-info p{color:var(--muted);font-size:14px;margin:0;line-height:1.6}
+      @media(max-width:768px){.content-section{padding:24px;margin:24px 0}.video-grid{gap:24px}}
     </style>
     
     <!-- Load main stylesheet asynchronously -->
@@ -122,72 +119,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <main class="container">
       <section class="content-section">
-        <h1 style="font-size:36px;margin:0 0 16px;color:var(--fg)">About ChangeImageTo.com</h1>
+        <h1 style="font-size:36px;margin:0 0 16px;color:var(--fg)">ChangeImageTo Videos</h1>
         <p style="font-size:18px;color:var(--muted);margin-bottom:32px">
-          The leading platform for free online image editing, powered by advanced AI technology.
+          Watch video tutorials and demonstrations of our powerful image editing tools. Learn how to remove backgrounds, enhance photos, use our Chrome extension, and more.
         </p>
 
-        <h2>Our Mission</h2>
-        <p>
-          At <span class="highlight">ChangeImageTo.com</span>, we believe that professional-quality image editing should be accessible to everyone, regardless of budget or technical expertise. Our mission is to democratize image processing by providing powerful, AI-powered tools completely free of charge.
-        </p>
-
-        <h2>What We Do</h2>
-        <p>
-          We offer a comprehensive suite of free online image editing tools designed for professionals, creators, and casual users alike:
-        </p>
-        <ul>
-          <li><strong>Background Removal:</strong> AI-powered precision removal for products and portraits</li>
-          <li><strong>Background Changes:</strong> Replace backgrounds with solid colors or custom images</li>
-          <li><strong>Color Adjustment:</strong> Modify hue, saturation, brightness, and contrast</li>
-          <li><strong>Image Enhancement:</strong> Sharpen details and improve overall quality</li>
-          <li><strong>Image Upscaling:</strong> Increase resolution up to 4x with AI technology</li>
-          <li><strong>Bulk Processing:</strong> Resize multiple images simultaneously</li>
-          <li><strong>Format Conversion:</strong> Convert between JPG, PNG, and WebP formats</li>
-        </ul>
-
-        <h2>Our Technology</h2>
-        <p>
-          Our platform leverages cutting-edge artificial intelligence and machine learning models to deliver professional-grade results. We use specialized AI models trained on millions of images to ensure the highest quality output for every tool we offer.
-        </p>
-
-        <h2>Why We're Different</h2>
-        <ul>
-          <li><strong>100% Free:</strong> No subscriptions, watermarks, or hidden costs</li>
-          <li><strong>No Registration Required:</strong> Start editing immediately without creating accounts</li>
-          <li><strong>Privacy-First:</strong> Images are processed securely and never stored</li>
-          <li><strong>Fast Processing:</strong> Most images processed in under 10 seconds</li>
-          <li><strong>High Quality:</strong> Professional-grade AI models for best results</li>
-          <li><strong>Multiple Formats:</strong> Support for JPG, PNG, and WebP files</li>
-        </ul>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-number">1M+</div>
-            <div class="stat-label">Images Processed</div>
+        <div class="video-grid">
+          <div class="video-item">
+            <div class="video-wrapper">
+              <iframe 
+                src="https://www.youtube.com/embed/kAUn0PN4duQ" 
+                title="ChangeImageTo Tutorial Video 1"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowfullscreen
+                loading="lazy">
+              </iframe>
+            </div>
+            <div class="video-info">
+              <h3>ChangeImageTo Tutorial</h3>
+              <p>Learn how to use ChangeImageTo's powerful image editing tools to transform your photos.</p>
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-number">100%</div>
-            <div class="stat-label">Free to Use</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">10+</div>
-            <div class="stat-label">AI-Powered Tools</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">24/7</div>
-            <div class="stat-label">Always Available</div>
+
+          <div class="video-item">
+            <div class="video-wrapper">
+              <iframe 
+                src="https://www.youtube.com/embed/zKSxEFLnO3c" 
+                title="ChangeImageTo Tutorial Video 2"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowfullscreen
+                loading="lazy">
+              </iframe>
+            </div>
+            <div class="video-info">
+              <h3>ChangeImageTo Demo</h3>
+              <p>Watch a demonstration of ChangeImageTo's features and capabilities.</p>
+            </div>
           </div>
         </div>
 
-        <h2>Our Commitment</h2>
-        <p>
-          We are committed to continuously improving our platform and adding new features based on user feedback. Our goal is to provide the most comprehensive and user-friendly image editing experience available online, while maintaining our core values of accessibility, privacy, and quality.
-        </p>
+        <div style="margin-top:40px;padding:24px;background:var(--bg);border:1px solid var(--border);border-radius:12px">
+          <h2 style="font-size:22px;margin:0 0 16px;color:var(--fg)">More Videos Coming Soon</h2>
+          <p style="color:var(--muted);margin:0;line-height:1.7">
+            We're constantly creating new video tutorials and demonstrations. Check back soon for more content covering advanced features, tips, and tricks for getting the most out of ChangeImageTo.
+          </p>
+        </div>
 
-        <p>
-          Whether you're a professional photographer, e-commerce seller, social media manager, or just someone who loves creating beautiful images, <span class="highlight">ChangeImageTo.com</span> is here to help you achieve your vision.
-        </p>
+        <div style="margin-top:32px;padding:32px;background:linear-gradient(135deg,var(--accent),#4f46e5);border-radius:16px;text-align:center">
+          <h2 style="color:#001633;margin:0 0 16px;font-size:24px">Want to Learn More?</h2>
+          <p style="color:#001633;margin:0 0 24px;font-size:16px">
+            Explore our tools and start editing images for free today!
+          </p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a href="/" style="display:inline-block;background:#001633;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;transition:all 0.2s ease">
+              Try Our Tools
+            </a>
+            <a href="/chrome-extension.html" style="display:inline-block;background:#001633;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;transition:all 0.2s ease">
+              Get Chrome Extension
+            </a>
+          </div>
+        </div>
       </section>
     </main>
 

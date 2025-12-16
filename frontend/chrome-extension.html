@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChangeImageTo Chrome Extension - Edit Images from Any Website</title>
+    <meta name="description" content="Install the ChangeImageTo Chrome extension to edit images directly from any website. Remove backgrounds, blur backgrounds, enhance images, and upscale photos with one click.">
+    <meta name="keywords" content="chrome extension, image editor extension, remove background extension, edit images online, browser extension, image editing tool">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/chrome-extension.html" />
+
+    <meta property="og:title" content="ChangeImageTo Chrome Extension - Edit Images from Any Website" />
+    <meta property="og:description" content="Edit images directly from any website with our powerful Chrome extension. Remove backgrounds, enhance photos, and more with one click." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.changeimageto.com/chrome-extension.html" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "ChangeImageTo Chrome Extension",
+      "description": "Edit images directly from any website - remove backgrounds, blur backgrounds, enhance images, and upscale photos with one click.",
+      "applicationCategory": "BrowserExtension",
+      "operatingSystem": "Chrome",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5",
+        "ratingCount": "1"
+      }
+    }
+    </script>
+
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    
+    <!-- Preconnect to critical external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Load fonts with optimized technique -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+    
+    <!-- Critical CSS for above-the-fold content -->
+    <style>
+      :root{--bg:#0b0f13;--fg:#eaf0f6;--muted:#9aa7b2;--accent:#6aa7ff;--card:#12171d;--border:#1e2630}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+      .container{max-width:1000px;margin:0 auto;padding:16px}
+      .header h1{margin:0 0 8px}
+      .header p{margin:0;color:var(--muted)}
+      .logo-link{display:inline-flex;align-items:center;gap:10px;margin-bottom:16px;text-decoration:none;color:inherit}
+      .logo-img{height:28px;width:auto;display:block}
+      @media(min-width:768px){.container{padding:24px}.logo-img{height:36px}}
+      .top-nav a{color:#fff;text-decoration:none;font-weight:600;margin-left:16px}
+      .top-nav a:hover{text-decoration:underline}
+      .content-section{margin:40px 0;padding:32px;background:var(--card);border:1px solid var(--border);border-radius:16px}
+      .content-section h2{font-size:28px;margin:0 0 24px;color:var(--fg)}
+      .content-section h3{font-size:22px;margin:24px 0 16px;color:var(--fg)}
+      .content-section p{color:var(--muted);margin-bottom:20px;line-height:1.7}
+      .content-section ul{color:var(--muted);margin-bottom:20px;padding-left:20px}
+      .content-section li{margin-bottom:12px;line-height:1.7}
+      .highlight{color:var(--accent);font-weight:600}
+      .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px;margin:32px 0}
+      .feature-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center}
+      .feature-icon{font-size:32px;margin-bottom:12px}
+      .feature-card h4{font-size:18px;font-weight:600;color:var(--fg);margin:0 0 12px}
+      .feature-card p{color:var(--muted);font-size:14px;margin:0;line-height:1.6}
+      .install-steps{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:24px;margin:24px 0}
+      .install-steps ol{padding-left:20px;margin:16px 0}
+      .install-steps li{margin-bottom:12px;color:var(--muted);line-height:1.7}
+      .install-steps code{background:var(--card);padding:2px 6px;border-radius:4px;font-size:13px;color:var(--accent)}
+      .cta-button{display:inline-block;background:var(--accent);color:#001633;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;margin:24px 0;transition:all 0.2s ease}
+      .cta-button:hover{background:#4f46e5;color:white;transform:translateY(-2px);box-shadow:0 8px 20px rgba(106,167,255,0.3)}
+      .usage-method{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;margin:20px 0}
+      .usage-method h4{color:var(--fg);margin:0 0 12px;font-size:18px}
+      .usage-method ol{padding-left:20px;margin:12px 0}
+      .usage-method li{color:var(--muted);margin-bottom:8px;line-height:1.6}
+      @media(max-width:768px){.content-section{padding:24px;margin:24px 0}.content-section h2{font-size:24px}.feature-grid{grid-template-columns:1fr;gap:16px}}
+    </style>
+    
+    <!-- Load main stylesheet asynchronously -->
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="./styles.css?v=20250916-3"></noscript>
+
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    // Check if gtag is already available
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      // If gtag is not available yet, wait for it (for dynamic loading pattern)
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      // Stop checking after 10 seconds
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link">
+        <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" class="logo-img" loading="eager" width="200" height="68" />
+      </a>
+      <nav class="top-nav">
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="content-section">
+        <h1 style="font-size:36px;margin:0 0 16px;color:var(--fg)">ChangeImageTo Chrome Extension</h1>
+        <p style="font-size:18px;color:var(--muted);margin-bottom:32px">
+          Edit images directly from any website with our powerful Chrome extension. Remove backgrounds, enhance photos, blur backgrounds, and upscale images with just one click - no need to leave the page you're on.
+        </p>
+
+        <a href="https://chrome.google.com/webstore" class="cta-button" target="_blank" rel="noopener noreferrer">
+          Install Chrome Extension
+        </a>
+
+        <h2>What is the ChangeImageTo Extension?</h2>
+        <p>
+          The <span class="highlight">ChangeImageTo Chrome Extension</span> brings the power of our AI-powered image editing tools directly to your browser. Instead of navigating to our website every time you want to edit an image, you can now edit any image you see on the web instantly - right from the page you're viewing.
+        </p>
+
+        <h2>Key Features</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🎭</div>
+            <h4>Remove Background</h4>
+            <p>Instantly remove backgrounds from any image with AI-powered precision. Perfect for product photos, portraits, and more.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🌫️</div>
+            <h4>Blur Background</h4>
+            <p>Create professional portrait-style photos by blurring the background while keeping the subject sharp and clear.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">✨</div>
+            <h4>Enhance Image</h4>
+            <p>Improve image quality, sharpness, and overall appearance with our advanced AI enhancement technology.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔍</div>
+            <h4>Upscale Image</h4>
+            <p>Increase image resolution up to 4x without losing quality. Perfect for enlarging small images for print or display.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎨</div>
+            <h4>Change Background Color</h4>
+            <p>Replace image backgrounds with solid colors. Choose from presets or pick your own custom color.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h4>Right-Click Menu</h4>
+            <p>Access all editing options directly from the context menu when you right-click on any image.</p>
+          </div>
+        </div>
+
+        <h2>How to Install</h2>
+        <div class="install-steps">
+          <h3>Method 1: Chrome Web Store (Recommended)</h3>
+          <ol>
+            <li>Visit the Chrome Web Store and search for "ChangeImageTo"</li>
+            <li>Click "Add to Chrome" on the extension page</li>
+            <li>Confirm the installation in the popup dialog</li>
+            <li>The extension icon will appear in your Chrome toolbar</li>
+            <li>You're ready to start editing images!</li>
+          </ol>
+
+          <h3>Method 2: Developer Mode (For Testing)</h3>
+          <ol>
+            <li>Open Google Chrome and navigate to <code>chrome://extensions/</code></li>
+            <li>Enable <strong>"Developer mode"</strong> using the toggle in the top right corner</li>
+            <li>Click <strong>"Load unpacked"</strong> button</li>
+            <li>Select the folder containing the extension files</li>
+            <li>The extension will be installed and ready to use</li>
+          </ol>
+        </div>
+
+        <h2>How to Use</h2>
+        
+        <div class="usage-method">
+          <h4>Method 1: Right-Click Context Menu</h4>
+          <ol>
+            <li>Navigate to any website with images</li>
+            <li>Right-click on any image you want to edit</li>
+            <li>Select <strong>"Edit with ChangeImageTo"</strong> from the context menu</li>
+            <li>Choose your desired operation (Remove Background, Blur Background, etc.)</li>
+            <li>The image will be processed and displayed on the page</li>
+            <li>Download the processed image directly</li>
+          </ol>
+        </div>
+
+        <div class="usage-method">
+          <h4>Method 2: Extension Popup</h4>
+          <ol>
+            <li>Click on the ChangeImageTo extension icon in your Chrome toolbar</li>
+            <li>Click <strong>"Pick Images From Page"</strong> to select images on the current webpage</li>
+            <li>Click on images to select them (they'll be highlighted)</li>
+            <li>Use the quick action buttons in the popup to process selected images</li>
+            <li>Download processed images individually or in bulk</li>
+          </ol>
+        </div>
+
+        <div class="usage-method">
+          <h4>Method 3: Upload Images</h4>
+          <ol>
+            <li>Click the extension icon in your toolbar</li>
+            <li>Click <strong>"Upload Image"</strong> button</li>
+            <li>Select an image file from your computer</li>
+            <li>Choose your editing operation from the available options</li>
+            <li>Download the processed result</li>
+          </ol>
+        </div>
+
+        <h2>Why Use the Extension?</h2>
+        <ul>
+          <li><strong>Instant Access:</strong> Edit images without leaving the page you're viewing</li>
+          <li><strong>No Downloads Required:</strong> Process images directly from web pages</li>
+          <li><strong>Batch Processing:</strong> Select and process multiple images at once</li>
+          <li><strong>100% Free:</strong> All features are completely free to use</li>
+          <li><strong>Privacy-First:</strong> Images are processed securely and never stored</li>
+          <li><strong>Works Everywhere:</strong> Use on any website with images</li>
+          <li><strong>Fast Processing:</strong> Most images processed in under 10 seconds</li>
+          <li><strong>Professional Quality:</strong> Powered by the same AI technology as our web platform</li>
+        </ul>
+
+        <h2>Supported Image Formats</h2>
+        <p>
+          The extension supports all common image formats including:
+        </p>
+        <ul>
+          <li><strong>JPG/JPEG:</strong> Standard photo format</li>
+          <li><strong>PNG:</strong> Supports transparency</li>
+          <li><strong>WebP:</strong> Modern web format</li>
+        </ul>
+
+        <h2>System Requirements</h2>
+        <ul>
+          <li>Google Chrome browser (version 88 or later)</li>
+          <li>Active internet connection</li>
+          <li>No additional software required</li>
+        </ul>
+
+        <h2>Privacy & Security</h2>
+        <p>
+          Your privacy is important to us. The extension:
+        </p>
+        <ul>
+          <li>Processes images through our secure backend servers</li>
+          <li>Does not store or save any images permanently</li>
+          <li>Does not track your browsing activity</li>
+          <li>Only accesses images you explicitly select or upload</li>
+          <li>Uses secure HTTPS connections for all API calls</li>
+        </ul>
+
+        <h2>Technical Details</h2>
+        <p>
+          The extension uses <strong>Manifest V3</strong>, the latest Chrome extension standard, ensuring:
+        </p>
+        <ul>
+          <li>Better performance and security</li>
+          <li>Lower memory usage</li>
+          <li>Future compatibility with Chrome updates</li>
+          <li>Enhanced privacy protections</li>
+        </ul>
+
+        <h2>API Integration</h2>
+        <p>
+          The extension seamlessly integrates with our existing backend APIs:
+        </p>
+        <ul>
+          <li><code>/api/remove-background</code> - Background removal</li>
+          <li><code>/api/blur-background</code> - Background blurring</li>
+          <li><code>/api/enhance-image</code> - Image enhancement</li>
+          <li><code>/api/upscale-image</code> - Image upscaling</li>
+        </ul>
+
+        <h2>Tips & Best Practices</h2>
+        <ul>
+          <li><strong>High-Quality Images:</strong> For best results, use images with good resolution and clarity</li>
+          <li><strong>Product Photos:</strong> The extension works excellently for e-commerce product images</li>
+          <li><strong>Portraits:</strong> Background removal and blur work great on portrait photos</li>
+          <li><strong>Batch Processing:</strong> Select multiple images at once to process them efficiently</li>
+          <li><strong>Right-Click Shortcut:</strong> Use the context menu for the fastest workflow</li>
+        </ul>
+
+        <h2>Frequently Asked Questions</h2>
+        
+        <h3>Is the extension free?</h3>
+        <p>
+          Yes! The ChangeImageTo Chrome extension is completely free to use. All features are available at no cost.
+        </p>
+
+        <h3>Do I need to create an account?</h3>
+        <p>
+          No account is required. You can start using the extension immediately after installation.
+        </p>
+
+        <h3>Are my images stored?</h3>
+        <p>
+          No. Images are processed in real-time and are not stored on our servers. Your privacy is protected.
+        </p>
+
+        <h3>Does it work offline?</h3>
+        <p>
+          The extension requires an active internet connection as image processing happens on our servers.
+        </p>
+
+        <h3>Can I use it on other browsers?</h3>
+        <p>
+          Currently, the extension is available for Google Chrome. Support for other Chromium-based browsers (Edge, Brave, etc.) may work but is not officially supported.
+        </p>
+
+        <h3>What if the extension doesn't work?</h3>
+        <p>
+          Make sure you have the latest version of Chrome installed. If issues persist, try refreshing the webpage or reinstalling the extension. Check that you have an active internet connection.
+        </p>
+
+        <div style="margin-top:40px;padding:32px;background:linear-gradient(135deg,var(--accent),#4f46e5);border-radius:16px;text-align:center">
+          <h2 style="color:#001633;margin:0 0 16px">Ready to Get Started?</h2>
+          <p style="color:#001633;margin:0 0 24px;font-size:18px">
+            Install the ChangeImageTo Chrome extension and start editing images from any website today!
+          </p>
+          <a href="https://chrome.google.com/webstore" class="cta-button" target="_blank" rel="noopener noreferrer" style="background:#001633;color:white">
+            Install Now - It's Free!
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <!-- Brand Section -->
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+            <div class="footer-social">
+              <a href="https://x.com/vipulawl" aria-label="Follow us on Twitter" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+              <a href="https://www.youtube.com/@changeimageto" aria-label="Subscribe on YouTube" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+              </a>
+              <a href="https://linkedin.com/company/make-a-video/" aria-label="Connect on LinkedIn" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tools Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+              <li><a href="/blur-background.html">Blur Background</a></li>
+              <li><a href="/convert-image-format.html">Convert Image Format</a></li>
+              <li><a href="/remove-people-from-photo.html">Remove People / Objects</a></li>
+              <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
+              <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
+              <li><a href="/image-quality-checker.html">Image Quality Checker</a></li>
+              <li><a href="/real-estate-photo-enhancement.html">Real Estate Photo Enhancement</a></li>
+            </ul>
+          </div>
+
+          <!-- Blog Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Latest Blog Posts</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/remove-background-from-image.html">Remove Background from Image</a></li>
+              <li><a href="/blog/upscale-image.html">Upscale Image Quality</a></li>
+              <li><a href="/blog/change-image-background-color.html">Change Image Background Color</a></li>
+              <li><a href="/blog/remove-background-from-image-photoshop.html">Remove Background in Photoshop</a></li>
+              <li><a href="/blog/change-image-background-color-online.html">Change Background Color Online</a></li>
+              <li><a href="/blog/remove-background-from-image-canva.html">Remove Background in Canva</a></li>
+              <li><a href="/blog/change-image-background-color-photoshop.html">Change Background in Photoshop</a></li>
+              <li><a href="/blog/remove-background-from-image-android.html">Remove Background on Android</a></li>
+            </ul>
+          </div>
+
+          <!-- Alternatives Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Tool Alternatives</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/photopea-vs-canva.html">Photopea vs Canva</a></li>
+              <li><a href="/blog/capcut-vs-davinci-resolve.html">CapCut vs DaVinci Resolve</a></li>
+              <li><a href="/blog/canva-vs-photopea.html">Canva vs Photopea</a></li>
+              <li><a href="/blog/free-photoshop-alternatives.html">Free Photoshop Alternatives</a></li>
+              <li><a href="/blog/ai-background-removers.html">AI Background Removers</a></li>
+            </ul>
+          </div>
+
+          <!-- Company Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+              <li><a href="/chrome-extension.html">Chrome Extension</a></li>
+              <li><a href="/videos.html">Videos</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+            <div class="footer-bottom-links">
+              <a href="/privacy-policy.html">Privacy</a>
+              <a href="#terms">Terms</a>
+              <a href="#cookies">Cookies</a>
+              <a href="#security">Security</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./script.js?v=20250916-3" defer></script>
+  </body>
+</html>

@@ -1,0 +1,482 @@
+<!-- Feedback Popup Component -->
+<div id="feedback-popup" class="feedback-popup" style="display: none;">
+  <div class="feedback-popup-overlay"></div>
+  <div class="feedback-popup-content">
+    <button class="feedback-popup-close" id="feedback-close-btn" aria-label="Close feedback popup">&times;</button>
+    <h3 class="feedback-popup-title">How was your experience?</h3>
+    <p class="feedback-popup-subtitle">We'd love to hear your feedback!</p>
+    
+    <div class="feedback-rating">
+      <div class="feedback-stars">
+        <button class="feedback-star" data-rating="1" aria-label="1 star">⭐</button>
+        <button class="feedback-star" data-rating="2" aria-label="2 stars">⭐</button>
+        <button class="feedback-star" data-rating="3" aria-label="3 stars">⭐</button>
+        <button class="feedback-star" data-rating="4" aria-label="4 stars">⭐</button>
+        <button class="feedback-star" data-rating="5" aria-label="5 stars">⭐</button>
+      </div>
+      <p class="feedback-rating-text" id="feedback-rating-text">Tap a star to rate</p>
+    </div>
+    
+    <div class="feedback-comment-section">
+      <label for="feedback-comment" class="feedback-comment-label">Your feedback (optional)</label>
+      <textarea 
+        id="feedback-comment" 
+        class="feedback-comment-input" 
+        placeholder="Tell us what you think..."
+        rows="4"
+        maxlength="1000"
+      ></textarea>
+      <div class="feedback-char-count"><span id="feedback-char-count">0</span>/1000</div>
+    </div>
+    
+    <div class="feedback-actions">
+      <button class="feedback-btn feedback-btn-submit" id="feedback-submit-btn" disabled>Submit Feedback</button>
+      <button class="feedback-btn feedback-btn-skip" id="feedback-skip-btn">Skip</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.feedback-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feedback-popup-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.feedback-popup-content {
+  position: relative;
+  background: var(--card, #12171d);
+  border: 1px solid var(--border, #1e2630);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.feedback-popup-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--muted, #9aa7b2);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.feedback-popup-close:hover {
+  color: var(--fg, #eaf0f6);
+  background: var(--border, #1e2630);
+}
+
+.feedback-popup-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--fg, #eaf0f6);
+  margin: 0 0 8px;
+}
+
+.feedback-popup-subtitle {
+  font-size: 14px;
+  color: var(--muted, #9aa7b2);
+  margin: 0 0 24px;
+}
+
+.feedback-rating {
+  margin: 24px 0;
+  text-align: center;
+}
+
+.feedback-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.feedback-star {
+  background: transparent;
+  border: none;
+  font-size: 40px;
+  cursor: pointer;
+  padding: 4px;
+  transition: all 0.2s ease;
+  filter: grayscale(100%) opacity(0.5);
+}
+
+.feedback-star:hover {
+  transform: scale(1.1);
+  filter: grayscale(0%) opacity(1);
+}
+
+.feedback-star.active {
+  filter: grayscale(0%) opacity(1);
+  transform: scale(1.1);
+}
+
+.feedback-star.active ~ .feedback-star {
+  filter: grayscale(100%) opacity(0.5);
+}
+
+.feedback-rating-text {
+  font-size: 14px;
+  color: var(--muted, #9aa7b2);
+  margin: 0;
+}
+
+.feedback-comment-section {
+  margin: 24px 0;
+}
+
+.feedback-comment-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg, #eaf0f6);
+  margin-bottom: 8px;
+}
+
+.feedback-comment-input {
+  width: 100%;
+  padding: 12px;
+  background: var(--bg, #0b0f13);
+  border: 1px solid var(--border, #1e2630);
+  border-radius: 8px;
+  color: var(--fg, #eaf0f6);
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.feedback-comment-input:focus {
+  outline: none;
+  border-color: var(--accent, #6aa7ff);
+  box-shadow: 0 0 0 3px rgba(106, 167, 255, 0.1);
+}
+
+.feedback-char-count {
+  font-size: 12px;
+  color: var(--muted, #9aa7b2);
+  text-align: right;
+  margin-top: 4px;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.feedback-btn {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feedback-btn-submit {
+  background: var(--accent, #6aa7ff);
+  color: #001633;
+}
+
+.feedback-btn-submit:hover:not(:disabled) {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.feedback-btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feedback-btn-skip {
+  background: transparent;
+  color: var(--muted, #9aa7b2);
+  border: 1px solid var(--border, #1e2630);
+}
+
+.feedback-btn-skip:hover {
+  background: var(--border, #1e2630);
+  color: var(--fg, #eaf0f6);
+}
+
+@media (max-width: 600px) {
+  .feedback-popup-content {
+    padding: 24px;
+    width: 95%;
+  }
+  
+  .feedback-star {
+    font-size: 32px;
+  }
+  
+  .feedback-actions {
+    flex-direction: column;
+  }
+}
+</style>
+
+<script>
+(function() {
+  'use strict';
+  
+  // Check if feedback popup already exists
+  if (document.getElementById('feedback-popup')) {
+    return;
+  }
+  
+  // Load the feedback popup HTML
+  const feedbackHTML = document.getElementById('feedback-popup-template');
+  if (!feedbackHTML) {
+    // Create popup element
+    const popup = document.createElement('div');
+    popup.id = 'feedback-popup';
+    popup.className = 'feedback-popup';
+    popup.style.display = 'none';
+    popup.innerHTML = `
+      <div class="feedback-popup-overlay"></div>
+      <div class="feedback-popup-content">
+        <button class="feedback-popup-close" id="feedback-close-btn" aria-label="Close feedback popup">&times;</button>
+        <h3 class="feedback-popup-title">How was your experience?</h3>
+        <p class="feedback-popup-subtitle">We'd love to hear your feedback!</p>
+        
+        <div class="feedback-rating">
+          <div class="feedback-stars">
+            <button class="feedback-star" data-rating="1" aria-label="1 star">⭐</button>
+            <button class="feedback-star" data-rating="2" aria-label="2 stars">⭐</button>
+            <button class="feedback-star" data-rating="3" aria-label="3 stars">⭐</button>
+            <button class="feedback-star" data-rating="4" aria-label="4 stars">⭐</button>
+            <button class="feedback-star" data-rating="5" aria-label="5 stars">⭐</button>
+          </div>
+          <p class="feedback-rating-text" id="feedback-rating-text">Tap a star to rate</p>
+        </div>
+        
+        <div class="feedback-comment-section">
+          <label for="feedback-comment" class="feedback-comment-label">Your feedback (optional)</label>
+          <textarea 
+            id="feedback-comment" 
+            class="feedback-comment-input" 
+            placeholder="Tell us what you think..."
+            rows="4"
+            maxlength="1000"
+          ></textarea>
+          <div class="feedback-char-count"><span id="feedback-char-count">0</span>/1000</div>
+        </div>
+        
+        <div class="feedback-actions">
+          <button class="feedback-btn feedback-btn-submit" id="feedback-submit-btn" disabled>Submit Feedback</button>
+          <button class="feedback-btn feedback-btn-skip" id="feedback-skip-btn">Skip</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(popup);
+  }
+  
+  let selectedRating = 0;
+  let hasShownFeedback = false;
+  
+  // Check if user has already submitted feedback in this session
+  const feedbackShown = sessionStorage.getItem('feedbackShown');
+  if (feedbackShown === 'true') {
+    hasShownFeedback = true;
+  }
+  
+  function showFeedbackPopup() {
+    // Don't show if already shown in this session
+    if (hasShownFeedback) {
+      return;
+    }
+    
+    const popup = document.getElementById('feedback-popup');
+    if (!popup) return;
+    
+    // Reset state
+    selectedRating = 0;
+    document.getElementById('feedback-comment').value = '';
+    document.getElementById('feedback-char-count').textContent = '0';
+    document.getElementById('feedback-rating-text').textContent = 'Tap a star to rate';
+    document.getElementById('feedback-submit-btn').disabled = true;
+    
+    // Reset stars
+    document.querySelectorAll('.feedback-star').forEach(star => {
+      star.classList.remove('active');
+    });
+    
+    popup.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  
+  function hideFeedbackPopup() {
+    const popup = document.getElementById('feedback-popup');
+    if (popup) {
+      popup.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+  
+  function submitFeedback() {
+    if (selectedRating === 0) return;
+    
+    const comment = document.getElementById('feedback-comment').value.trim();
+    const pageType = window.location.pathname;
+    const operation = getOperationType();
+    
+    const feedbackData = {
+      rating: selectedRating,
+      comment: comment,
+      page: pageType,
+      operation: operation,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent
+    };
+    
+    // Send to backend
+    const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+    const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
+    
+    fetch(apiBase + '/api/feedback', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(feedbackData)
+    }).catch(err => {
+      console.warn('Failed to submit feedback:', err);
+    });
+    
+    // Mark as shown
+    hasShownFeedback = true;
+    sessionStorage.setItem('feedbackShown', 'true');
+    
+    hideFeedbackPopup();
+    
+    // Show thank you message briefly
+    const thankYou = document.createElement('div');
+    thankYou.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--accent,#6aa7ff);color:#001633;padding:16px 24px;border-radius:8px;z-index:10001;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+    thankYou.textContent = 'Thank you for your feedback! 🙏';
+    document.body.appendChild(thankYou);
+    
+    setTimeout(() => {
+      thankYou.style.opacity = '0';
+      thankYou.style.transition = 'opacity 0.3s';
+      setTimeout(() => thankYou.remove(), 300);
+    }, 2000);
+  }
+  
+  function getOperationType() {
+    const path = window.location.pathname;
+    if (path === '/' || path === '/index.html' || path.includes('remove-background')) return 'remove_background';
+    if (path.includes('change-image-background')) return 'change_background';
+    if (path === '/change-color-of-image.html') return 'change_color';
+    if (path === '/upscale-image.html') return 'upscale';
+    if (path === '/blur-background.html') return 'blur_background';
+    if (path === '/enhance-image.html') return 'enhance';
+    if (path === '/remove-text-from-image.html') return 'remove_text';
+    if (path === '/remove-people-from-photo.html') return 'remove_people';
+    return 'unknown';
+  }
+  
+  // Initialize event listeners when DOM is ready
+  function initFeedbackPopup() {
+    const popup = document.getElementById('feedback-popup');
+    if (!popup) return;
+    
+    // Close button
+    document.getElementById('feedback-close-btn').addEventListener('click', hideFeedbackPopup);
+    
+    // Overlay click
+    popup.querySelector('.feedback-popup-overlay').addEventListener('click', hideFeedbackPopup);
+    
+    // Star ratings
+    document.querySelectorAll('.feedback-star').forEach(star => {
+      star.addEventListener('click', function() {
+        selectedRating = parseInt(this.dataset.rating);
+        
+        // Update star display
+        document.querySelectorAll('.feedback-star').forEach((s, index) => {
+          if (index < selectedRating) {
+            s.classList.add('active');
+          } else {
+            s.classList.remove('active');
+          }
+        });
+        
+        // Update rating text
+        const ratingTexts = {
+          1: 'Poor',
+          2: 'Fair',
+          3: 'Good',
+          4: 'Very Good',
+          5: 'Excellent'
+        };
+        document.getElementById('feedback-rating-text').textContent = ratingTexts[selectedRating] || 'Tap a star to rate';
+        
+        // Enable submit button
+        document.getElementById('feedback-submit-btn').disabled = false;
+      });
+    });
+    
+    // Comment character count
+    document.getElementById('feedback-comment').addEventListener('input', function() {
+      const count = this.value.length;
+      document.getElementById('feedback-char-count').textContent = count;
+    });
+    
+    // Submit button
+    document.getElementById('feedback-submit-btn').addEventListener('click', submitFeedback);
+    
+    // Skip button
+    document.getElementById('feedback-skip-btn').addEventListener('click', function() {
+      hasShownFeedback = true;
+      sessionStorage.setItem('feedbackShown', 'true');
+      hideFeedbackPopup();
+    });
+    
+    // ESC key to close
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && popup.style.display !== 'none') {
+        hideFeedbackPopup();
+      }
+    });
+  }
+  
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFeedbackPopup);
+  } else {
+    initFeedbackPopup();
+  }
+  
+  // Export function to show popup
+  window.showFeedbackPopup = showFeedbackPopup;
+})();
+</script>
