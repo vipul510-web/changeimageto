@@ -267,28 +267,58 @@ function setupEventListeners() {
         ensureUploadCTA();
         saveUIState();
     });
-    document.getElementById('pickFromPageBtn').addEventListener('click', async () => {
+    const pickFromPageBtn = document.getElementById('pickFromPageBtn');
+    if (pickFromPageBtn) {
+        pickFromPageBtn.addEventListener('click', async () => {
         try {
+            updateStatus('Scanning page for images...');
+            showLoading('Scanning page for images...');
             const deep = document.getElementById('deepScanToggle')?.checked || false; // if visible
             const resp = await chrome.runtime.sendMessage({ action: 'getPageImages', deep });
+            hideLoading();
             if (resp && resp.success) {
                 pageImages = resp.images || [];
                 pageIndex = 0;
                 renderPageImages(paginate(pageImages));
                 updateActionsToolbar();
-                switchTab('picked');
+                if (window.switchTab) {
+                    window.switchTab('picked');
+                } else {
+                    // Fallback if switchTab not yet defined
+                    const viewHome = document.getElementById('viewHome');
+                    const viewPicked = document.getElementById('viewPicked');
+                    const viewUploaded = document.getElementById('viewUploaded');
+                    const tabHome = document.getElementById('tabHome');
+                    const tabPicked = document.getElementById('tabPicked');
+                    const tabUploaded = document.getElementById('tabUploaded');
+                    if (viewHome && viewPicked && viewUploaded && tabHome && tabPicked && tabUploaded) {
+                        viewHome.style.display = 'none';
+                        viewPicked.style.display = 'block';
+                        viewUploaded.style.display = 'none';
+                        tabHome.style.background = '#6c757d';
+                        tabPicked.style.background = '#0b0f13';
+                        tabUploaded.style.background = '#6c757d';
+                    }
+                }
                 ensurePickedCTA();
+                updateStatus(`Found ${pageImages.length} image(s)`);
             } else {
                 pageImages = [];
                 renderPageImages([]);
-                if (resp && resp.error) updateStatus(`Error: ${resp.error}`);
+                const errorMsg = resp && resp.error ? resp.error : 'Failed to get page images';
+                updateStatus(`Error: ${errorMsg}`);
             }
         } catch (e) {
+            hideLoading();
+            console.error('Error picking images from page:', e);
             updateStatus(`Error: ${e.message || e}`);
             pageImages = [];
             renderPageImages([]);
         }
     });
+    } else {
+        console.error('pickFromPageBtn not found in DOM');
+    }
 
     // Empty state CTAs
     const emptyPickBtn = document.getElementById('ctaPickFromPage');
@@ -304,6 +334,18 @@ function setupEventListeners() {
         const more = paginate(pageImages);
         appendPageImages(more, grid);
     });
+    
+    // Review link handler
+    const reviewLink = document.getElementById('reviewLink');
+    if (reviewLink) {
+        reviewLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Get extension ID and open Chrome Web Store review page
+            const extensionId = chrome.runtime.id;
+            const reviewUrl = `https://chrome.google.com/webstore/detail/${extensionId}/reviews`;
+            chrome.tabs.create({ url: reviewUrl });
+        });
+    }
 }
 
 // Load selected images from content script

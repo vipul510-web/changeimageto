@@ -12,20 +12,33 @@ if [ ! -f "analytics.py" ]; then
     exit 1
 fi
 
-# Check if log file exists
-if [ ! -f "app.log" ]; then
-    echo "❌ app.log not found! Make sure the backend is running and has processed some requests."
-    exit 1
+DAYS=${1:-1}  # Default to 1 day if not specified
+
+# Check if we should fetch Cloud Run logs
+# If app.log doesn't exist or is older than 1 day, try fetching from Cloud Run
+if [ ! -f "app.log" ] || [ $(find app.log -mtime +1 2>/dev/null | wc -l) -gt 0 ]; then
+    echo "📥 No recent local logs found. Attempting to fetch from Cloud Run..."
+    if [ -f "scripts/fetch_cloudrun_logs.sh" ]; then
+        ./scripts/fetch_cloudrun_logs.sh $DAYS
+        if [ $? -eq 0 ]; then
+            echo "✅ Cloud Run logs fetched successfully"
+        else
+            echo "⚠️  Could not fetch Cloud Run logs. Using local logs if available."
+        fi
+    else
+        echo "⚠️  Cloud Run log fetcher not found. Using local logs if available."
+    fi
 fi
 
-# Run analytics for last 1 day
-echo "📊 Analyzing last 24 hours..."
-python3 analytics.py --days 1
+# Run analytics for specified days
+echo "📊 Analyzing last $DAYS day(s)..."
+python3 analytics.py --days $DAYS
 
 echo ""
 echo "✅ Analytics complete!"
 echo ""
 echo "💡 Tips:"
 echo "  - Run this script daily to track usage patterns"
-echo "  - Use 'python3 analytics.py --days 7' for weekly analysis"
+echo "  - Use './run_analytics.sh 7' for weekly analysis"
+echo "  - Use './scripts/fetch_cloudrun_logs.sh 30' to fetch Cloud Run logs manually"
 echo "  - Check the generated summary files for historical data"

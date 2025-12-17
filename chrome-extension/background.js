@@ -103,13 +103,25 @@
         
         switch (request.action) {
             case 'getPageImages': {
-                const respondError = (msg) => { try { sendResponse({ success: false, error: msg, images: [] }); } catch (_) {} };
+                const respondError = (msg) => { 
+                    try { 
+                        sendResponse({ success: false, error: msg, images: [] }); 
+                    } catch (err) {
+                        console.error('Failed to send error response:', err);
+                    }
+                };
                 (async () => {
-                    let tabId = sender && sender.tab && sender.tab.id != null ? sender.tab.id : await getActiveTabId();
-                    if (tabId == null) { respondError('No active tab'); return; }
                     try {
+                        let tabId = sender && sender.tab && sender.tab.id != null ? sender.tab.id : await getActiveTabId();
+                        if (tabId == null) { 
+                            respondError('No active tab found. Please ensure you have a webpage open.'); 
+                            return; 
+                        }
+                        
+                        console.log('Executing script to get page images, tabId:', tabId);
+                        
                         const results = await chrome.scripting.executeScript({
-                            target: { tabId, allFrames: true },
+                            target: { tabId, allFrames: false }, // Changed to false to avoid cross-origin issues
                             func: (opts) => {
                                 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
                                 const extractUrlsFromStyle = (styleVal) => {
@@ -167,9 +179,16 @@
                         });
                         // Aggregate from frames
                         const images = (results || []).flatMap(r => (r && r.result) ? r.result : []);
-                        try { sendResponse({ success: true, images }); } catch (_) {}
+                        console.log('Found', images.length, 'images on page');
+                        try { 
+                            sendResponse({ success: true, images }); 
+                        } catch (err) {
+                            console.error('Failed to send success response:', err);
+                            respondError('Failed to send response');
+                        }
                     } catch (e) {
-                        respondError(e?.message || String(e));
+                        console.error('Error in getPageImages:', e);
+                        respondError(e?.message || String(e) || 'Unknown error occurred');
                     }
                 })();
                 return true;

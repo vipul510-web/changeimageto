@@ -17,6 +17,8 @@ def parse_log_file(log_file='app.log'):
         return []
     
     actions = []
+    is_cloudrun_format = 'cloudrun_logs' in log_file
+    
     with open(log_file, 'r') as f:
         for line in f:
             if 'USER_ACTION:' in line:
@@ -25,24 +27,89 @@ def parse_log_file(log_file='app.log'):
                     json_start = line.find('USER_ACTION: ') + len('USER_ACTION: ')
                     json_str = line[json_start:].strip()
                     action_data = json.loads(json_str)
+                    
+                    # Handle nested frontend_analytics actions
+                    if action_data.get('action') == 'frontend_analytics' and 'details' in action_data:
+                        # Extract the nested action from frontend_analytics
+                        nested_details = action_data['details']
+                        if isinstance(nested_details, dict) and 'action' in nested_details:
+                            # Create a flattened action with nested action details
+                            nested_action = {
+                                'action': nested_details['action'],
+                                'timestamp': nested_details.get('timestamp', action_data.get('timestamp', '')),
+                                'userAgent': nested_details.get('userAgent', ''),
+                                'details': nested_details.get('details', {})
+                            }
+                            # Also include page info if available
+                            if 'page' in nested_details:
+                                nested_action['details']['page'] = nested_details['page']
+                            actions.append(nested_action)
+                    
+                    # Also add the original action (for backend actions)
                     actions.append(action_data)
                 except (json.JSONDecodeError, ValueError) as e:
-                    print(f"Error parsing line: {line.strip()}")
+                    # Silently skip malformed lines
                     continue
     
     return actions
 
+def parse_timestamp(timestamp_str):
+    """Parse timestamp string, handling various formats"""
+    if not timestamp_str:
+        return None
+    
+    try:
+        # Handle ISO format with Z timezone
+        if timestamp_str.endswith('Z'):
+            timestamp_str = timestamp_str.replace('Z', '+00:00')
+            return datetime.fromisoformat(timestamp_str)
+        # Handle ISO format with timezone
+        elif '+' in timestamp_str or timestamp_str.count('-') >= 3:
+            return datetime.fromisoformat(timestamp_str)
+        # Handle ISO format without timezone (naive datetime)
+        else:
+            # Try parsing as naive datetime
+            dt = datetime.fromisoformat(timestamp_str)
+            # If it's naive, assume local timezone
+            return dt
+    except (ValueError, AttributeError):
+        # Try alternative parsing
+        try:
+            # Try parsing common formats
+            for fmt in ['%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S']:
+                try:
+                    return datetime.strptime(timestamp_str.split('.')[0], fmt)
+                except ValueError:
+                    continue
+        except:
+            pass
+        return None
+
 def analyze_actions(actions, days=1):
     """Analyze user actions for the last N days"""
-    cutoff_date = datetime.now() - timedelta(days=days)
+    from datetime import timezone
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
     
     recent_actions = []
     for action in actions:
         try:
-            action_date = datetime.fromisoformat(action['timestamp'].replace('Z', '+00:00'))
-            if action_date >= cutoff_date:
-                recent_actions.append(action)
-        except (ValueError, KeyError):
+            timestamp_str = action.get('timestamp', '')
+            if not timestamp_str:
+                continue
+            
+            action_date = parse_timestamp(timestamp_str)
+            if action_date:
+                # Normalize to UTC for comparison
+                if action_date.tzinfo is None:
+                    # Naive datetime - assume UTC
+                    action_date = action_date.replace(tzinfo=timezone.utc)
+                else:
+                    # Convert to UTC
+                    action_date = action_date.astimezone(timezone.utc)
+                
+                if action_date >= cutoff_date:
+                    recent_actions.append(action)
+        except (ValueError, KeyError, AttributeError, TypeError) as e:
             continue
     
     return recent_actions
@@ -97,10 +164,10 @@ def generate_report(actions):
             print(f"    {file_type}: {count}")
         print()
     
-    # Processing requests
-    processing_started = [a for a in actions if a['action'] == 'processing_started']
-    processing_completed = [a for a in actions if a['action'] == 'processing_completed']
-    processing_errors = [a for a in actions if a['action'] == 'processing_error']
+    # Processing requests - include all processing-related actions
+    processing_started = [a for a in actions if a['action'] in ['processing_started', 'color_change_processing_started', 'request_started', 'color_change_request_started']]
+    processing_completed = [a for a in actions if a['action'] in ['processing_completed', 'color_change_processing_completed']]
+    processing_errors = [a for a in actions if a['action'] in ['processing_error', 'error']]
     
     if processing_started:
         print("⚙️ PROCESSING REQUESTS:")
@@ -152,8 +219,11 @@ def generate_report(actions):
     hours = []
     for action in actions:
         try:
-            action_date = datetime.fromisoformat(action['timestamp'].replace('Z', '+00:00'))
-            hours.append(action_date.hour)
+            timestamp_str = action.get('timestamp', '')
+            if timestamp_str:
+                action_date = parse_timestamp(timestamp_str)
+                if action_date:
+                    hours.append(action_date.hour)
         except:
             continue
     
@@ -193,16 +263,59 @@ def main():
     
     parser = argparse.ArgumentParser(description='Analyze background removal tool usage')
     parser.add_argument('--days', type=int, default=1, help='Number of days to analyze (default: 1)')
-    parser.add_argument('--log-file', default='app.log', help='Log file to analyze (default: app.log)')
+    parser.add_argument('--log-file', default=None, help='Log file to analyze (default: checks app.log and backend/app.log)')
     
     args = parser.parse_args()
     
-    # Parse and analyze
-    all_actions = parse_log_file(args.log_file)
+    # Check multiple log files if not specified
+    log_files = []
+    if args.log_file:
+        log_files = [args.log_file]
+    else:
+        # Check both possible log file locations
+        if os.path.exists('app.log'):
+            log_files.append('app.log')
+        if os.path.exists('backend/app.log'):
+            log_files.append('backend/app.log')
+        # Check for Cloud Run exported logs
+        cloudrun_logs = [f for f in os.listdir('.') if f.startswith('cloudrun_logs_') and f.endswith('.log')]
+        if cloudrun_logs:
+            # Sort by date and use the most recent
+            cloudrun_logs.sort(reverse=True)
+            log_files.extend(cloudrun_logs[:3])  # Include up to 3 most recent
+    
+    if not log_files:
+        print("No log files found! Checked: app.log, backend/app.log")
+        return
+    
+    # Parse all log files
+    all_actions = []
+    for log_file in log_files:
+        print(f"Reading log file: {log_file}")
+        actions = parse_log_file(log_file)
+        all_actions.extend(actions)
+        print(f"  Found {len(actions)} actions")
+    
+    print(f"\nTotal actions found: {len(all_actions)}")
+    
+    # Analyze recent actions
     recent_actions = analyze_actions(all_actions, args.days)
     
     if not recent_actions:
-        print(f"No actions found in the last {args.days} day(s).")
+        from datetime import timezone
+        print(f"\nNo actions found in the last {args.days} day(s).")
+        print(f"Cutoff date: {datetime.now(timezone.utc) - timedelta(days=args.days)}")
+        if all_actions:
+            # Show date range of available data
+            dates = []
+            for action in all_actions[:10]:  # Check first 10 actions
+                ts = action.get('timestamp', '')
+                if ts:
+                    dt = parse_timestamp(ts)
+                    if dt:
+                        dates.append(dt)
+            if dates:
+                print(f"Available data range: {min(dates)} to {max(dates)}")
         return
     
     generate_report(recent_actions)

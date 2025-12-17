@@ -1,0 +1,36 @@
+Analytics Summary - 2025-11-14
+Total actions: 5957
+Action breakdown:
+  frontend_analytics: 2430
+  page_visit: 899
+  file_uploaded: 547
+  processing_started: 478
+  processing_completed: 456
+  download_link_created: 307
+  request_started: 153
+  file_processed: 149
+  bg_color_debug: 86
+  upscale_completed: 80
+  color_change_processing_completed: 36
+  color_change_processing_started: 36
+  color_change_file_processed: 36
+  color_change_request_started: 36
+  text_removal_request: 23
+  painted_areas_removal_success: 22
+  inpaint_method: 22
+  mask_debug: 22
+  painted_areas_removal_request: 22
+  processing_error: 22
+  bulk_quality_check_started: 19
+  text_removal_success: 19
+  reset_action: 12
+  bulk_quality_check_completed: 12
+  convert_completed: 12
+  convert_request_started: 6
+  error: 4
+  no_text_detected: 2
+  bulk_convert_completed: 2
+  bulk_convert_started: 2
+  enhance_image_error: 2
+  text_detection_error: 2
+  convert_error: 1

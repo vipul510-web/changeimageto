@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ChangeImageTo - Image Editor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Edit images directly from any website - remove backgrounds, change colors, enhance, and more!",
   
   "permissions": [
