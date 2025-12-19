@@ -1033,6 +1033,7 @@ async def remove_bg(
     foreground_x: Optional[float] = Form(None),
     foreground_y: Optional[float] = Form(None),
     foreground_scale: Optional[float] = Form(None),
+    background_blur: Optional[float] = Form(None),
 ):
     # Log the request start
     client_ip = request.client.host if request.client else "unknown"
@@ -1159,6 +1160,12 @@ async def remove_bg(
                 left = (new_bg_w - target_w) // 2
                 top = (new_bg_h - target_h) // 2
                 bg_image = bg_image.crop((left, top, left + target_w, top + target_h))
+                
+                # Apply blur to background if requested
+                if background_blur and background_blur > 0:
+                    bg_image = bg_image.convert("RGB")  # Convert to RGB for blur filter
+                    bg_image = bg_image.filter(ImageFilter.GaussianBlur(radius=float(background_blur)))
+                    bg_image = bg_image.convert("RGBA")  # Convert back to RGBA
                 
                 # Composite foreground onto background with position and scale
                 # Apply scale if provided

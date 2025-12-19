@@ -533,9 +533,11 @@ if (form) form.addEventListener('submit', async (e) => {
         const foregroundX = document.getElementById('foreground-x');
         const foregroundY = document.getElementById('foreground-y');
         const foregroundScale = document.getElementById('foreground-scale');
+        const backgroundBlur = document.getElementById('background-blur');
         if (foregroundX && foregroundX.value) body.append('foreground_x', foregroundX.value);
         if (foregroundY && foregroundY.value) body.append('foreground_y', foregroundY.value);
         if (foregroundScale && foregroundScale.value) body.append('foreground_scale', foregroundScale.value);
+        if (backgroundBlur && backgroundBlur.value) body.append('background_blur', backgroundBlur.value);
       } else {
         // Check for solid color background
         var hidden = document.getElementById('bg-color');

@@ -230,6 +230,18 @@
                                     <span style="font-size: 12px;">200%</span>
                                 </div>
                             </div>
+                            <div class="control-group">
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="blur-background-checkbox" style="width: auto;">
+                                    Blur Background
+                                </label>
+                                <div class="scale-control" id="blur-control" style="display: none;">
+                                    <span style="font-size: 12px;">None</span>
+                                    <input type="range" id="blur-slider" min="0" max="30" value="12" step="1">
+                                    <span style="font-size: 12px;">Strong</span>
+                                    <span class="scale-value" id="blur-display" style="min-width: 40px;">12</span>
+                                </div>
+                            </div>
                             <div class="preview-canvas-container" id="preview-canvas-wrapper">
                                 <canvas id="preview-canvas"></canvas>
                                 <div class="foreground-layer" id="foreground-layer"></div>
@@ -240,6 +252,7 @@
                     <input type="hidden" id="foreground-x" name="foreground_x" value="0">
                     <input type="hidden" id="foreground-y" name="foreground_y" value="0">
                     <input type="hidden" id="foreground-scale" name="foreground_scale" value="1.0">
+                    <input type="hidden" id="background-blur" name="background_blur" value="0">
                 </div>
 
                 <div class="controls">
@@ -370,6 +383,35 @@
                             <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
                             <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
                             <li><a href="/image-quality-checker.html">Image Quality Checker</a></li>
+                            <li><a href="/compress-image-online.html">Compress Image</a></li>
+                            <li><a href="/real-estate-photo-enhancement.html">Real Estate Photo Enhancement</a></li>
+                            <li><a href="/nano-banana-change-image.html">Nano Banana Change Image</a></li>
+                            <li><a href="/gemini-change-image-size.html">Gemini Change Image Size</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-section">
+                        <h3 class="footer-heading">Latest Blog Posts</h3>
+                        <ul class="footer-links">
+                            <li><a href="/blog/remove-background-from-image.html">Remove Background from Image</a></li>
+                            <li><a href="/blog/upscale-image.html">Upscale Image Quality</a></li>
+                            <li><a href="/blog/change-image-background-color.html">Change Image Background Color</a></li>
+                            <li><a href="/blog/remove-background-from-image-photoshop.html">Remove Background in Photoshop</a></li>
+                            <li><a href="/blog/change-image-background-color-online.html">Change Background Color Online</a></li>
+                            <li><a href="/blog/remove-background-from-image-canva.html">Remove Background in Canva</a></li>
+                            <li><a href="/blog/change-image-background-color-photoshop.html">Change Background in Photoshop</a></li>
+                            <li><a href="/blog/remove-background-from-image-android.html">Remove Background on Android</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-section">
+                        <h3 class="footer-heading">Tool Alternatives</h3>
+                        <ul class="footer-links">
+                            <li><a href="/blog/photopea-vs-canva.html">Photopea vs Canva</a></li>
+                            <li><a href="/blog/capcut-vs-davinci-resolve.html">CapCut vs DaVinci Resolve</a></li>
+                            <li><a href="/blog/canva-vs-photopea.html">Canva vs Photopea</a></li>
+                            <li><a href="/blog/free-photoshop-alternatives.html">Free Photoshop Alternatives</a></li>
+                            <li><a href="/blog/ai-background-removers.html">AI Background Removers</a></li>
                         </ul>
                     </div>
 
@@ -379,6 +421,8 @@
                             <li><a href="/privacy-policy.html">Privacy Policy</a></li>
                             <li><a href="/contact.html">Contact Us</a></li>
                             <li><a href="/about.html">About</a></li>
+                            <li><a href="/chrome-extension.html">Chrome Extension</a></li>
+                            <li><a href="/videos.html">Videos</a></li>
                         </ul>
                     </div>
                 </div>
@@ -386,8 +430,14 @@
                 <div class="footer-bottom">
                     <div class="footer-bottom-content">
                         <p class="footer-copyright">
-                            © 2024 ChangeImageTo.com. All rights reserved.
+                            © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
                         </p>
+                        <div class="footer-bottom-links">
+                            <a href="/privacy-policy.html">Privacy</a>
+                            <a href="#terms">Terms</a>
+                            <a href="#cookies">Cookies</a>
+                            <a href="#security">Security</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -431,6 +481,34 @@
                 updatePreview();
             });
 
+            // Blur checkbox and slider handlers
+            const blurCheckbox = document.getElementById('blur-background-checkbox');
+            const blurSlider = document.getElementById('blur-slider');
+            const blurDisplay = document.getElementById('blur-display');
+            const blurControl = document.getElementById('blur-control');
+            const backgroundBlurInput = document.getElementById('background-blur');
+
+            blurCheckbox.addEventListener('change', function() {
+                blurControl.style.display = this.checked ? 'flex' : 'none';
+                if (!this.checked) {
+                    backgroundBlurInput.value = '0';
+                    blurSlider.value = '12';
+                    blurDisplay.textContent = '12';
+                } else {
+                    backgroundBlurInput.value = blurSlider.value;
+                }
+                updatePreview();
+            });
+
+            blurSlider.addEventListener('input', function() {
+                const blurValue = this.value;
+                blurDisplay.textContent = blurValue;
+                if (blurCheckbox.checked) {
+                    backgroundBlurInput.value = blurValue;
+                }
+                updatePreview();
+            });
+
             // Reset button
             resetBtn.addEventListener('click', function() {
                 positionEditor.scale = 1.0;
@@ -441,6 +519,13 @@
                 document.getElementById('foreground-scale').value = '1.0';
                 document.getElementById('foreground-x').value = '0';
                 document.getElementById('foreground-y').value = '0';
+                if (blurCheckbox) {
+                    blurCheckbox.checked = false;
+                    if (blurControl) blurControl.style.display = 'none';
+                    if (blurSlider) blurSlider.value = '12';
+                    if (blurDisplay) blurDisplay.textContent = '12';
+                    if (backgroundBlurInput) backgroundBlurInput.value = '0';
+                }
                 updatePreview();
             });
 
@@ -544,8 +629,15 @@
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw background
+            // Draw background (with blur if enabled)
+            ctx.save();
+            const blurValue = parseFloat(document.getElementById('background-blur').value || '0');
+            if (blurValue > 0) {
+                // Apply blur using canvas filter (for preview)
+                ctx.filter = `blur(${blurValue}px)`;
+            }
             ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
 
             // Calculate scaled foreground dimensions
             const scaledWidth = fg.width * positionEditor.scale;
