@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Christmas Background to Photo Online Free | ChangeImageTo.com</title>
+    <meta name="description" content="Add Christmas background to your photo online for free. Upload your picture and add festive Christmas backgrounds instantly. No login required, no watermark.">
+    <meta name="keywords" content="add christmas background to photo, add christmas background to photo online free, add picture to christmas background, add your picture to a christmas background, add picture to christmas background free">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/add-christmas-background.html">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Add Christmas Background to Photo Online Free">
+    <meta property="og:description" content="Add Christmas background to your photo online for free. Upload your picture and add festive Christmas backgrounds instantly.">
+    <meta property="og:url" content="https://www.changeimageto.com/add-christmas-background.html">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Add Christmas Background to Photo Online Free">
+    <meta name="twitter:description" content="Add Christmas background to your photo online for free. Upload your picture and add festive Christmas backgrounds instantly.">
+    
+    <link rel="preload" as="style" href="styles.css?v=20250916-3">
+    <link rel="stylesheet" href="styles.css?v=20250916-3">
+    
+    <style>
+        .christmas-templates {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .template-item {
+            position: relative;
+            cursor: pointer;
+            border: 2px solid var(--border, #1e2630);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            aspect-ratio: 1;
+        }
+        .template-item:hover {
+            border-color: var(--accent, #6aa7ff);
+            transform: scale(1.05);
+        }
+        .template-item.selected {
+            border-color: var(--accent, #6aa7ff);
+            border-width: 3px;
+            box-shadow: 0 0 0 2px rgba(106, 167, 255, 0.2);
+        }
+        .template-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .template-item img[src=""], .template-item img:not([src]) {
+            display: none;
+        }
+        .template-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            text-align: center;
+        }
+        .upload-custom-bg {
+            margin-top: 16px;
+            padding: 16px;
+            border: 2px dashed var(--border, #1e2630);
+            border-radius: 8px;
+            text-align: center;
+        }
+        .upload-custom-bg input[type="file"] {
+            display: none;
+        }
+        .upload-custom-bg label {
+            cursor: pointer;
+            color: var(--accent, #6aa7ff);
+            text-decoration: underline;
+        }
+        .position-editor {
+            margin-top: 24px;
+            padding: 20px;
+            border: 2px solid var(--border, #1e2630);
+            border-radius: 8px;
+            background: var(--bg-secondary, #1a1f2e);
+        }
+        .position-editor h4 {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        .editor-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .control-group label {
+            font-size: 14px;
+            color: var(--text-secondary, #a0a8b8);
+        }
+        .scale-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .scale-control input[type="range"] {
+            flex: 1;
+        }
+        .scale-value {
+            min-width: 50px;
+            text-align: center;
+            font-weight: bold;
+            color: var(--accent, #6aa7ff);
+        }
+        .preview-canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 16px auto;
+            border: 2px solid var(--border, #1e2630);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f0f0f0;
+            cursor: move;
+            touch-action: none;
+        }
+        .preview-canvas-container canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .preview-canvas-container .foreground-layer {
+            position: absolute;
+            cursor: move;
+            border: 2px dashed rgba(106, 167, 255, 0.5);
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .preview-canvas-container .foreground-layer:hover {
+            border-color: rgba(106, 167, 255, 0.8);
+        }
+        .preview-canvas-container .foreground-layer.dragging {
+            border-color: var(--accent, #6aa7ff);
+            border-style: solid;
+        }
+        .reset-position-btn {
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary, #252a3a);
+            border: 1px solid var(--border, #1e2630);
+            border-radius: 4px;
+            color: var(--text, #e0e6ed);
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .reset-position-btn:hover {
+            background: var(--bg-hover, #2d3444);
+        }
+    </style>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-D3Q582VFCG');
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="logo-link"><img src="./logo.png?v=20250916-1" alt="ChangeImageTo" class="logo-img" /></a>
+            <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+                <h1 style="margin:0">Add Christmas Background to Photo Online (Free)</h1>
+                <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
+            </div>
+            <p class="subtitle">Upload your photo and add festive Christmas backgrounds instantly. Free, no login, no watermark.</p>
+        </header>
+
+        <main>
+            <form id="upload-form" enctype="multipart/form-data">
+                <div class="controls">
+                    <label>Photo Type</label>
+                    <div class="category-buttons" role="group" aria-label="Choose photo type">
+                        <button type="button" class="cat-btn active" data-cat="product" id="cat-product">Product / Object</button>
+                        <button type="button" class="cat-btn" data-cat="portrait" id="cat-portrait">Portrait / People</button>
+                    </div>
+                    <input type="hidden" id="category" name="category" value="product" />
+                </div>
+
+                <div class="controls" id="position-editor-section" style="display: none;">
+                    <div class="position-editor">
+                        <h4>Position & Scale Your Photo</h4>
+                        <div class="editor-controls">
+                            <div class="control-group">
+                                <label>Scale: <span class="scale-value" id="scale-display">100%</span></label>
+                                <div class="scale-control">
+                                    <span style="font-size: 12px;">50%</span>
+                                    <input type="range" id="scale-slider" min="50" max="200" value="100" step="5">
+                                    <span style="font-size: 12px;">200%</span>
+                                </div>
+                            </div>
+                            <div class="preview-canvas-container" id="preview-canvas-wrapper">
+                                <canvas id="preview-canvas"></canvas>
+                                <div class="foreground-layer" id="foreground-layer"></div>
+                            </div>
+                            <button type="button" class="reset-position-btn" id="reset-position-btn">Reset Position & Scale</button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="foreground-x" name="foreground_x" value="0">
+                    <input type="hidden" id="foreground-y" name="foreground_y" value="0">
+                    <input type="hidden" id="foreground-scale" name="foreground_scale" value="1.0">
+                </div>
+
+                <div class="controls">
+                    <label>Choose Christmas Background</label>
+                    <div class="christmas-templates" id="template-grid">
+                        <div style="text-align: center; padding: 20px; color: var(--muted);">
+                            Loading Christmas backgrounds...
+                        </div>
+                    </div>
+                    
+                    <div class="upload-custom-bg">
+                        <p>Or upload your own Christmas background:</p>
+                        <label for="custom-bg-input">
+                            <input type="file" id="custom-bg-input" accept="image/*" />
+                            <span style="cursor: pointer; color: var(--accent, #6aa7ff); text-decoration: underline;">Choose Background Image</span>
+                        </label>
+                        <div id="custom-bg-preview" style="margin-top: 12px; display: none;">
+                            <img id="custom-bg-preview-img" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid var(--accent, #6aa7ff);" />
+                            <button type="button" id="remove-custom-bg" style="margin-top: 8px; padding: 4px 12px; background: var(--card, #12171d); border: 1px solid var(--border, #1e2630); color: var(--fg, #eaf0f6); border-radius: 4px; cursor: pointer;">Remove</button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="selected-template" value="" />
+                </div>
+
+                <div class="uploader" id="dropzone">
+                    <input type="file" id="file-input" accept="image/*" />
+                    <div class="uploader-instructions">
+                        <strong>Drop your photo here</strong>
+                        <span>or click to browse</span>
+                    </div>
+                </div>
+
+                <button id="process-btn" type="submit" disabled>Add Christmas Background</button>
+            </form>
+
+            <section class="preview" id="preview-section" hidden>
+                <div class="preview-grid">
+                    <div>
+                        <h3>Original Photo</h3>
+                        <img id="original-img" alt="Original photo" />
+                    </div>
+                    <div>
+                        <h3>With Christmas Background</h3>
+                        <p id="process-prompt" class="prompt">Press "Add Christmas Background" to process.</p>
+                        <div id="result-wrapper" hidden>
+                            <div class="checkerboard">
+                                <img id="result-img" alt="Photo with Christmas background" />
+                            </div>
+                            <div class="actions">
+                                <a id="download-link" download="christmas-photo.png" class="btn">Download</a>
+                                <button id="reset-btn" class="btn secondary" type="button">Try Another Photo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="seo">
+                <h2>How to Add Christmas Background to Photo Online Free</h2>
+                <p>Transform your photos into festive holiday cards with our free Christmas background tool. Simply upload your photo, choose a Christmas background template, and download your personalized holiday image in seconds.</p>
+                
+                <h3>Steps to Add Christmas Background:</h3>
+                <ol>
+                    <li><strong>Upload Your Photo:</strong> Select or drag and drop your photo into the upload area</li>
+                    <li><strong>Choose Photo Type:</strong> Select "Portrait / People" for photos with people, or "Product / Object" for items</li>
+                    <li><strong>Select Christmas Background:</strong> Choose from our festive templates or upload your own Christmas background image</li>
+                    <li><strong>Process:</strong> Click "Add Christmas Background" to combine your photo with the background</li>
+                    <li><strong>Download:</strong> Save your festive photo and share it with friends and family</li>
+                </ol>
+
+                <h3>Perfect For:</h3>
+                <ul>
+                    <li><strong>Holiday Cards:</strong> Create personalized Christmas cards with family photos</li>
+                    <li><strong>Social Media:</strong> Add festive backgrounds to profile pictures and posts</li>
+                    <li><strong>Product Photos:</strong> Give your products a holiday theme for seasonal marketing</li>
+                    <li><strong>Family Photos:</strong> Add Christmas magic to family portraits</li>
+                    <li><strong>Pet Photos:</strong> Make your pets part of the holiday fun</li>
+                </ul>
+
+                <h3>Why Use Our Tool?</h3>
+                <ul>
+                    <li><strong>100% Free:</strong> No subscription fees, no hidden costs</li>
+                    <li><strong>No Registration:</strong> Start using immediately without creating an account</li>
+                    <li><strong>High Quality:</strong> AI-powered background removal ensures clean edges</li>
+                    <li><strong>Fast Processing:</strong> Get results in seconds</li>
+                    <li><strong>Privacy Protected:</strong> Your photos are processed securely and not stored</li>
+                </ul>
+            </section>
+        </main>
+
+        <nav class="seo-links">
+            <a href="/remove-background-from-image.html">Remove Background from Image</a>
+            <a href="/change-image-background.html">Change Image Background</a>
+            <a href="/change-color-of-image.html">Change Color of Image</a>
+            <a href="/blur-background.html">Blur Background</a>
+            <a href="/upscale-image.html">AI Image Upscaler</a>
+        </nav>
+
+        <footer class="comprehensive-footer">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <div class="footer-logo">
+                            <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+                        </div>
+                        <p class="footer-description">
+                            The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+                        </p>
+                    </div>
+
+                    <div class="footer-section">
+                        <h3 class="footer-heading">Image Tools</h3>
+                        <ul class="footer-links">
+                            <li><a href="/add-christmas-background.html">Add Christmas Background</a></li>
+                            <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+                            <li><a href="/change-image-background.html">Change Background</a></li>
+                            <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-section">
+                        <h3 class="footer-heading">Company</h3>
+                        <ul class="footer-links">
+                            <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                            <li><a href="/contact.html">Contact Us</a></li>
+                            <li><a href="/about.html">About</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <div class="footer-bottom-content">
+                        <p class="footer-copyright">
+                            © 2024 ChangeImageTo.com. All rights reserved.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js?v=20250916-3" defer></script>
+    <script>
+        // Position editor state
+        let positionEditor = {
+            foregroundImage: null,
+            backgroundImage: null,
+            canvas: null,
+            ctx: null,
+            foregroundLayer: null,
+            scale: 1.0,
+            x: 0,
+            y: 0,
+            isDragging: false,
+            dragStartX: 0,
+            dragStartY: 0,
+            originalForegroundX: 0,
+            originalForegroundY: 0
+        };
+
+        // Initialize position editor
+        function initPositionEditor() {
+            positionEditor.canvas = document.getElementById('preview-canvas');
+            positionEditor.ctx = positionEditor.canvas.getContext('2d');
+            positionEditor.foregroundLayer = document.getElementById('foreground-layer');
+            const scaleSlider = document.getElementById('scale-slider');
+            const scaleDisplay = document.getElementById('scale-display');
+            const resetBtn = document.getElementById('reset-position-btn');
+            const previewWrapper = document.getElementById('preview-canvas-wrapper');
+
+            // Scale slider handler
+            scaleSlider.addEventListener('input', function() {
+                positionEditor.scale = parseFloat(this.value) / 100;
+                scaleDisplay.textContent = this.value + '%';
+                document.getElementById('foreground-scale').value = positionEditor.scale;
+                updatePreview();
+            });
+
+            // Reset button
+            resetBtn.addEventListener('click', function() {
+                positionEditor.scale = 1.0;
+                positionEditor.x = 0;
+                positionEditor.y = 0;
+                scaleSlider.value = 100;
+                scaleDisplay.textContent = '100%';
+                document.getElementById('foreground-scale').value = '1.0';
+                document.getElementById('foreground-x').value = '0';
+                document.getElementById('foreground-y').value = '0';
+                updatePreview();
+            });
+
+            // Drag handlers for foreground layer
+            let startX, startY, startLayerX, startLayerY;
+
+            positionEditor.foregroundLayer.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                positionEditor.isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startLayerX = positionEditor.x;
+                startLayerY = positionEditor.y;
+                positionEditor.foregroundLayer.classList.add('dragging');
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!positionEditor.isDragging) return;
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                const rect = previewWrapper.getBoundingClientRect();
+                const scaleX = positionEditor.canvas.width / rect.width;
+                const scaleY = positionEditor.canvas.height / rect.height;
+                
+                positionEditor.x = startLayerX + (deltaX * scaleX);
+                positionEditor.y = startLayerY + (deltaY * scaleY);
+                
+                document.getElementById('foreground-x').value = Math.round(positionEditor.x);
+                document.getElementById('foreground-y').value = Math.round(positionEditor.y);
+                updatePreview();
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (positionEditor.isDragging) {
+                    positionEditor.isDragging = false;
+                    positionEditor.foregroundLayer.classList.remove('dragging');
+                }
+            });
+
+            // Touch handlers for mobile
+            positionEditor.foregroundLayer.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                positionEditor.isDragging = true;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                startLayerX = positionEditor.x;
+                startLayerY = positionEditor.y;
+                positionEditor.foregroundLayer.classList.add('dragging');
+            });
+
+            document.addEventListener('touchmove', function(e) {
+                if (!positionEditor.isDragging) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - startX;
+                const deltaY = touch.clientY - startY;
+                const rect = previewWrapper.getBoundingClientRect();
+                const scaleX = positionEditor.canvas.width / rect.width;
+                const scaleY = positionEditor.canvas.height / rect.height;
+                
+                positionEditor.x = startLayerX + (deltaX * scaleX);
+                positionEditor.y = startLayerY + (deltaY * scaleY);
+                
+                document.getElementById('foreground-x').value = Math.round(positionEditor.x);
+                document.getElementById('foreground-y').value = Math.round(positionEditor.y);
+                updatePreview();
+            });
+
+            document.addEventListener('touchend', function() {
+                if (positionEditor.isDragging) {
+                    positionEditor.isDragging = false;
+                    positionEditor.foregroundLayer.classList.remove('dragging');
+                }
+            });
+        }
+
+        // Update preview canvas
+        function updatePreview() {
+            if (!positionEditor.foregroundImage || !positionEditor.backgroundImage || !positionEditor.canvas) return;
+
+            const canvas = positionEditor.canvas;
+            const ctx = positionEditor.ctx;
+            const bg = positionEditor.backgroundImage;
+            const fg = positionEditor.foregroundImage;
+
+            // Calculate display size (max 600px width for preview)
+            const maxDisplayWidth = 600;
+            const displayScale = Math.min(1, maxDisplayWidth / bg.width);
+            const displayWidth = bg.width * displayScale;
+            const displayHeight = bg.height * displayScale;
+
+            // Set canvas display size
+            canvas.style.width = displayWidth + 'px';
+            canvas.style.height = displayHeight + 'px';
+            
+            // Set canvas internal size to match background (for accurate drawing)
+            canvas.width = bg.width;
+            canvas.height = bg.height;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background
+            ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+
+            // Calculate scaled foreground dimensions
+            const scaledWidth = fg.width * positionEditor.scale;
+            const scaledHeight = fg.height * positionEditor.scale;
+
+            // Calculate position (x/y are relative to center, 0,0 means centered)
+            let drawX, drawY;
+            
+            if (positionEditor.x === 0 && positionEditor.y === 0) {
+                // Default: center the foreground
+                drawX = (canvas.width - scaledWidth) / 2;
+                drawY = (canvas.height - scaledHeight) / 2;
+            } else {
+                // Position is relative to center
+                drawX = (canvas.width / 2) + positionEditor.x - (scaledWidth / 2);
+                drawY = (canvas.height / 2) + positionEditor.y - (scaledHeight / 2);
+            }
+
+            // Clamp to canvas bounds
+            drawX = Math.max(0, Math.min(drawX, canvas.width - scaledWidth));
+            drawY = Math.max(0, Math.min(drawY, canvas.height - scaledHeight));
+
+            // Draw foreground
+            ctx.save();
+            ctx.globalAlpha = 0.85; // Slightly transparent for preview
+            ctx.drawImage(fg, drawX, drawY, scaledWidth, scaledHeight);
+            ctx.restore();
+
+            // Update foreground layer position for dragging (use display scale)
+            positionEditor.foregroundLayer.style.left = (drawX * displayScale) + 'px';
+            positionEditor.foregroundLayer.style.top = (drawY * displayScale) + 'px';
+            positionEditor.foregroundLayer.style.width = (scaledWidth * displayScale) + 'px';
+            positionEditor.foregroundLayer.style.height = (scaledHeight * displayScale) + 'px';
+        }
+
+        // Load images for position editor
+        function loadImagesForEditor(foregroundFile, backgroundFile) {
+            return new Promise((resolve) => {
+                const fgImg = new Image();
+                const bgImg = new Image();
+
+                fgImg.onload = function() {
+                    positionEditor.foregroundImage = fgImg;
+                    if (positionEditor.backgroundImage) {
+                        updatePreview();
+                        resolve();
+                    }
+                };
+
+                bgImg.onload = function() {
+                    positionEditor.backgroundImage = bgImg;
+                    if (positionEditor.foregroundImage) {
+                        updatePreview();
+                        resolve();
+                    }
+                };
+
+                // Load foreground from file
+                const fgReader = new FileReader();
+                fgReader.onload = function(e) {
+                    fgImg.src = e.target.result;
+                };
+                fgReader.readAsDataURL(foregroundFile);
+
+                // Load background from file
+                const bgReader = new FileReader();
+                bgReader.onload = function(e) {
+                    bgImg.src = e.target.result;
+                };
+                bgReader.readAsDataURL(backgroundFile);
+            });
+        }
+
+        // Christmas background page specific JavaScript
+        document.addEventListener('DOMContentLoaded', async function() {
+            initPositionEditor();
+            const templateGrid = document.getElementById('template-grid');
+            const customBgInput = document.getElementById('custom-bg-input');
+            const customBgPreview = document.getElementById('custom-bg-preview');
+            const customBgPreviewImg = document.getElementById('custom-bg-preview-img');
+            const removeCustomBg = document.getElementById('remove-custom-bg');
+            const selectedTemplateInput = document.getElementById('selected-template');
+            let selectedTemplate = null;
+            let customBgFile = null;
+            let loadedBackgrounds = [];
+            
+            // Fetch Christmas backgrounds from Pixabay via backend
+            const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+            const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
+            
+            try {
+                const response = await fetch(apiBase + '/api/christmas-backgrounds');
+                const data = await response.json();
+                
+                if (data.success && data.backgrounds && data.backgrounds.length > 0) {
+                    loadedBackgrounds = data.backgrounds;
+                    templateGrid.innerHTML = ''; // Clear loading message
+                    
+                    // Create template items for each background
+                    data.backgrounds.forEach((bg, index) => {
+                        const templateItem = document.createElement('div');
+                        templateItem.className = 'template-item';
+                        templateItem.dataset.template = `pixabay-${bg.id}`;
+                        templateItem.dataset.imageUrl = bg.large_image_url || bg.webformat_url;
+                        templateItem.dataset.fullHdUrl = bg.full_hd_url || bg.large_image_url || bg.webformat_url;
+                        
+                        templateItem.innerHTML = `
+                            <img src="${bg.preview_url}" alt="${bg.tags || 'Christmas background'}" loading="lazy" />
+                            <div class="template-label">${bg.tags ? bg.tags.split(',')[0] : 'Christmas'}</div>
+                        `;
+                        
+                        templateGrid.appendChild(templateItem);
+                    });
+                } else {
+                    // Fallback to gradient templates if API fails
+                    templateGrid.innerHTML = `
+                        <div class="template-item" data-template="snowy-scene">
+                            <div style="background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #FFFFFF 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px;">❄️</div>
+                            <div class="template-label">Snowy Scene</div>
+                        </div>
+                        <div class="template-item" data-template="christmas-tree">
+                            <div style="background: linear-gradient(180deg, #1a472a 0%, #2d5a3d 50%, #3d6b4f 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px;">🎄</div>
+                            <div class="template-label">Christmas Tree</div>
+                        </div>
+                        <div class="template-item" data-template="fireplace">
+                            <div style="background: linear-gradient(180deg, #8B4513 0%, #A0522D 50%, #CD853F 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔥</div>
+                            <div class="template-label">Fireplace</div>
+                        </div>
+                        <div class="template-item" data-template="red-green">
+                            <div style="background: linear-gradient(135deg, #DC143C 0%, #228B22 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px;">🎁</div>
+                            <div class="template-label">Red & Green</div>
+                        </div>
+                        <div class="template-item" data-template="gold-sparkles">
+                            <div style="background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px;">✨</div>
+                            <div class="template-label">Gold Sparkles</div>
+                        </div>
+                        <div class="template-item" data-template="winter-wonderland">
+                            <div style="background: linear-gradient(180deg, #B0E0E6 0%, #E0F6FF 50%, #F0F8FF 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px;">🏔️</div>
+                            <div class="template-label">Winter Wonderland</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading Christmas backgrounds:', error);
+                templateGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--muted);">Failed to load backgrounds. Please upload your own image below.</div>';
+            }
+            
+            // Wait for templates to be added, then attach event listeners
+            setTimeout(() => {
+                const templateItems = document.querySelectorAll('.template-item');
+
+                // Template selection - load image from Pixabay or generate gradient
+                templateItems.forEach(item => {
+                    item.addEventListener('click', async function() {
+                        // Remove selection from all
+                        templateItems.forEach(t => t.classList.remove('selected'));
+                        // Select this one
+                        this.classList.add('selected');
+                        selectedTemplate = this.dataset.template;
+                        selectedTemplateInput.value = selectedTemplate;
+                        
+                        // Clear custom background
+                        customBgFile = null;
+                        window.customBackgroundFile = null;
+                        customBgPreview.style.display = 'none';
+                        customBgInput.value = '';
+                        
+                        // Load template image
+                        try {
+                            const templateImg = this.querySelector('img');
+                            const templateDiv = this.querySelector('div[style*="background"]');
+                            const imageUrl = this.dataset.imageUrl || this.dataset.fullHdUrl;
+                            const templateName = this.dataset.template;
+                            
+                            // Check if this is a Pixabay image (has imageUrl)
+                            if (imageUrl && templateImg) {
+                                // Fetch the full HD image from Pixabay
+                                try {
+                                    const imgResponse = await fetch(imageUrl);
+                                    const imgBlob = await imgResponse.blob();
+                                    const file = new File([imgBlob], `christmas-${templateName}.jpg`, { type: 'image/jpeg' });
+                                    window.customBackgroundFile = file;
+                                    customBgFile = file;
+                                    
+                                    // Show preview
+                                    const reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        customBgPreviewImg.src = e.target.result;
+                                        customBgPreview.style.display = 'block';
+                                        // Show position editor if foreground image is already loaded
+                                        showPositionEditorIfReady();
+                                    };
+                                    reader.readAsDataURL(file);
+                                } catch (fetchError) {
+                                    console.error('Error fetching image:', fetchError);
+                                    // Fallback: use preview image
+                                    if (templateImg.complete && templateImg.naturalWidth > 0) {
+                                        const canvas = document.createElement('canvas');
+                                        canvas.width = templateImg.naturalWidth || 1920;
+                                        canvas.height = templateImg.naturalHeight || 1080;
+                                        const ctx = canvas.getContext('2d');
+                                        ctx.drawImage(templateImg, 0, 0);
+                                        
+                                        canvas.toBlob(function(blob) {
+                                            const file = new File([blob], `christmas-${templateName}.png`, { type: 'image/png' });
+                                            window.customBackgroundFile = file;
+                                            customBgFile = file;
+                                            customBgPreviewImg.src = templateImg.src;
+                                            customBgPreview.style.display = 'block';
+                                            showPositionEditorIfReady();
+                                        }, 'image/png');
+                                    }
+                                }
+                            } else if (templateDiv) {
+                                // Fallback: Generate gradient background for old templates
+                                const canvas = document.createElement('canvas');
+                                canvas.width = 1920;
+                                canvas.height = 1080;
+                                const ctx = canvas.getContext('2d');
+                                
+                                let gradient;
+                                if (templateName === 'snowy-scene') {
+                                    gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                                    gradient.addColorStop(0, '#87CEEB');
+                                    gradient.addColorStop(0.5, '#E0F6FF');
+                                    gradient.addColorStop(1, '#FFFFFF');
+                                } else if (templateName === 'christmas-tree') {
+                                    gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                                    gradient.addColorStop(0, '#1a472a');
+                                    gradient.addColorStop(0.5, '#2d5a3d');
+                                    gradient.addColorStop(1, '#3d6b4f');
+                                } else if (templateName === 'fireplace') {
+                                    gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                                    gradient.addColorStop(0, '#8B4513');
+                                    gradient.addColorStop(0.5, '#A0522D');
+                                    gradient.addColorStop(1, '#CD853F');
+                                } else if (templateName === 'red-green') {
+                                    gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                                    gradient.addColorStop(0, '#DC143C');
+                                    gradient.addColorStop(1, '#228B22');
+                                } else if (templateName === 'gold-sparkles') {
+                                    gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                                    gradient.addColorStop(0, '#1a1a2e');
+                                    gradient.addColorStop(0.5, '#16213e');
+                                    gradient.addColorStop(1, '#0f3460');
+                                } else if (templateName === 'winter-wonderland') {
+                                    gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                                    gradient.addColorStop(0, '#B0E0E6');
+                                    gradient.addColorStop(0.5, '#E0F6FF');
+                                    gradient.addColorStop(1, '#F0F8FF');
+                                } else {
+                                    gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                                    gradient.addColorStop(0, '#87CEEB');
+                                    gradient.addColorStop(1, '#FFFFFF');
+                                }
+                                
+                                ctx.fillStyle = gradient;
+                                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                
+                                canvas.toBlob(function(blob) {
+                                    const file = new File([blob], `christmas-${templateName}.png`, { type: 'image/png' });
+                                    window.customBackgroundFile = file;
+                                    customBgFile = file;
+                                    
+                                    const reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        customBgPreviewImg.src = e.target.result;
+                                        customBgPreview.style.display = 'block';
+                                    };
+                                    reader.readAsDataURL(file);
+                                }, 'image/png');
+                            }
+                        } catch (e) {
+                            console.error('Error loading template:', e);
+                            alert('Please upload your own Christmas background image instead.');
+                        }
+                    });
+                });
+            }, 100);
+
+
+            // Store background file globally for script.js to access
+            window.customBackgroundFile = null;
+            
+            // Update when custom background is selected
+            customBgInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    customBgFile = file;
+                    window.customBackgroundFile = file; // Make it globally accessible
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        customBgPreviewImg.src = e.target.result;
+                        customBgPreview.style.display = 'block';
+                        // Clear template selection
+                        templateItems.forEach(t => t.classList.remove('selected'));
+                        selectedTemplate = null;
+                        selectedTemplateInput.value = '';
+                        // Show position editor if foreground image is already loaded
+                        showPositionEditorIfReady();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Clear when custom background is removed
+            removeCustomBg.addEventListener('click', function() {
+                customBgFile = null;
+                window.customBackgroundFile = null;
+                customBgPreview.style.display = 'none';
+                customBgInput.value = '';
+                document.getElementById('position-editor-section').style.display = 'none';
+            });
+
+            // Function to show position editor when both images are ready
+            function showPositionEditorIfReady() {
+                const fileInput = document.getElementById('file-input');
+                const currentFile = fileInput?.files[0];
+                const backgroundFile = window.customBackgroundFile;
+                
+                if (currentFile && backgroundFile) {
+                    const editorSection = document.getElementById('position-editor-section');
+                    editorSection.style.display = 'block';
+                    
+                    // Load images into editor
+                    loadImagesForEditor(currentFile, backgroundFile).then(() => {
+                        // Reset position and scale
+                        positionEditor.scale = 1.0;
+                        positionEditor.x = 0;
+                        positionEditor.y = 0;
+                        document.getElementById('scale-slider').value = 100;
+                        document.getElementById('scale-display').textContent = '100%';
+                        document.getElementById('foreground-scale').value = '1.0';
+                        document.getElementById('foreground-x').value = '0';
+                        document.getElementById('foreground-y').value = '0';
+                        updatePreview();
+                    });
+                }
+            }
+
+            // Watch for file input changes to show editor
+            const fileInput = document.getElementById('file-input');
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    setTimeout(showPositionEditorIfReady, 100);
+                });
+            }
+
+            // Also listen for file selection via dropzone (handled by script.js)
+            const dropzone = document.getElementById('dropzone');
+            if (dropzone) {
+                dropzone.addEventListener('drop', function() {
+                    setTimeout(showPositionEditorIfReady, 200);
+                });
+            }
+
+            // Also listen for any file-input change events (delegated, in case script.js handles it)
+            document.addEventListener('change', function(e) {
+                if (e.target && e.target.id === 'file-input' && e.target.files && e.target.files[0]) {
+                    setTimeout(showPositionEditorIfReady, 100);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

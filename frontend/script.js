@@ -518,13 +518,27 @@ if (form) form.addEventListener('submit', async (e) => {
     } else {
       // Background removal or background change
       body.append('category', categoryInput?.value || 'product');
-      var hidden = document.getElementById('bg-color');
-      if(hidden) body.append('bg_color', hidden.value);
-      // If a swatch is active, prefer that color
-      var activeSwatch = document.querySelector('#color-palette .swatch.active');
-      if(activeSwatch){ body.append('bg_color', activeSwatch.getAttribute('data-color')); }
-      var pageColor = document.body.getAttribute('data-target-color');
-      if(pageColor) body.append('bg_color', pageColor);
+      
+      // Check for background image (Christmas backgrounds or custom)
+      if (window.customBackgroundFile) {
+        body.append('background_image', window.customBackgroundFile);
+        // Add position and scale parameters if available (for Christmas background page)
+        const foregroundX = document.getElementById('foreground-x');
+        const foregroundY = document.getElementById('foreground-y');
+        const foregroundScale = document.getElementById('foreground-scale');
+        if (foregroundX && foregroundX.value) body.append('foreground_x', foregroundX.value);
+        if (foregroundY && foregroundY.value) body.append('foreground_y', foregroundY.value);
+        if (foregroundScale && foregroundScale.value) body.append('foreground_scale', foregroundScale.value);
+      } else {
+        // Check for solid color background
+        var hidden = document.getElementById('bg-color');
+        if(hidden) body.append('bg_color', hidden.value);
+        // If a swatch is active, prefer that color
+        var activeSwatch = document.querySelector('#color-palette .swatch.active');
+        if(activeSwatch){ body.append('bg_color', activeSwatch.getAttribute('data-color')); }
+        var pageColor = document.body.getAttribute('data-target-color');
+        if(pageColor) body.append('bg_color', pageColor);
+      }
     }
 
         console.log('Making API call to:', apiBase + endpoint);

@@ -24,7 +24,7 @@ gcloud run deploy $SERVICE_NAME \
   --max-instances 10 \
   --timeout 300 \
   --port 8080 \
-  --set-env-vars DEFAULT_MODEL=u2netp,MAX_IMAGE_SIDE=1600,MAX_CONCURRENCY=2,BLOG_BUCKET=${BLOG_BUCKET:-changeimageto-blog},CRON_TOKEN=${CRON_TOKEN:-changeme}
+  --set-env-vars DEFAULT_MODEL=u2netp,MAX_IMAGE_SIDE=1600,MAX_CONCURRENCY=2,BLOG_BUCKET=${BLOG_BUCKET:-changeimageto-blog},CRON_TOKEN=${CRON_TOKEN:-changeme},PIXABAY_API_KEY=53808557-ae026e819afe0e03779db078c
 
 echo "Deployment complete!"
 echo "Service URL: https://$SERVICE_NAME-$REGION.a.run.app"

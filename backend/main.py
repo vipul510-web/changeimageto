@@ -127,6 +127,10 @@ CRON_TOKEN = os.getenv("CRON_TOKEN", "")
 INDEXNOW_KEY = os.getenv("INDEXNOW_KEY", "")
 INDEXNOW_SITE_DOMAIN = os.getenv("INDEXNOW_SITE_DOMAIN", "")
 
+# Pixabay API configuration
+PIXABAY_API_KEY = os.getenv("PIXABAY_API_KEY", "")
+PIXABAY_API_URL = "https://pixabay.com/api/"
+
 # Resolve path to static frontend assets so blog pages can use site-wide styles in local/dev
 FRONTEND_DIR = os.getenv(
     "FRONTEND_DIR",
@@ -1025,6 +1029,10 @@ async def remove_bg(
     file: UploadFile = File(...),
     category: str = Form("product"),
     bg_color: Optional[str] = Form(None),
+    background_image: Optional[UploadFile] = File(None),
+    foreground_x: Optional[float] = Form(None),
+    foreground_y: Optional[float] = Form(None),
+    foreground_scale: Optional[float] = Form(None),
 ):
     # Log the request start
     client_ip = request.client.host if request.client else "unknown"
@@ -1037,7 +1045,8 @@ async def remove_bg(
         "content_type": file.content_type,
         "category": category,
         "bg_color": bg_color,
-        "has_bg_color": bg_color is not None
+        "has_bg_color": bg_color is not None,
+        "has_background_image": background_image is not None
     })
 
     try:
@@ -1124,8 +1133,74 @@ async def remove_bg(
         except Exception:
             pass
             
-        # Optional solid background color compositing
-        if bg_color:
+        # Optional background compositing (image or solid color)
+        if background_image:
+            # Use background image
+            try:
+                bg_contents = await background_image.read()
+                bg_image = Image.open(io.BytesIO(bg_contents)).convert("RGBA")
+                
+                # Resize background to match original image dimensions (cover mode - maintain aspect ratio, fill space)
+                bg_w, bg_h = bg_image.size
+                target_w, target_h = original_size
+                
+                # Calculate scaling to cover (maintain aspect ratio, fill entire space)
+                scale_w = target_w / bg_w
+                scale_h = target_h / bg_h
+                scale = max(scale_w, scale_h)  # Use larger scale to ensure coverage
+                
+                new_bg_w = int(bg_w * scale)
+                new_bg_h = int(bg_h * scale)
+                
+                # Resize background image
+                bg_image = bg_image.resize((new_bg_w, new_bg_h), Image.LANCZOS)
+                
+                # Crop to exact target size (center crop)
+                left = (new_bg_w - target_w) // 2
+                top = (new_bg_h - target_h) // 2
+                bg_image = bg_image.crop((left, top, left + target_w, top + target_h))
+                
+                # Composite foreground onto background with position and scale
+                # Apply scale if provided
+                if foreground_scale and foreground_scale != 1.0:
+                    new_width = int(trimmed_result.width * foreground_scale)
+                    new_height = int(trimmed_result.height * foreground_scale)
+                    trimmed_result = trimmed_result.resize((new_width, new_height), Image.LANCZOS)
+                
+                # Calculate position
+                if foreground_x is not None and foreground_y is not None:
+                    # Position is relative to center (as sent from frontend)
+                    offset_x = int((bg_image.width / 2) + foreground_x - (trimmed_result.width / 2))
+                    offset_y = int((bg_image.height / 2) + foreground_y - (trimmed_result.height / 2))
+                else:
+                    # Default: center the foreground
+                    offset_x = (bg_image.width - trimmed_result.width) // 2
+                    offset_y = (bg_image.height - trimmed_result.height) // 2
+                
+                # Ensure position is within bounds
+                offset_x = max(0, min(offset_x, bg_image.width - trimmed_result.width))
+                offset_y = max(0, min(offset_y, bg_image.height - trimmed_result.height))
+                
+                bg_image.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
+                result = bg_image
+                
+                log_user_action("background_image_applied", {
+                    "bg_image_size": f"{bg_image.width}x{bg_image.height}",
+                    "original_size": f"{original_size[0]}x{original_size[1]}"
+                })
+            except Exception as e:
+                log_user_action("error", {
+                    "error_type": "background_image_processing",
+                    "error_message": str(e)
+                })
+                # Fallback to transparent if background image fails
+                canvas = Image.new('RGBA', original_size, (0, 0, 0, 0))
+                offset_x = (original_size[0] - trimmed_result.width) // 2
+                offset_y = (original_size[1] - trimmed_result.height) // 2
+                canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
+                result = canvas
+        elif bg_color:
+            # Use solid background color
             log_user_action("bg_color_debug", {
                 "bg_color_raw": bg_color,
                 "bg_color_type": type(bg_color).__name__,
@@ -1146,9 +1221,27 @@ async def remove_bg(
             r = int(col[0:2], 16); g = int(col[2:4], 16); b = int(col[4:6], 16)
             # Ensure output keeps the original input dimensions
             canvas = Image.new('RGBA', original_size, (r, g, b, 255))
-            # Center the trimmed subject on the original-sized canvas
-            offset_x = (original_size[0] - trimmed_result.width) // 2
-            offset_y = (original_size[1] - trimmed_result.height) // 2
+            
+            # Apply scale if provided
+            if foreground_scale and foreground_scale != 1.0:
+                new_width = int(trimmed_result.width * foreground_scale)
+                new_height = int(trimmed_result.height * foreground_scale)
+                trimmed_result = trimmed_result.resize((new_width, new_height), Image.LANCZOS)
+            
+            # Calculate position
+            if foreground_x is not None and foreground_y is not None:
+                # Position is relative to center (as sent from frontend)
+                offset_x = int((canvas.width / 2) + foreground_x - (trimmed_result.width / 2))
+                offset_y = int((canvas.height / 2) + foreground_y - (trimmed_result.height / 2))
+            else:
+                # Default: center the trimmed subject on the original-sized canvas
+                offset_x = (canvas.width - trimmed_result.width) // 2
+                offset_y = (canvas.height - trimmed_result.height) // 2
+            
+            # Ensure position is within bounds
+            offset_x = max(0, min(offset_x, canvas.width - trimmed_result.width))
+            offset_y = max(0, min(offset_y, canvas.height - trimmed_result.height))
+            
             canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
             result = canvas
         else:
@@ -1369,7 +1462,7 @@ async def submit_feedback(request: Request):
             INSERT INTO user_feedback (rating, comment, page, operation, user_agent)
             VALUES (?, ?, ?, ?, ?)
         ''', (rating, comment, page, operation, user_agent))
-        conn.commit()
+        save_db_changes(conn)
         conn.close()
         
         # Log impression as submitted
@@ -1378,7 +1471,7 @@ async def submit_feedback(request: Request):
                 INSERT INTO feedback_impressions (page, operation, user_agent, action)
                 VALUES (?, ?, ?, 'submitted')
             ''', (page, operation, user_agent))
-            conn.commit()
+            save_db_changes(conn)
         except Exception as e:
             logger.warning(f"Failed to log feedback impression: {e}")
         
@@ -1417,7 +1510,7 @@ async def submit_whats_missing(request: Request):
             INSERT INTO whats_missing_feedback (feedback_text, page, user_agent)
             VALUES (?, ?, ?)
         ''', (feedback_text, page, user_agent))
-        conn.commit()
+        save_db_changes(conn)
         conn.close()
         
         # Also log for analytics
@@ -1431,6 +1524,61 @@ async def submit_whats_missing(request: Request):
     except Exception as e:
         logger.error(f"What's missing feedback error: {str(e)}")
         return {"status": "error", "message": str(e)}
+
+@app.get("/api/christmas-backgrounds")
+async def get_christmas_backgrounds():
+    """Fetch Christmas background images from Pixabay API"""
+    if not PIXABAY_API_KEY:
+        # Return placeholder data if API key not configured
+        return {
+            "success": False,
+            "message": "Pixabay API not configured",
+            "backgrounds": []
+        }
+    
+    try:
+        # Search for Christmas backgrounds
+        params = {
+            "key": PIXABAY_API_KEY,
+            "q": "christmas background",
+            "image_type": "photo",
+            "category": "backgrounds",
+            "orientation": "all",
+            "safesearch": "true",
+            "per_page": 12,
+            "min_width": 1920,
+            "min_height": 1080
+        }
+        
+        response = requests.get(PIXABAY_API_URL, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Format results for frontend
+        backgrounds = []
+        for hit in data.get("hits", [])[:6]:  # Limit to 6 backgrounds
+            backgrounds.append({
+                "id": hit.get("id"),
+                "preview_url": hit.get("previewURL"),
+                "webformat_url": hit.get("webformatURL"),
+                "large_image_url": hit.get("largeImageURL"),
+                "full_hd_url": hit.get("fullHDURL") or hit.get("largeImageURL"),
+                "tags": hit.get("tags", ""),
+                "user": hit.get("user", "")
+            })
+        
+        return {
+            "success": True,
+            "backgrounds": backgrounds
+        }
+        
+    except Exception as e:
+        logger.error(f"Pixabay API error: {str(e)}")
+        return {
+            "success": False,
+            "message": str(e),
+            "backgrounds": []
+        }
 
 @app.get("/api/whats-missing")
 async def get_whats_missing(limit: int = 50):
@@ -1493,7 +1641,7 @@ async def log_feedback_impression(request: Request):
             INSERT INTO feedback_impressions (page, operation, user_agent, action)
             VALUES (?, ?, ?, ?)
         ''', (page, operation, user_agent, action))
-        conn.commit()
+        save_db_changes(conn)
         conn.close()
         
         # Also log for analytics
@@ -1928,9 +2076,13 @@ class BlogStatus(Enum):
     PUBLISHED = "published"
     REJECTED = "rejected"
 
+# Database configuration - must be defined before functions that use it
+DB_FILE = 'blog_management.db'
+DB_BUCKET_PATH = 'data/blog_management.db'  # Path in Cloud Storage
+
 def init_blog_db():
     """Initialize SQLite database for blog management"""
-    conn = sqlite3.connect('blog_management.db')
+    conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -1997,12 +2149,58 @@ def init_blog_db():
         )
     ''')
     
-    conn.commit()
-    conn.close()
+def sync_db_from_storage():
+    """Download database from Cloud Storage if it exists"""
+    if not BLOG_BUCKET or storage is None:
+        logger.info("Cloud Storage not configured, using local database only")
+        return
+    
+    try:
+        client = get_storage_client()
+        bucket = get_or_create_bucket(client)
+        blob = bucket.blob(DB_BUCKET_PATH)
+        
+        if blob.exists():
+            logger.info(f"Downloading database from Cloud Storage: {DB_BUCKET_PATH}")
+            blob.download_to_filename(DB_FILE)
+            logger.info("Database downloaded successfully from Cloud Storage")
+        else:
+            logger.info("No existing database in Cloud Storage, starting fresh")
+    except Exception as e:
+        logger.warning(f"Failed to sync database from Cloud Storage: {e}. Using local database.")
+
+def sync_db_to_storage():
+    """Upload database to Cloud Storage"""
+    if not BLOG_BUCKET or storage is None:
+        return
+    
+    try:
+        if not os.path.exists(DB_FILE):
+            return
+        
+        client = get_storage_client()
+        bucket = get_or_create_bucket(client)
+        blob = bucket.blob(DB_BUCKET_PATH)
+        
+        blob.upload_from_filename(DB_FILE)
+        logger.info(f"Database synced to Cloud Storage: {DB_BUCKET_PATH}")
+    except Exception as e:
+        logger.warning(f"Failed to sync database to Cloud Storage: {e}")
 
 def get_db_connection():
-    """Get database connection"""
-    return sqlite3.connect('blog_management.db')
+    """Get database connection with auto-sync to Cloud Storage"""
+    conn = sqlite3.connect(DB_FILE)
+    return conn
+
+def save_db_changes(conn):
+    """Commit changes and sync to Cloud Storage"""
+    conn.commit()
+    # Sync to Cloud Storage (this is important for persistence!)
+    try:
+        sync_db_to_storage()
+    except Exception as e:
+        logger.warning(f"Failed to sync database to Cloud Storage: {e}")
+        # Still commit locally even if sync fails
 
 def check_local_only():
     """Check if we're in local development mode"""
@@ -2010,8 +2208,41 @@ def check_local_only():
     if os.getenv("K_SERVICE") or os.getenv("ENVIRONMENT") == "production":
         raise HTTPException(status_code=404, detail="Admin interface not found")
 
-# Initialize database on startup
-init_blog_db()
+# Initialize database on startup and sync from Cloud Storage
+# This runs AFTER the app starts listening, so it won't block startup
+@app.on_event("startup")
+async def init_database():
+    """Initialize database and sync from Cloud Storage on startup (completely non-blocking)"""
+    # Schedule in background - don't wait for it
+    async def _init_db_async():
+        try:
+            logger.info("Starting database initialization in background...")
+            # Use asyncio.to_thread to run sync operations
+            try:
+                await asyncio.to_thread(sync_db_from_storage)
+            except Exception as e:
+                logger.warning(f"Could not sync from Cloud Storage (will start fresh): {e}")
+            
+            # Initialize/create tables
+            try:
+                await asyncio.to_thread(init_blog_db)
+                logger.info("Database tables initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize database tables: {e}")
+            
+            # Sync back after initialization (optional)
+            try:
+                await asyncio.to_thread(sync_db_to_storage)
+                logger.info("Database synced to Cloud Storage")
+            except Exception as e:
+                logger.warning(f"Could not sync to Cloud Storage: {e}")
+                
+        except Exception as e:
+            logger.error(f"Database initialization error (non-fatal): {e}")
+    
+    # Fire and forget - don't await, don't block
+    asyncio.create_task(_init_db_async())
+    logger.info("Database initialization scheduled (non-blocking)")
 
 @app.get("/api/blog/admin/drafts")
 async def get_blog_drafts():
@@ -2097,7 +2328,7 @@ async def update_blog_post(post_id: int, request: Request):
         conn.close()
         raise HTTPException(status_code=404, detail="Post not found")
     
-    conn.commit()
+    save_db_changes(conn)
     conn.close()
     
     return {"success": True, "message": "Post updated successfully"}
@@ -2128,7 +2359,7 @@ async def approve_blog_post(post_id: int, request: Request):
         VALUES (?, 'approve', ?, ?)
     ''', (post_id, data.get('approver', 'admin'), data.get('notes', '')))
     
-    conn.commit()
+    save_db_changes(conn)
     conn.close()
     
     return {"success": True, "message": "Post approved successfully"}
@@ -2159,7 +2390,7 @@ async def reject_blog_post(post_id: int, request: Request):
         VALUES (?, 'reject', ?, ?)
     ''', (post_id, data.get('approver', 'admin'), data.get('notes', '')))
     
-    conn.commit()
+    save_db_changes(conn)
     conn.close()
     
     return {"success": True, "message": "Post rejected"}
@@ -2199,7 +2430,7 @@ async def publish_blog_post(post_id: int):
                 WHERE id = ?
             ''', (post_id,))
             
-            conn.commit()
+            save_db_changes(conn)
             conn.close()
             
             # Submit to IndexNow if configured
@@ -2233,7 +2464,7 @@ async def publish_blog_post(post_id: int):
                 WHERE id = ?
             ''', (fresh_content, post_id))
             
-            conn.commit()
+            save_db_changes(conn)
             conn.close()
             
             return {"success": True, "message": message}
@@ -2245,7 +2476,7 @@ async def publish_blog_post(post_id: int):
                 WHERE id = ?
             ''', (fresh_content, post_id))
             
-            conn.commit()
+            save_db_changes(conn)
             conn.close()
             
             return {"success": True, "message": f"Post marked as published locally (production publishing failed: {str(e)})"}
@@ -2311,7 +2542,7 @@ async def generate_blog_draft(token: str = None):
         
         created.append({"slug": slug, "title": title, "status": "draft"})
     
-    conn.commit()
+    save_db_changes(conn)
     conn.close()
     
     return {"created": created, "message": "Drafts created - awaiting approval"}
