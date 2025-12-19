@@ -16,16 +16,6 @@
             <priority>0.9</priority>
         </url>
         <url>
-            <loc>https://www.changeimageto.com/resize-image-for-instagram.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/resize-image-for-facebook.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
             <loc>https://www.changeimageto.com/change-color-of-image.html</loc>
             <changefreq>daily</changefreq>
             <priority>0.9</priority>
@@ -37,36 +27,6 @@
         </url>
         <url>
             <loc>https://www.changeimageto.com/convert-image-format.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/convert-png-to-jpg.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/convert-jpg-to-png.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/convert-png-to-webp.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/convert-jpg-to-webp.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/convert-webp-to-png.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/convert-webp-to-jpg.html</loc>
             <changefreq>weekly</changefreq>
             <priority>0.9</priority>
         </url>
@@ -99,6 +59,46 @@
             <loc>https://www.changeimageto.com/upscale-image.html</loc>
             <changefreq>weekly</changefreq>
             <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/gemini-change-image-resolution.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.85</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/gemini-change-image-size.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.85</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/how-to-change-the-aspect-ratio-of-an-image-in-gemini.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.85</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/nano-banana-change-image-aspect-ratio.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.85</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/nano-banana-change-image-format.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.85</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/nano-banana-change-image-size.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.85</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/nano-banana-change-image-style.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.85</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/nano-banana-change-image.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.85</priority>
         </url>
         <url>
             <loc>https://www.changeimageto.com/change-image-background-to-black.html</loc>
@@ -191,6 +191,76 @@
             <priority>0.7</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-image-in-canva.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-image-in-capcut.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-image-in-figma.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-image-in-paint.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-image-in-photoshop.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-image-in-powerpoint.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-image-in-ppt.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-images-in-google-slides.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-images-on-iphone.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-resize-an-image-in-canva.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-resize-an-image-in-gimp.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-resize-an-image-in-html.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-resize-an-image-in-paint.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-resize-an-image-in-photoshop.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/blog/how-to-resize-images-without-losing-quality.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.7</priority>
@@ -246,6 +316,11 @@
             <priority>0.5</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/add-christmas-background.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/blog-admin.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.5</priority>
@@ -271,12 +346,77 @@
             <priority>0.5</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/chrome-extension.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-free.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-online.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-size.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-to-200kb.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/compress-image-without-losing-quality.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/contact.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.5</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/convert-jpg-to-png.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-jpg-to-webp.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-png-to-jpg.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-png-to-webp.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-webp-to-jpg.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-webp-to-png.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/enhance-image-for-ecommerce.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/feedback-popup.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.5</priority>
         </url>
@@ -306,6 +446,16 @@
             <priority>0.5</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/resize-image-for-facebook.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/resize-image-for-instagram.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/upscale-image-for-print.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.5</priority>
@@ -316,28 +466,8 @@
             <priority>0.5</priority>
         </url>
         <url>
-            <loc>https://www.changeimageto.com/compress-image-online.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/compress-image-size.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/compress-image-without-losing-quality.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/compress-image-free.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
-        </url>
-        <url>
-            <loc>https://www.changeimageto.com/compress-image-to-200kb.html</loc>
-            <changefreq>weekly</changefreq>
-            <priority>0.9</priority>
+            <loc>https://www.changeimageto.com/videos.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
         </url>
 </urlset>
