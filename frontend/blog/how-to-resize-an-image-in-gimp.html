@@ -1,51 +1,35 @@
-<!doctype html><html lang='en'><head>
-<meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
-<title>Image Editing Blog | Tutorials, Tips & How‑To Guides</title>
-<meta name='description' content='Learn image editing: remove background, change colors, upscale, blur, enhance images. Free tutorials and guides.'>
-<link rel='canonical' href='https://www.changeimageto.com/blog/index.html'>
-<script type='application/ld+json'>{"@context": "https://schema.org", "@type": "Blog", "name": "Image Editing Blog | Tutorials, Tips & How\u2011To Guides", "description": "Learn image editing: remove background, change colors, upscale, blur, enhance images. Free tutorials and guides.", "url": "https://www.changeimageto.com/blog"}</script>
-<link rel='preload' as='style' href='/styles.css?v=20250916-3'/>
-<link rel='stylesheet' href='/styles.css?v=20250916-3'/>
-<link rel='stylesheet' href='https://www.changeimageto.com/styles.css?v=20250916-3'/>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>How to Resize an Image in GIMP</title>
+<meta name="description" content="Complete guide on how to resize an image in GIMP. Learn to use Scale Image tool, maintain aspect ratio, and resize for web or print with this free image editor."/>
+<link rel="canonical" href="https://www.changeimageto.com/blog/how-to-resize-an-image-in-gimp.html"/>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "How to Resize an Image in GIMP", "datePublished": "2025-12-19T22:30:00.000000", "author": {"@type": "Organization", "name": "ChangeImageTo.com Team"}}</script>
+<link rel="preload" as="style" href="/styles.css?v=20250916-3"/><link rel="stylesheet" href="/styles.css?v=20250916-3"/>
+<link rel="stylesheet" href="https://www.changeimageto.com/styles.css?v=20250916-3"/>
 <style>
-  .blog-wrap{max-width:1000px;margin:0 auto;padding:24px}
-  .blog-title{margin:0 0 12px}
-  .blog-sub{color:var(--muted);margin:0 0 16px}
-  .blog-list{list-style:none;padding:0;margin:0}
-  .blog-list li{padding:10px 0;border-bottom:1px solid var(--border)}
-  .blog-list li:last-child{border-bottom:none}
-  .blog-list a{color:#fff;text-decoration:none;font-weight:700}
-  .blog-list a:hover{text-decoration:underline}
-  .blog-list .date{color:var(--muted);font-weight:400}
+  body, .main, main.container.main, .seo, .seo p, .seo li, .seo h2, .seo h3, .seo details, .seo summary { color: #ffffff; }
+  .seo a { color: #9ccfff; }
+  .seo a:hover { text-decoration: underline; }
+  .seo-links a { color: #ffffff; }
+  .header h1 { color: #ffffff; }
 </style>
-
-<!-- Google AI Overview tracking -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   if (window.location.hash.includes(":~:text")) {
-    // Check if gtag is already available
     if (typeof gtag === "function") {
-      gtag("event", "ai_overview", {
-        anchor: window.location.hash
-      });
+      gtag("event", "ai_overview", { anchor: window.location.hash });
     } else {
-      // If gtag is not available yet, wait for it (for dynamic loading pattern)
       const checkGtag = setInterval(() => {
         if (typeof gtag === "function") {
           clearInterval(checkGtag);
-          gtag("event", "ai_overview", {
-            anchor: window.location.hash
-          });
+          gtag("event", "ai_overview", { anchor: window.location.hash });
         }
       }, 100);
-      // Stop checking after 10 seconds
       setTimeout(() => clearInterval(checkGtag), 10000);
     }
   }
 });
 </script>
-
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -53,24 +37,23 @@ document.addEventListener("DOMContentLoaded", () => {
   gtag('js', new Date());
   gtag('config', 'G-D3Q582VFCG');
 </script>
-</head>
-<body>
-  <header class='container header'>
-    <a href='/' class='logo-link'><img src='https://www.changeimageto.com/logo.png?v=20250916-2' class='logo-img' alt='ChangeImageTo'/></a>
-    <div style='display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%'>
-      <h1 style='margin:0'>Image Editing Blog</h1>
-      <nav class='top-nav'><a href='/blog' aria-label='Read our blog'>Blog</a></nav>
-    </div>
-  </header>
-  <main class='blog-wrap'>
-    <p class='blog-sub'>Guides for removing backgrounds, changing colors, upscaling, blurring, and enhancing images.</p>
-    <ul class='blog-list'><li><a href='/blog/how-to-resize-an-image-in-canva.html'>How to Resize an Image in Canva</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-an-image-in-gimp.html'>How to Resize an Image in GIMP</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-an-image-in-html.html'>How to Resize an Image in HTML</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-an-image-in-photoshop.html'>How to Resize an Image in Photoshop</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-an-image-in-paint.html'>How to Resize an Image in Paint</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-images-without-losing-quality.html'>How to Resize Images Without Losing Quality</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/free-tools-make-photo-background-transparent.html'>Free Tools to Make Photo Background Transparent</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/best-online-background-removers-free-no-signup.html'>Best Online Background Removers (Free & No Signup)</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/free-tool-resize-multiple-images-shopify-stores.html'>Free Tool to Resize Multiple Images for Shopify Stores</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/change-photo-background-white-amazon-listings.html'>How to Change Photo Background to White for Amazon Listings</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/upscale-image.html'>Upscale Image</a> <span class='date'>— 2025-09-23</span></li><li><a href='/blog/remove-background-from-image.html'>Remove Background From Image</a> <span class='date'>— 2025-09-23</span></li><li><a href='/blog/remove-background-from-image-google-slides.html'>Remove Background From Image Google Slides</a> <span class='date'>— 2025-09-23</span></li><li><a href='/blog/remove-background-from-image-canva.html'>Remove Background From Image Canva</a> <span class='date'>— 2025-09-23</span></li><li><a href='/blog/remove-background-from-image-iphone.html'>Remove Background From Image Iphone</a> <span class='date'>— 2025-09-22</span></li><li><a href='/blog/remove-background-from-image-photoshop.html'>Remove Background From Image Photoshop</a> <span class='date'>— 2025-09-22</span></li><li><a href='/blog/change-image-background-color-to-white.html'>Change Image Background Color To White</a> <span class='date'>— 2025-09-22</span></li><li><a href='/blog/change-image-background-color-photoshop.html'>Change Image Background Color Photoshop</a> <span class='date'>— 2025-09-22</span></li><li><a href='/blog/change-image-background-color-online.html'>Change Image Background Color Online</a> <span class='date'>— 2025-09-21</span></li><li><a href='/blog/change-image-background-color-powerpoint.html'>Change Image Background Color Powerpoint</a> <span class='date'>— 2025-09-21</span></li><li><a href='/blog/change-image-background-color.html'>Change Image Background Color</a> <span class='date'>— 2025-09-21</span></li><li><a href='/blog/remove-background-from-image-android.html'>How to Remove Background From Image on Android</a> <span class='date'>— 2025-09-20</span></li></ul>
-  </main>
-  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/blur-background.html'>Blur Background</a><a href='/enhance-image.html'>Enhance Image</a></nav>
-      <footer class="comprehensive-footer">
+</head><body>
+<header class="container header"><a href="https://www.changeimageto.com/" class="logo-link"><img src="https://www.changeimageto.com/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img"/></a><div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%"><h1 style="margin:0">How to Resize an Image in GIMP</h1><nav class="top-nav"><a href="https://www.changeimageto.com/blog" aria-label="Read our blog">Blog</a></nav></div></header>
+<main class="container main">
+  <p class="seo" style="margin:0 0 16px"><strong>By:</strong> ChangeImageTo.com Team · <time datetime="2025-12-19T22:30:00.000000">2025-12-19 22:30:00 UTC</time></p>
+  <section class="seo"><p>GIMP (GNU Image Manipulation Program) is a powerful free alternative to Photoshop. Here's how to resize images in GIMP.</p></section>
+<section class="seo"><h2>Resize image in GIMP (step-by-step)</h2><ol><li>Open GIMP and load your image: <strong>File → Open</strong> or press <strong>Ctrl+O</strong> (Cmd+O on Mac).</li><li>Go to <strong>Image → Scale Image</strong> in the menu bar.</li><li>In the Scale Image dialog, you'll see Width and Height fields with a chain link icon between them.</li><li>Click the chain link to lock aspect ratio (recommended).</li><li>Enter your desired width or height. The other dimension will adjust automatically.</li><li>Choose your interpolation method: <strong>Cubic</strong> or <strong>Lanczos</strong> for best quality when downscaling.</li><li>Click <strong>Scale</strong> to apply the changes.</li><li>Save your resized image: <strong>File → Export As</strong> (not Save, which saves in GIMP's native format).</li></ol></section>
+<section class="seo"><h2>Resize canvas vs. scale image</h2><p>GIMP offers two resize options:</p><ul><li><strong>Scale Image</strong> (Image → Scale Image): Resizes the actual image content. Use this for resizing photos.</li><li><strong>Canvas Size</strong> (Image → Canvas Size): Changes the canvas size without scaling the image. Use this to add borders or crop areas.</li></ul></section>
+<section class="seo"><h2>Free alternative for bulk resizing</h2><p>Need to resize multiple images quickly? Use our free <a href="/bulk-image-resizer.html">Bulk Image Resizer</a> tool:</p><ol><li>Upload up to 50 images at once.</li><li>Set your desired dimensions.</li><li>Download all resized images as a ZIP file.</li></ol><p>Perfect for batch processing without opening each image in GIMP individually.</p></section>
+<section class="seo"><h3>Try it online (free)</h3><ul><li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a> - Resize multiple images at once</li><li><a href="/resize-image-for-instagram.html">Resize Image for Instagram</a> - Optimize for Instagram</li><li><a href="/resize-image-for-facebook.html">Resize Image for Facebook</a> - Perfect Facebook dimensions</li><li><a href="/change-image-background.html">Change image background</a></li></ul></section>
+<section class="seo"><h2>Tips for resizing in GIMP</h2><ul><li>Use <strong>Lanczos</strong> interpolation for best quality when downscaling.</li><li>Use <strong>Cubic</strong> interpolation for upscaling (though quality loss is inevitable).</li><li>For print, set resolution to 300 DPI in the Scale Image dialog.</li><li>For web, 72-150 DPI is sufficient.</li><li>Always work on a copy of your original image to preserve the source file.</li><li>Use <strong>View → Zoom → Fit Image in Window</strong> to see the full resized image.</li></ul></section>
+<section class="seo"><h2>FAQ</h2><details><summary>Can I resize multiple images at once in GIMP?</summary><p>GIMP doesn't have built-in batch processing, but you can use scripts. For easier bulk resizing, use our free <a href="/bulk-image-resizer.html">Bulk Image Resizer</a> tool.</p></details><details><summary>What's the best interpolation method?</summary><p>Use <strong>Lanczos</strong> for downscaling (making smaller) and <strong>Cubic</strong> for upscaling. Both provide better quality than Linear or None.</p></details><details><summary>Is it really free?</summary><p>Yes, our bulk resizer tool is completely free with no watermark and no login required.</p></details></section>
+  <p class="seo" style="margin-top:24px"><a href="https://www.changeimageto.com/blog" style="color:#fff">← Back to blog</a></p>
+</main>
+<nav class="seo-links"><a href="https://www.changeimageto.com/remove-background-from-image.html">Remove Background from Image</a><a href="https://www.changeimageto.com/change-color-of-image.html">Change color of image online</a><a href="https://www.changeimageto.com/change-image-background.html">Change image background</a><a href="https://www.changeimageto.com/convert-image-format.html">Convert image format</a><a href="https://www.changeimageto.com/upscale-image.html">AI Image Upscaler</a><a href="https://www.changeimageto.com/blur-background.html">Blur Background</a><a href="https://www.changeimageto.com/enhance-image.html">Enhance Image</a></nav>
+    <footer class="comprehensive-footer">
       <div class="container">
         <div class="footer-grid">
-          <!-- Brand Section -->
           <div class="footer-brand">
             <div class="footer-logo">
               <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
@@ -96,8 +79,6 @@ document.addEventListener("DOMContentLoaded", () => {
               </a>
             </div>
           </div>
-
-          <!-- Tools Section -->
           <div class="footer-section">
             <h3 class="footer-heading">Image Tools</h3>
             <ul class="footer-links">
@@ -115,8 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
               <li><a href="/real-estate-photo-enhancement.html">Real Estate Photo Enhancement</a></li>
             </ul>
           </div>
-
-          <!-- Blog Section -->
           <div class="footer-section">
             <h3 class="footer-heading">Latest Blog Posts</h3>
             <ul class="footer-links">
@@ -130,8 +109,6 @@ document.addEventListener("DOMContentLoaded", () => {
               <li><a href="/blog/remove-background-from-image-android.html">Remove Background on Android</a></li>
             </ul>
           </div>
-
-          <!-- Alternatives Section -->
           <div class="footer-section">
             <h3 class="footer-heading">Tool Alternatives</h3>
             <ul class="footer-links">
@@ -142,8 +119,6 @@ document.addEventListener("DOMContentLoaded", () => {
               <li><a href="/blog/ai-background-removers.html">AI Background Removers</a></li>
             </ul>
           </div>
-
-          <!-- Company Section -->
           <div class="footer-section">
             <h3 class="footer-heading">Company</h3>
             <ul class="footer-links">
@@ -153,8 +128,6 @@ document.addEventListener("DOMContentLoaded", () => {
             </ul>
           </div>
         </div>
-
-        <!-- Bottom Bar -->
         <div class="footer-bottom">
           <div class="footer-bottom-content">
             <p class="footer-copyright">
@@ -170,5 +143,5 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </div>
     </footer>
-  <script src='/script.js?v=20250916-3' defer></script>
+<script src="/script.js?v=20250916-3" defer></script>
 </body></html>
