@@ -25,10 +25,26 @@
     
     <style>
         .christmas-templates {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            display: flex;
+            flex-direction: row;
             gap: 16px;
             margin: 24px 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent, #6aa7ff) var(--bg-secondary, #1a1f2e);
+        }
+        .christmas-templates::-webkit-scrollbar {
+            height: 8px;
+        }
+        .christmas-templates::-webkit-scrollbar-track {
+            background: var(--bg-secondary, #1a1f2e);
+            border-radius: 4px;
+        }
+        .christmas-templates::-webkit-scrollbar-thumb {
+            background: var(--accent, #6aa7ff);
+            border-radius: 4px;
         }
         .template-item {
             position: relative;
@@ -38,6 +54,9 @@
             overflow: hidden;
             transition: all 0.2s ease;
             aspect-ratio: 1;
+            flex-shrink: 0;
+            width: 150px;
+            min-width: 150px;
         }
         .template-item:hover {
             border-color: var(--accent, #6aa7ff);
@@ -253,7 +272,7 @@
                     </div>
                 </div>
 
-                <button id="process-btn" type="submit" disabled>Add Christmas Background</button>
+                <button id="process-btn" type="submit" disabled>Generate Christmas Photo</button>
             </form>
 
             <section class="preview" id="preview-section" hidden>
@@ -264,7 +283,7 @@
                     </div>
                     <div>
                         <h3>With Christmas Background</h3>
-                        <p id="process-prompt" class="prompt">Press "Add Christmas Background" to process.</p>
+                        <p id="process-prompt" class="prompt">Press "Generate Christmas Photo" to process.</p>
                         <div id="result-wrapper" hidden>
                             <div class="checkerboard">
                                 <img id="result-img" alt="Photo with Christmas background" />
@@ -287,7 +306,7 @@
                     <li><strong>Upload Your Photo:</strong> Select or drag and drop your photo into the upload area</li>
                     <li><strong>Choose Photo Type:</strong> Select "Portrait / People" for photos with people, or "Product / Object" for items</li>
                     <li><strong>Select Christmas Background:</strong> Choose from our festive templates or upload your own Christmas background image</li>
-                    <li><strong>Process:</strong> Click "Add Christmas Background" to combine your photo with the background</li>
+                    <li><strong>Process:</strong> Click "Generate Christmas Photo" to combine your photo with the background</li>
                     <li><strong>Download:</strong> Save your festive photo and share it with friends and family</li>
                 </ol>
 

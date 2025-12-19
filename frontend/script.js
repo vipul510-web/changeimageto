@@ -130,6 +130,7 @@ function updateCtaText(){
   const isEnhancePage = window.location.pathname === '/enhance-image.html';
   const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
   const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
+  const isChristmasBgPage = window.location.pathname === '/add-christmas-background.html';
   const isDenoisePage = false;
   
   if (isColorChangePage) {
@@ -150,6 +151,9 @@ function updateCtaText(){
   } else if (isRemovePeoplePage) {
     processBtn.textContent = 'Remove Painted Areas';
     processBtn.setAttribute('aria-label', 'Remove Painted Areas');
+  } else if (isChristmasBgPage) {
+    processBtn.textContent = 'Generate Christmas Photo';
+    processBtn.setAttribute('aria-label', 'Generate Christmas Photo');
   } else if (isColorPage) {
     processBtn.textContent = 'Change image background';
     processBtn.setAttribute('aria-label', 'Change image background');
@@ -168,6 +172,7 @@ function updatePromptText(){
   const isEnhancePage = window.location.pathname === '/enhance-image.html';
   const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
   const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
+  const isChristmasBgPage = window.location.pathname === '/add-christmas-background.html';
   const isDenoisePage = false;
   
   if (isColorChangePage) {
@@ -182,6 +187,8 @@ function updatePromptText(){
     prompt.textContent = 'Press "Remove Text" to process.';
   } else if (isRemovePeoplePage) {
     prompt.textContent = 'Paint over people to remove, then press "Remove Painted Areas".';
+  } else if (isChristmasBgPage) {
+    prompt.textContent = 'Press "Generate Christmas Photo" to process.';
   } else if (isColorPage) {
     prompt.textContent = 'Press "Change image background" to process.';
   } else {

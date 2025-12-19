@@ -1545,7 +1545,7 @@ async def get_christmas_backgrounds():
             "category": "backgrounds",
             "orientation": "all",
             "safesearch": "true",
-            "per_page": 12,
+            "per_page": 20,
             "min_width": 1920,
             "min_height": 1080
         }
@@ -1556,7 +1556,7 @@ async def get_christmas_backgrounds():
         
         # Format results for frontend
         backgrounds = []
-        for hit in data.get("hits", [])[:6]:  # Limit to 6 backgrounds
+        for hit in data.get("hits", [])[:10]:  # Limit to 10 backgrounds
             backgrounds.append({
                 "id": hit.get("id"),
                 "preview_url": hit.get("previewURL"),
