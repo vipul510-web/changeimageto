@@ -1259,17 +1259,28 @@ async def remove_bg(
             canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
             result = canvas
         else:
-            # No background specified - return trimmed result directly with transparent background
-            # This matches rembg behavior: just the subject with transparent background, no extra canvas
-            # If user wants original positioning preserved, they can use a background color/image
-            result = trimmed_result
-            # Ensure it's RGBA for transparency
+            # No background specified - preserve original canvas size and subject position with transparent background
+            # Create transparent canvas at original size
+            canvas = Image.new('RGBA', original_size, (0, 0, 0, 0))  # Fully transparent
+            # Place trimmed subject at its original position (preserve original positioning)
+            offset_x = trim_offset_x
+            offset_y = trim_offset_y
+            # Ensure trimmed_result is RGBA
+            if trimmed_result.mode != "RGBA":
+                trimmed_result = trimmed_result.convert("RGBA")
+            # Paste with alpha mask to preserve transparency
+            canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1] if trimmed_result.mode == "RGBA" else None)
+            result = canvas
+            # Ensure final result is RGBA
             if result.mode != "RGBA":
                 result = result.convert("RGBA")
             
         output_io = io.BytesIO()
+        # Ensure result is RGBA before saving to preserve transparency
+        if result.mode != "RGBA":
+            result = result.convert("RGBA")
         # Save as PNG with transparency support
-        result.save(output_io, format="PNG")
+        result.save(output_io, format="PNG", optimize=False)
         output_bytes = output_io.getvalue()
         
         # Log successful processing
