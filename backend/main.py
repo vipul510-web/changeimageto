@@ -1118,9 +1118,9 @@ async def remove_bg(
             "action_type": "change_background" if bg_color else "remove_background"
         })
 
-        # Process with rembg
+        # Process with rembg - EXACT SAME CODE AS TEST ENDPOINT
         proc_image = downscale_image_if_needed(image)
-
+        
         async with PROCESS_SEM:
             result = remove(
                 proc_image,
@@ -1132,26 +1132,19 @@ async def remove_bg(
                 post_process_mask=True,
             )
         
-        # Convert to RGBA - rembg should return RGBA with transparency
-        if result.mode != "RGBA":
-            result = result.convert("RGBA")
-
-        # Resize to original size if needed
-        if result.size != original_size:
-            result = result.resize(original_size, Image.LANCZOS)
-            # After resize, ensure it's still RGBA
-            if result.mode != "RGBA":
-                result = result.convert("RGBA")
-        
-        # For transparent output, return result directly
+        # For transparent output, return result directly - EXACT SAME AS TEST
         if not background_image and not bg_color:
-            # Ensure final result is RGBA
+            # Resize to original size if needed (same as test)
+            if result.size != original_size:
+                result = result.resize(original_size, Image.LANCZOS)
+            
+            # Ensure RGBA mode (same as test)
             if result.mode != "RGBA":
                 result = result.convert("RGBA")
             
-            # Save as PNG - this MUST preserve transparency
+            # Save as PNG - EXACT SAME AS TEST ENDPOINT
             output_io = io.BytesIO()
-            result.save(output_io, format="PNG", optimize=False)
+            result.save(output_io, format="PNG")
             output_bytes = output_io.getvalue()
             
             # Verify the saved PNG has transparency by checking file size and mode
