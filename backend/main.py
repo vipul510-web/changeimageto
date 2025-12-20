@@ -1117,10 +1117,11 @@ async def remove_bg(
             "action_type": "change_background" if bg_color else "remove_background"
         })
 
-        # Process with rembg - it returns RGBA with transparent background at same size as input
-        # Downscale for processing efficiency, but we'll resize back
+        # Process with rembg
+        # IMPORTANT: rembg.remove() returns RGBA image at SAME SIZE as input
+        # So if we downscale input, result is downscaled - we MUST resize back
         proc_image = downscale_image_if_needed(image)
-        was_downscaled = proc_image.size != original_size
+        proc_size = proc_image.size
 
         async with PROCESS_SEM:
             result = remove(
@@ -1133,20 +1134,19 @@ async def remove_bg(
                 post_process_mask=True,
             )
         
-        # rembg returns RGBA, but ensure it's RGBA mode
+        # rembg returns RGBA - ensure it's RGBA mode
         if result.mode != "RGBA":
             result = result.convert("RGBA")
         
-        # CRITICAL: Resize result back to original size if we downscaled
-        # This preserves the exact positioning and transparency
-        if was_downscaled:
-            result = result.resize(original_size, Image.LANCZOS)
-        
-        # Ensure result is RGBA and at original size
-        if result.mode != "RGBA":
-            result = result.convert("RGBA")
+        # CRITICAL FIX: Resize result back to original size
+        # rembg result is at proc_size, we need it at original_size
         if result.size != original_size:
+            # Use high-quality resampling to preserve transparency
             result = result.resize(original_size, Image.LANCZOS)
+        
+        # Final verification
+        if result.mode != "RGBA":
+            result = result.convert("RGBA")
 
         # For transparent output (no bg_color or background_image), return result directly
         # Only trim/reposition when we need to composite on a background
