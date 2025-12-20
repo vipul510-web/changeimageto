@@ -1132,66 +1132,75 @@ async def remove_bg(
                 post_process_mask=True,
             )
         
-        # CRITICAL: rembg.remove() should return RGBA with transparent background
-        # Check what rembg actually returned
-        log_user_action("rembg_result_check", {
-            "rembg_mode": result.mode,
-            "rembg_size": f"{result.width}x{result.height}",
-            "proc_size": f"{proc_image.width}x{proc_image.height}",
-            "original_size": f"{original_size[0]}x{original_size[1]}"
-        })
+        # Handle all possible return formats from rembg
+        # Case 1: rembg returns RGB (shouldn't happen, but handle it)
+        if result.mode == "RGB":
+            # Convert to RGBA - but this will make everything opaque (alpha=255)
+            # We need to detect white/light background and make it transparent
+            result = result.convert("RGBA")
+            # Get RGB channels
+            rgb_array = np.array(result)[:, :, :3]
+            # Detect white/light pixels (RGB values close to 255)
+            # Background is typically white/light, so pixels with high RGB values are likely background
+            white_threshold = 240  # Pixels with RGB > 240 are likely white background
+            is_background = np.all(rgb_array > white_threshold, axis=2)
+            # Set alpha to 0 for background pixels
+            alpha = np.array(result.split()[-1])
+            alpha[is_background] = 0
+            # Reconstruct RGBA image with proper transparency
+            result = Image.fromarray(np.dstack([rgb_array, alpha]))
         
-        # Ensure RGBA mode
-        if result.mode != "RGBA":
-            log_user_action("rembg_mode_warning", {
-                "message": f"rembg returned {result.mode} instead of RGBA!",
-                "original_mode": result.mode
-            })
+        # Case 2: rembg returns RGBA but with opaque white background (alpha=255 for white pixels)
+        elif result.mode == "RGBA":
+            # Check if background pixels are opaque white instead of transparent
+            rgb_array = np.array(result)[:, :, :3]
+            alpha_array = np.array(result.split()[-1])
+            
+            # Detect white/light background pixels
+            white_threshold = 240
+            is_white = np.all(rgb_array > white_threshold, axis=2)
+            is_opaque_white = is_white & (alpha_array > 250)  # White AND opaque
+            
+            # If we have opaque white pixels, make them transparent
+            if np.any(is_opaque_white):
+                alpha_array[is_opaque_white] = 0
+                # Reconstruct RGBA with corrected alpha
+                result = Image.fromarray(np.dstack([rgb_array, alpha_array]))
+        
+        # Case 3: Other mode - convert to RGBA
+        else:
             result = result.convert("RGBA")
         
-        # Check alpha channel - if all pixels are opaque (alpha=255), we have a problem
-        alpha_channel = result.split()[-1]
-        alpha_array = np.array(alpha_channel)
-        min_alpha = int(alpha_array.min())
-        max_alpha = int(alpha_array.max())
-        mean_alpha = float(alpha_array.mean())
-        transparent_pixels = int(np.sum(alpha_array < 128))  # Count pixels with alpha < 50%
+        # Resize to original size if needed (after transparency fix)
+        if result.size != original_size:
+            result = result.resize(original_size, Image.LANCZOS)
+            # After resize, ensure it's still RGBA
+            if result.mode != "RGBA":
+                result = result.convert("RGBA")
         
-        log_user_action("alpha_channel_check", {
-            "min_alpha": min_alpha,
-            "max_alpha": max_alpha,
-            "mean_alpha": mean_alpha,
-            "transparent_pixels": transparent_pixels,
-            "total_pixels": alpha_array.size,
-            "has_transparency": transparent_pixels > 0
-        })
-        
-        # If all pixels are opaque (alpha >= 255), rembg didn't create transparency
-        # This means rembg returned an image with white background instead of transparent
-        if min_alpha >= 250:  # All pixels are nearly or fully opaque
-            log_user_action("rembg_no_transparency_warning", {
-                "message": "rembg result has no transparent pixels - all alpha values are >= 250!"
-            })
-            # We can't fix this - rembg didn't create transparency
-            # But we should still return it as RGBA so at least the format is correct
-        
-        # For transparent output, return rembg result DIRECTLY without any resizing or manipulation
-        # This is the simplest possible path - just what rembg gives us
-        if not background_image and not bg_color:
-            # Return rembg result AS-IS - no resize, no conversion, nothing
-            # rembg result is already RGBA with transparency at proc_image size
-            # If user wants original size, they can resize on frontend
-            # But let's resize to original size to match user expectations
-            if result.size != original_size:
-                result = result.resize(original_size, Image.LANCZOS)
+        # Final transparency check and fix - ensure white background pixels are transparent
+        if result.mode == "RGBA":
+            rgb_array = np.array(result)[:, :, :3]
+            alpha_array = np.array(result.split()[-1])
             
-            # Ensure RGBA mode
+            # Detect white/light background pixels that are still opaque
+            white_threshold = 240
+            is_white = np.all(rgb_array > white_threshold, axis=2)
+            is_opaque_white = is_white & (alpha_array > 250)
+            
+            # Make opaque white pixels transparent
+            if np.any(is_opaque_white):
+                alpha_array[is_opaque_white] = 0
+                result = Image.fromarray(np.dstack([rgb_array, alpha_array]))
+        
+        # For transparent output, return result directly
+        if not background_image and not bg_color:
+            # Ensure final result is RGBA
             if result.mode != "RGBA":
                 result = result.convert("RGBA")
             
-            # Save directly - PNG format preserves RGBA transparency
+            # Save as PNG - this MUST preserve transparency
             output_io = io.BytesIO()
-            # CRITICAL: Save as PNG with transparency - do NOT use optimize as it might affect transparency
             result.save(output_io, format="PNG", optimize=False)
             output_bytes = output_io.getvalue()
             
