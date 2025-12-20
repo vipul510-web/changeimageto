@@ -378,9 +378,29 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     </footer>
 
-    <script src="./script.js?v=20251220-1" defer></script>
     <script>
-      // Override the form submission to use test endpoint
+      // Google Analytics event tracking function
+      function trackGAEvent(eventName, eventParams) {
+        window.dataLayer = window.dataLayer || [];
+        const eventData = {
+          'event': eventName,
+          'event_category': eventParams.event_category || 'engagement',
+          'event_label': eventParams.event_label || '',
+          'value': eventParams.value || 1
+        };
+        if (eventParams.page_path) eventData.page_path = eventParams.page_path;
+        if (eventParams.page_title) eventData.page_title = eventParams.page_title;
+        window.dataLayer.push(eventData);
+        if (typeof window.gtag === 'function') {
+          try {
+            window.gtag('event', eventName, eventParams);
+          } catch (e) {
+            console.warn('gtag call failed:', e);
+          }
+        }
+      }
+
+      // Use test endpoint - DO NOT load script.js as it will use production endpoint
       document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('upload-form');
         const fileInput = document.getElementById('file-input');
