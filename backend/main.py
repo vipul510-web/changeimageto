@@ -1131,7 +1131,8 @@ async def remove_bg(
                 post_process_mask=True,
             )
         
-        # CRITICAL: rembg should return RGBA, but force it to be RGBA
+        # CRITICAL: rembg.remove() should return RGBA with transparent background
+        # But if it returns RGB, we need to handle it differently
         # Check what rembg actually returned
         log_user_action("rembg_result_check", {
             "rembg_mode": result.mode,
@@ -1140,8 +1141,16 @@ async def remove_bg(
             "original_size": f"{original_size[0]}x{original_size[1]}"
         })
         
-        # Force RGBA mode - this is critical for transparency
-        if result.mode != "RGBA":
+        # If rembg returned RGB (shouldn't happen, but handle it), we have a problem
+        # Because converting RGB->RGBA will make everything opaque (alpha=255)
+        if result.mode == "RGB":
+            # This is wrong - rembg should return RGBA
+            # But if it does return RGB, we can't create transparency from it
+            log_user_action("rembg_rgb_warning", {"message": "rembg returned RGB instead of RGBA!"})
+            # Force to RGBA - but this will make background opaque white (wrong!)
+            result = result.convert("RGBA")
+        elif result.mode != "RGBA":
+            # Other mode - convert to RGBA
             result = result.convert("RGBA")
         
         # Resize back to original size if needed
