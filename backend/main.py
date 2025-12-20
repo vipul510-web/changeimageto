@@ -1120,7 +1120,7 @@ async def remove_bg(
 
         # Process with rembg
         proc_image = downscale_image_if_needed(image)
-        
+
         async with PROCESS_SEM:
             result = remove(
                 proc_image,
@@ -1135,7 +1135,7 @@ async def remove_bg(
         # Convert to RGBA - rembg should return RGBA with transparency
         if result.mode != "RGBA":
             result = result.convert("RGBA")
-        
+
         # Resize to original size if needed
         if result.size != original_size:
             result = result.resize(original_size, Image.LANCZOS)
@@ -1180,15 +1180,15 @@ async def remove_bg(
         trim_offset_y = 0
         
         if background_image or bg_color:
-            try:
-                alpha_channel = result.split()[-1]
-                trim_bbox = alpha_channel.getbbox()
-                if trim_bbox and trim_bbox != (0, 0, result.width, result.height):
+        try:
+            alpha_channel = result.split()[-1]
+            trim_bbox = alpha_channel.getbbox()
+            if trim_bbox and trim_bbox != (0, 0, result.width, result.height):
                     trim_offset_x = trim_bbox[0]
                     trim_offset_y = trim_bbox[1]
-                    trimmed_result = result.crop(trim_bbox)
-            except Exception:
-                pass
+                trimmed_result = result.crop(trim_bbox)
+        except Exception:
+            pass
             
         # Optional background compositing (image or solid color)
         if background_image:
@@ -1298,7 +1298,7 @@ async def remove_bg(
                 # Position is relative to center (as sent from frontend)
                 offset_x = int((canvas.width / 2) + foreground_x - (trimmed_result.width / 2))
                 offset_y = int((canvas.height / 2) + foreground_y - (trimmed_result.height / 2))
-            else:
+        else:
                 # Default: preserve original position instead of centering
                 offset_x = trim_offset_x
                 offset_y = trim_offset_y
