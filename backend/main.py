@@ -1289,16 +1289,29 @@ async def remove_bg(
             # No background specified - return rembg result directly
             # Result is already RGBA at original_size with transparent background
             # No manipulation needed - this is exactly what rembg produces
-            pass  # result is already correct
+            # Just ensure it's RGBA and at correct size
+            if result.mode != "RGBA":
+                result = result.convert("RGBA")
+            if result.size != original_size:
+                result = result.resize(original_size, Image.LANCZOS)
             
         output_io = io.BytesIO()
-        # Double-check result is RGBA (should already be)
+        # Final check: result MUST be RGBA for transparency
         if result.mode != "RGBA":
             result = result.convert("RGBA")
-        # Save as PNG - this MUST preserve transparency
-        # Use save_all=False and ensure format is PNG
+        # Save as PNG - PNG format preserves RGBA transparency
         result.save(output_io, format="PNG")
         output_bytes = output_io.getvalue()
+        
+        # Log for debugging
+        log_user_action("output_prepared", {
+            "result_mode": result.mode,
+            "result_size": f"{result.width}x{result.height}",
+            "original_size": f"{original_size[0]}x{original_size[1]}",
+            "output_bytes": len(output_bytes),
+            "has_bg_color": bg_color is not None,
+            "has_background_image": background_image is not None
+        })
         
         # Log successful processing
         log_user_action("processing_completed", {
