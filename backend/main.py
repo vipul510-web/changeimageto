@@ -1180,15 +1180,15 @@ async def remove_bg(
         trim_offset_y = 0
         
         if background_image or bg_color:
-        try:
-            alpha_channel = result.split()[-1]
-            trim_bbox = alpha_channel.getbbox()
-            if trim_bbox and trim_bbox != (0, 0, result.width, result.height):
+            try:
+                alpha_channel = result.split()[-1]
+                trim_bbox = alpha_channel.getbbox()
+                if trim_bbox and trim_bbox != (0, 0, result.width, result.height):
                     trim_offset_x = trim_bbox[0]
                     trim_offset_y = trim_bbox[1]
-                trimmed_result = result.crop(trim_bbox)
-        except Exception:
-            pass
+                    trimmed_result = result.crop(trim_bbox)
+            except Exception:
+                pass
             
         # Optional background compositing (image or solid color)
         if background_image:
