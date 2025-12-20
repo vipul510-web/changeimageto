@@ -38,47 +38,37 @@ function logUserAction(action, details = {}) {
 
 // Google Analytics event tracking with fallback
 function trackGAEvent(eventName, eventParams) {
-    // Ensure dataLayer exists
+    // Ensure dataLayer exists (GA will read from this even if gtag isn't ready)
     window.dataLayer = window.dataLayer || [];
     
-    // Check if gtag is available
-    if (typeof gtag === 'function') {
+    // Build the event object in the format GA expects
+    const eventData = {
+        'event': eventName,
+        'event_category': eventParams.event_category || 'engagement',
+        'event_label': eventParams.event_label || '',
+        'value': eventParams.value || 1
+    };
+    
+    // Add any additional parameters
+    if (eventParams.page_path) eventData.page_path = eventParams.page_path;
+    if (eventParams.page_title) eventData.page_title = eventParams.page_title;
+    
+    // Always push to dataLayer - GA will process it when ready
+    window.dataLayer.push(eventData);
+    console.log('GA Event queued:', eventName, eventData);
+    
+    // Also try to use gtag if available (for immediate processing)
+    if (typeof window.gtag === 'function') {
         try {
-            gtag('event', eventName, eventParams);
-            console.log('GA Event tracked:', eventName, eventParams);
+            window.gtag('event', eventName, eventParams);
+            console.log('GA Event also sent via gtag:', eventName);
         } catch (e) {
-            console.error('GA tracking error:', e);
-            // Fallback: push to dataLayer directly
-            window.dataLayer.push({
-                'event': eventName,
-                ...eventParams
-            });
+            console.warn('gtag call failed, but event is in dataLayer:', e);
         }
     } else {
-        // gtag not ready yet, push to dataLayer and wait for gtag
-        console.log('gtag not ready, queuing event:', eventName);
-        window.dataLayer.push({
-            'event': eventName,
-            ...eventParams
-        });
-        
-        // Try to wait for gtag to be available (max 5 seconds)
-        let attempts = 0;
-        const checkGtag = setInterval(() => {
-            attempts++;
-            if (typeof gtag === 'function') {
-                clearInterval(checkGtag);
-                try {
-                    gtag('event', eventName, eventParams);
-                    console.log('GA Event tracked (delayed):', eventName, eventParams);
-                } catch (e) {
-                    console.error('GA tracking error (delayed):', e);
-                }
-            } else if (attempts >= 50) { // 5 seconds max
-                clearInterval(checkGtag);
-                console.warn('gtag not available after 5 seconds, event may not be tracked:', eventName);
-            }
-        }, 100);
+        // gtag not available - that's OK, dataLayer push is sufficient
+        // GA will process dataLayer events when it loads
+        console.log('gtag not available, event queued in dataLayer (will be processed when GA loads)');
     }
 }
 
