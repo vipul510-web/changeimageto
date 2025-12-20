@@ -1124,12 +1124,17 @@ async def remove_bg(
         if result.mode != "RGBA":
             result = result.convert("RGBA")
 
-        # Always trim transparent padding first
+        # Always trim transparent padding first, but preserve original position info
         trimmed_result = result
+        trim_offset_x = 0
+        trim_offset_y = 0
         try:
             alpha_channel = result.split()[-1]
             trim_bbox = alpha_channel.getbbox()
             if trim_bbox and trim_bbox != (0, 0, result.width, result.height):
+                # Store the offset where the trimmed region was in the original
+                trim_offset_x = trim_bbox[0]  # left
+                trim_offset_y = trim_bbox[1]  # top
                 trimmed_result = result.crop(trim_bbox)
         except Exception:
             pass
@@ -1180,9 +1185,10 @@ async def remove_bg(
                     offset_x = int((bg_image.width / 2) + foreground_x - (trimmed_result.width / 2))
                     offset_y = int((bg_image.height / 2) + foreground_y - (trimmed_result.height / 2))
                 else:
-                    # Default: center the foreground
-                    offset_x = (bg_image.width - trimmed_result.width) // 2
-                    offset_y = (bg_image.height - trimmed_result.height) // 2
+                    # Default: preserve original position instead of centering
+                    # Scale the trim offset to match the original size (bg_image is already resized to original_size)
+                    offset_x = trim_offset_x
+                    offset_y = trim_offset_y
                 
                 # Ensure position is within bounds
                 offset_x = max(0, min(offset_x, bg_image.width - trimmed_result.width))
@@ -1201,9 +1207,10 @@ async def remove_bg(
                     "error_message": str(e)
                 })
                 # Fallback to transparent if background image fails
+                # Preserve original position instead of centering
                 canvas = Image.new('RGBA', original_size, (0, 0, 0, 0))
-                offset_x = (original_size[0] - trimmed_result.width) // 2
-                offset_y = (original_size[1] - trimmed_result.height) // 2
+                offset_x = trim_offset_x
+                offset_y = trim_offset_y
                 canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
                 result = canvas
         elif bg_color:
@@ -1241,9 +1248,9 @@ async def remove_bg(
                 offset_x = int((canvas.width / 2) + foreground_x - (trimmed_result.width / 2))
                 offset_y = int((canvas.height / 2) + foreground_y - (trimmed_result.height / 2))
             else:
-                # Default: center the trimmed subject on the original-sized canvas
-                offset_x = (canvas.width - trimmed_result.width) // 2
-                offset_y = (canvas.height - trimmed_result.height) // 2
+                # Default: preserve original position instead of centering
+                offset_x = trim_offset_x
+                offset_y = trim_offset_y
             
             # Ensure position is within bounds
             offset_x = max(0, min(offset_x, canvas.width - trimmed_result.width))
@@ -1252,15 +1259,16 @@ async def remove_bg(
             canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
             result = canvas
         else:
-            # Keep original dimensions for transparent output as well
-            # Create a transparent canvas of the original size and center the trimmed subject
-            canvas = Image.new('RGBA', original_size, (0, 0, 0, 0))
-            offset_x = (original_size[0] - trimmed_result.width) // 2
-            offset_y = (original_size[1] - trimmed_result.height) // 2
-            canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
-            result = canvas
+            # No background specified - return trimmed result directly with transparent background
+            # This matches rembg behavior: just the subject with transparent background, no extra canvas
+            # If user wants original positioning preserved, they can use a background color/image
+            result = trimmed_result
+            # Ensure it's RGBA for transparency
+            if result.mode != "RGBA":
+                result = result.convert("RGBA")
             
         output_io = io.BytesIO()
+        # Save as PNG with transparency support
         result.save(output_io, format="PNG")
         output_bytes = output_io.getvalue()
         
