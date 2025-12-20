@@ -1109,11 +1109,12 @@ async def remove_bg(
         })
 
         # Downscale to protect memory for processing, but remember original_size for output
-        image = downscale_image_if_needed(image)
+        proc_image = downscale_image_if_needed(image)
+        proc_size = proc_image.size
 
         async with PROCESS_SEM:
             result = remove(
-                image,
+                proc_image,
                 session=session,
                 alpha_matting=True,
                 alpha_matting_foreground_threshold=240,
@@ -1123,21 +1124,29 @@ async def remove_bg(
             )
         if result.mode != "RGBA":
             result = result.convert("RGBA")
+        
+        # Resize result back to original size BEFORE trimming/positioning
+        if result.size != original_size:
+            result = result.resize(original_size, Image.LANCZOS)
 
-        # Always trim transparent padding first, but preserve original position info
+        # For transparent output (no bg_color), don't trim - return result as-is to preserve positioning
+        # Only trim when we need to composite on a background
         trimmed_result = result
         trim_offset_x = 0
         trim_offset_y = 0
-        try:
-            alpha_channel = result.split()[-1]
-            trim_bbox = alpha_channel.getbbox()
-            if trim_bbox and trim_bbox != (0, 0, result.width, result.height):
-                # Store the offset where the trimmed region was in the original
-                trim_offset_x = trim_bbox[0]  # left
-                trim_offset_y = trim_bbox[1]  # top
-                trimmed_result = result.crop(trim_bbox)
-        except Exception:
-            pass
+        
+        # Only calculate trim if we're going to use it (background_image or bg_color)
+        if background_image or bg_color:
+            try:
+                alpha_channel = result.split()[-1]
+                trim_bbox = alpha_channel.getbbox()
+                if trim_bbox and trim_bbox != (0, 0, result.width, result.height):
+                    # Store the offset where the trimmed region was in the original
+                    trim_offset_x = trim_bbox[0]  # left
+                    trim_offset_y = trim_bbox[1]  # top
+                    trimmed_result = result.crop(trim_bbox)
+            except Exception:
+                pass
             
         # Optional background compositing (image or solid color)
         if background_image:
@@ -1259,21 +1268,10 @@ async def remove_bg(
             canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
             result = canvas
         else:
-            # No background specified - preserve original canvas size and subject position with transparent background
-            # Create transparent canvas at original size
-            canvas = Image.new('RGBA', original_size, (0, 0, 0, 0))  # Fully transparent
-            # Place trimmed subject at its original position (preserve original positioning)
-            offset_x = trim_offset_x
-            offset_y = trim_offset_y
-            # Ensure trimmed_result is RGBA
-            if trimmed_result.mode != "RGBA":
-                trimmed_result = trimmed_result.convert("RGBA")
-            # Paste with alpha mask to preserve transparency
-            canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1] if trimmed_result.mode == "RGBA" else None)
-            result = canvas
-            # Ensure final result is RGBA
-            if result.mode != "RGBA":
-                result = result.convert("RGBA")
+            # No background specified - return result directly with transparent background
+            # Result is already at original_size with transparent background, no need to trim or reposition
+            # This preserves the exact original positioning and transparency
+            result = result  # Already RGBA at original_size with transparency
             
         output_io = io.BytesIO()
         # Ensure result is RGBA before saving to preserve transparency
