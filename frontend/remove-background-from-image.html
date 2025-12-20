@@ -490,18 +490,18 @@ document.addEventListener("DOMContentLoaded", () => {
               body: formData,
             });
 
-            if (!response.ok) {
-              const errorText = await response.text();
-              throw new Error(errorText || 'Processing failed');
+            const data = await response.json();
+
+            if (data.error) {
+              alert('Error: ' + data.error);
+              processBtn.disabled = false;
+              processBtn.textContent = 'Remove Background';
+              return;
             }
 
-            // Production endpoint returns blob (image/png)
-            const blob = await response.blob();
-            const imageUrl = URL.createObjectURL(blob);
-            
-            // Show result image
-            resultImg.src = imageUrl;
-            downloadLink.href = imageUrl;
+            // Show result image - EXACT SAME AS TEST PAGE
+            resultImg.src = data.test_image_base64;
+            downloadLink.href = data.test_image_base64;
             downloadLink.download = `bg-removed-${Date.now()}.png`;
 
             processPrompt.style.display = 'none';
@@ -532,9 +532,6 @@ document.addEventListener("DOMContentLoaded", () => {
           fileInput.value = '';
           originalImg.src = '';
           resultImg.src = '';
-          if (downloadLink.href && downloadLink.href.startsWith('blob:')) {
-            URL.revokeObjectURL(downloadLink.href);
-          }
           downloadLink.removeAttribute('href');
           previewSection.hidden = true;
           processBtn.disabled = true;

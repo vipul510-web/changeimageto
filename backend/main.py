@@ -1134,7 +1134,7 @@ async def remove_bg(
         
         # For transparent output, use EXACT TEST ENDPOINT CODE
         if not background_image and not bg_color:
-            # EXACT COPY FROM TEST ENDPOINT - no changes whatsoever
+            # EXACT COPY FROM TEST ENDPOINT - return JSON with base64 like test endpoint
             output_io = io.BytesIO()
             if result.mode != "RGBA":
                 result = result.convert("RGBA")
@@ -1148,7 +1148,11 @@ async def remove_bg(
                 "processing_successful": True
             })
             
-            return Response(content=output_bytes, media_type="image/png")
+            # Return JSON with base64 EXACTLY like test endpoint
+            import base64
+            return {
+                "test_image_base64": "data:image/png;base64," + base64.b64encode(output_bytes).decode(),
+            }
         
         # Only do trimming/compositing if we have a background
         trimmed_result = result
