@@ -1108,7 +1108,8 @@ async def remove_bg(
             "action_type": "change_background" if bg_color else "remove_background"
         })
 
-        # Downscale to protect memory for processing, but remember original_size for output
+        # Process with rembg - it returns RGBA with transparent background at same size as input
+        # Downscale for processing efficiency, but we'll resize back
         proc_image = downscale_image_if_needed(image)
         was_downscaled = proc_image.size != original_size
 
@@ -1122,15 +1123,22 @@ async def remove_bg(
                 alpha_matting_erode_size=10,
                 post_process_mask=True,
             )
+        
+        # rembg returns RGBA, but ensure it's RGBA mode
         if result.mode != "RGBA":
             result = result.convert("RGBA")
         
-        # Resize result back to original size if we downscaled for processing
+        # CRITICAL: Resize result back to original size if we downscaled
+        # This preserves the exact positioning and transparency
         if was_downscaled:
             result = result.resize(original_size, Image.LANCZOS)
+        
+        # Verify result is at original size and RGBA
+        assert result.size == original_size, f"Result size {result.size} != original {original_size}"
+        assert result.mode == "RGBA", f"Result mode {result.mode} != RGBA"
 
-        # For transparent output (no bg_color), don't trim - return result as-is to preserve positioning
-        # Only trim when we need to composite on a background
+        # For transparent output (no bg_color or background_image), return result directly
+        # Only trim/reposition when we need to composite on a background
         trimmed_result = result
         trim_offset_x = 0
         trim_offset_y = 0
@@ -1141,9 +1149,8 @@ async def remove_bg(
                 alpha_channel = result.split()[-1]
                 trim_bbox = alpha_channel.getbbox()
                 if trim_bbox and trim_bbox != (0, 0, result.width, result.height):
-                    # Store the offset where the trimmed region was in the original
-                    trim_offset_x = trim_bbox[0]  # left
-                    trim_offset_y = trim_bbox[1]  # top
+                    trim_offset_x = trim_bbox[0]
+                    trim_offset_y = trim_bbox[1]
                     trimmed_result = result.crop(trim_bbox)
             except Exception:
                 pass
@@ -1268,17 +1275,18 @@ async def remove_bg(
             canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
             result = canvas
         else:
-            # No background specified - return result directly with transparent background
-            # Result is already at original_size with transparent background, no need to trim or reposition
-            # This preserves the exact original positioning and transparency
-            result = result  # Already RGBA at original_size with transparency
+            # No background specified - return rembg result directly
+            # Result is already RGBA at original_size with transparent background
+            # No manipulation needed - this is exactly what rembg produces
+            pass  # result is already correct
             
         output_io = io.BytesIO()
-        # Ensure result is RGBA before saving to preserve transparency
+        # Double-check result is RGBA (should already be)
         if result.mode != "RGBA":
             result = result.convert("RGBA")
-        # Save as PNG with transparency support
-        result.save(output_io, format="PNG", optimize=False)
+        # Save as PNG - this MUST preserve transparency
+        # Use save_all=False and ensure format is PNG
+        result.save(output_io, format="PNG")
         output_bytes = output_io.getvalue()
         
         # Log successful processing
