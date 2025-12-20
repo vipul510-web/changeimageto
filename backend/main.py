@@ -1132,66 +1132,16 @@ async def remove_bg(
                 post_process_mask=True,
             )
         
-        # Handle all possible return formats from rembg
-        # Case 1: rembg returns RGB (shouldn't happen, but handle it)
-        if result.mode == "RGB":
-            # Convert to RGBA - but this will make everything opaque (alpha=255)
-            # We need to detect white/light background and make it transparent
-            result = result.convert("RGBA")
-            # Get RGB channels
-            rgb_array = np.array(result)[:, :, :3]
-            # Detect white/light pixels (RGB values close to 255)
-            # Background is typically white/light, so pixels with high RGB values are likely background
-            white_threshold = 240  # Pixels with RGB > 240 are likely white background
-            is_background = np.all(rgb_array > white_threshold, axis=2)
-            # Set alpha to 0 for background pixels
-            alpha = np.array(result.split()[-1])
-            alpha[is_background] = 0
-            # Reconstruct RGBA image with proper transparency
-            result = Image.fromarray(np.dstack([rgb_array, alpha]))
-        
-        # Case 2: rembg returns RGBA but with opaque white background (alpha=255 for white pixels)
-        elif result.mode == "RGBA":
-            # Check if background pixels are opaque white instead of transparent
-            rgb_array = np.array(result)[:, :, :3]
-            alpha_array = np.array(result.split()[-1])
-            
-            # Detect white/light background pixels
-            white_threshold = 240
-            is_white = np.all(rgb_array > white_threshold, axis=2)
-            is_opaque_white = is_white & (alpha_array > 250)  # White AND opaque
-            
-            # If we have opaque white pixels, make them transparent
-            if np.any(is_opaque_white):
-                alpha_array[is_opaque_white] = 0
-                # Reconstruct RGBA with corrected alpha
-                result = Image.fromarray(np.dstack([rgb_array, alpha_array]))
-        
-        # Case 3: Other mode - convert to RGBA
-        else:
+        # Convert to RGBA - rembg should return RGBA with transparency
+        if result.mode != "RGBA":
             result = result.convert("RGBA")
         
-        # Resize to original size if needed (after transparency fix)
+        # Resize to original size if needed
         if result.size != original_size:
             result = result.resize(original_size, Image.LANCZOS)
             # After resize, ensure it's still RGBA
             if result.mode != "RGBA":
                 result = result.convert("RGBA")
-        
-        # Final transparency check and fix - ensure white background pixels are transparent
-        if result.mode == "RGBA":
-            rgb_array = np.array(result)[:, :, :3]
-            alpha_array = np.array(result.split()[-1])
-            
-            # Detect white/light background pixels that are still opaque
-            white_threshold = 240
-            is_white = np.all(rgb_array > white_threshold, axis=2)
-            is_opaque_white = is_white & (alpha_array > 250)
-            
-            # Make opaque white pixels transparent
-            if np.any(is_opaque_white):
-                alpha_array[is_opaque_white] = 0
-                result = Image.fromarray(np.dstack([rgb_array, alpha_array]))
         
         # For transparent output, return result directly
         if not background_image and not bg_color:
@@ -1398,6 +1348,123 @@ async def remove_bg(
             "action_type": "change_background" if bg_color else "remove_background"
         })
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+
+
+@app.post("/api/test-rembg")
+async def test_rembg(file: UploadFile = File(...)):
+    """
+    Test endpoint to check what rembg.remove() actually returns
+    Returns JSON with analysis of the rembg output
+    """
+    import numpy as np
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        
+        # Convert to RGB for rembg
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        
+        original_size = image.size
+        
+        # Process with rembg (same as production)
+        session = get_session_for_category("product")
+        proc_image = downscale_image_if_needed(image)
+        
+        async with PROCESS_SEM:
+            result = remove(
+                proc_image,
+                session=session,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_size=10,
+                post_process_mask=True,
+            )
+        
+        # Analyze what rembg returned
+        analysis = {
+            "rembg_returned_mode": result.mode,
+            "rembg_returned_size": f"{result.width}x{result.height}",
+            "original_size": f"{original_size[0]}x{original_size[1]}",
+            "was_downscaled": proc_image.size != original_size,
+        }
+        
+        if result.mode == "RGBA":
+            alpha = np.array(result.split()[-1])
+            rgb_array = np.array(result)[:, :, :3]
+            alpha_array = np.array(result)[:, :, 3]
+            
+            analysis["alpha_channel"] = {
+                "min": int(alpha.min()),
+                "max": int(alpha.max()),
+                "mean": float(alpha.mean()),
+                "transparent_pixels": int(np.sum(alpha < 10)),
+                "opaque_pixels": int(np.sum(alpha > 250)),
+            }
+            
+            # Check for white opaque pixels
+            white_threshold = 240
+            is_white = np.all(rgb_array > white_threshold, axis=2)
+            is_opaque = alpha_array > 250
+            opaque_white = is_white & is_opaque
+            white_count = int(np.sum(opaque_white))
+            
+            analysis["white_background_check"] = {
+                "opaque_white_pixels": white_count,
+                "percentage": float(white_count / alpha.size * 100),
+                "has_white_background": white_count > 0,
+            }
+            
+            # Check edges (usually background)
+            h, w = alpha_array.shape
+            edge_width = min(20, w//10, h//10)
+            edge_mask = np.zeros((h, w), dtype=bool)
+            edge_mask[:edge_width, :] = True
+            edge_mask[-edge_width:, :] = True
+            edge_mask[:, :edge_width] = True
+            edge_mask[:, -edge_width:] = True
+            
+            edge_alpha = alpha_array[edge_mask]
+            edge_rgb = rgb_array[edge_mask]
+            edge_is_white = np.all(edge_rgb > white_threshold, axis=1)
+            edge_is_opaque = edge_alpha > 250
+            
+            analysis["edge_analysis"] = {
+                "edge_pixels": int(np.sum(edge_mask)),
+                "edge_white_pixels": int(np.sum(edge_is_white)),
+                "edge_opaque_pixels": int(np.sum(edge_is_opaque)),
+                "edge_opaque_white": int(np.sum(edge_is_white & edge_is_opaque)),
+                "edge_mean_alpha": float(edge_alpha.mean()),
+                "edge_mean_rgb": [float(edge_rgb[:, i].mean()) for i in range(3)],
+            }
+        elif result.mode == "RGB":
+            analysis["warning"] = "rembg returned RGB instead of RGBA - no transparency!"
+            rgb_array = np.array(result)
+            white_pixels = np.all(rgb_array > 240, axis=2)
+            analysis["white_background_check"] = {
+                "white_pixels": int(np.sum(white_pixels)),
+                "percentage": float(np.sum(white_pixels) / white_pixels.size * 100),
+            }
+        
+        # Also save a test output image
+        output_io = io.BytesIO()
+        if result.mode != "RGBA":
+            result = result.convert("RGBA")
+        result.save(output_io, format="PNG")
+        output_bytes = output_io.getvalue()
+        
+        analysis["output_png_size_bytes"] = len(output_bytes)
+        
+        import base64
+        return {
+            "analysis": analysis,
+            "test_image_base64": "data:image/png;base64," + base64.b64encode(output_bytes).decode(),
+        }
+        
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
 
 
 @app.post("/api/change-color")

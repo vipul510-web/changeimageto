@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test rembg Output</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0b0f13;
+            color: #eaf0f6;
+        }
+        .container {
+            background: #12171d;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        h1 { margin-top: 0; }
+        .upload-area {
+            border: 2px dashed #1e2630;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .upload-area:hover {
+            border-color: #6aa7ff;
+        }
+        .upload-area.dragover {
+            border-color: #6aa7ff;
+            background: #1a1f28;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        button {
+            background: #6aa7ff;
+            color: #001633;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        button:hover {
+            background: #4f46e5;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 24px;
+        }
+        .image-preview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .image-box {
+            background: #1a1f28;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .image-box img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            background: conic-gradient(#cfd8e3 25%, transparent 0 50%, #cfd8e3 0 75%, transparent 0) 0 0/24px 24px;
+        }
+        .analysis {
+            background: #1a1f28;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        .analysis pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .warning {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+        .success {
+            color: #51cf66;
+            font-weight: 600;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test rembg Output</h1>
+        <p>Upload an image to see what rembg.remove() actually returns</p>
+        
+        <div class="upload-area" id="upload-area">
+            <p>📁 Drop image here or click to browse</p>
+            <input type="file" id="file-input" accept="image/*">
+        </div>
+        
+        <div class="loading" id="loading">
+            <p>Processing with rembg...</p>
+        </div>
+        
+        <div class="results" id="results" style="display: none;">
+            <h2>Results</h2>
+            
+            <div class="image-preview">
+                <div class="image-box">
+                    <h3>Original</h3>
+                    <img id="original-img" alt="Original">
+                </div>
+                <div class="image-box">
+                    <h3>rembg Output</h3>
+                    <img id="result-img" alt="rembg result">
+                </div>
+            </div>
+            
+            <div class="analysis">
+                <h3>Analysis</h3>
+                <pre id="analysis-text"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const originalImg = document.getElementById('original-img');
+        const resultImg = document.getElementById('result-img');
+        const analysisText = document.getElementById('analysis-text');
+
+        // Check if running locally
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            // Show original
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImg.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            // Show loading
+            loading.classList.add('active');
+            results.style.display = 'none';
+
+            // Send to test endpoint
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/test-rembg`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    analysisText.textContent = `Error: ${data.error}`;
+                    analysisText.className = 'analysis warning';
+                } else {
+                    // Show result image
+                    resultImg.src = data.test_image_base64;
+
+                    // Format analysis
+                    const analysis = data.analysis;
+                    let text = `rembg Returned Mode: ${analysis.rembg_returned_mode}\n`;
+                    text += `rembg Returned Size: ${analysis.rembg_returned_size}\n`;
+                    text += `Original Size: ${analysis.original_size}\n`;
+                    text += `Was Downscaled: ${analysis.was_downscaled}\n\n`;
+
+                    if (analysis.rembg_returned_mode === 'RGBA') {
+                        const alpha = analysis.alpha_channel;
+                        text += `Alpha Channel:\n`;
+                        text += `  Min: ${alpha.min}\n`;
+                        text += `  Max: ${alpha.max}\n`;
+                        text += `  Mean: ${alpha.mean.toFixed(2)}\n`;
+                        text += `  Transparent pixels (alpha < 10): ${alpha.transparent_pixels} (${(alpha.transparent_pixels / (parseInt(analysis.rembg_returned_size.split('x')[0]) * parseInt(analysis.rembg_returned_size.split('x')[1])) * 100).toFixed(1)}%)\n`;
+                        text += `  Opaque pixels (alpha > 250): ${alpha.opaque_pixels} (${(alpha.opaque_pixels / (parseInt(analysis.rembg_returned_size.split('x')[0]) * parseInt(analysis.rembg_returned_size.split('x')[1])) * 100).toFixed(1)}%)\n\n`;
+
+                        const white = analysis.white_background_check;
+                        if (white.has_white_background) {
+                            text += `⚠️ WARNING: ${white.opaque_white_pixels} opaque white pixels found (${white.percentage.toFixed(1)}%)\n`;
+                            text += `   This means rembg is NOT creating transparency for these areas!\n\n`;
+                        } else {
+                            text += `✓ No opaque white pixels - transparency looks good\n\n`;
+                        }
+
+                        if (analysis.edge_analysis) {
+                            const edge = analysis.edge_analysis;
+                            text += `Edge Analysis:\n`;
+                            text += `  Edge pixels: ${edge.edge_pixels}\n`;
+                            text += `  Edge white pixels: ${edge.edge_white_pixels}\n`;
+                            text += `  Edge opaque pixels: ${edge.edge_opaque_pixels}\n`;
+                            text += `  Edge opaque white: ${edge.edge_opaque_white}\n`;
+                            text += `  Edge mean alpha: ${edge.edge_mean_alpha.toFixed(2)}\n`;
+                            text += `  Edge mean RGB: (${edge.edge_mean_rgb.map(v => v.toFixed(1)).join(', ')})\n`;
+                        }
+                    } else if (analysis.rembg_returned_mode === 'RGB') {
+                        text += `⚠️ WARNING: rembg returned RGB instead of RGBA!\n`;
+                        text += `   No transparency - background will be opaque\n`;
+                        if (analysis.white_background_check) {
+                            text += `   White pixels: ${analysis.white_background_check.white_pixels} (${analysis.white_background_check.percentage.toFixed(1)}%)\n`;
+                        }
+                    }
+
+                    text += `\nOutput PNG size: ${analysis.output_png_size_bytes} bytes`;
+
+                    analysisText.textContent = text;
+                    analysisText.className = 'analysis';
+                }
+
+                results.style.display = 'block';
+                loading.classList.remove('active');
+            } catch (error) {
+                analysisText.textContent = `Error: ${error.message}`;
+                analysisText.className = 'analysis warning';
+                results.style.display = 'block';
+                loading.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
