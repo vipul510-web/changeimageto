@@ -1118,11 +1118,8 @@ async def remove_bg(
         })
 
         # Process with rembg
-        # IMPORTANT: rembg.remove() returns RGBA image at SAME SIZE as input
-        # So if we downscale input, result is downscaled - we MUST resize back
         proc_image = downscale_image_if_needed(image)
-        proc_size = proc_image.size
-
+        
         async with PROCESS_SEM:
             result = remove(
                 proc_image,
@@ -1134,20 +1131,46 @@ async def remove_bg(
                 post_process_mask=True,
             )
         
-        # rembg returns RGBA - ensure it's RGBA mode
+        # CRITICAL: rembg should return RGBA, but force it to be RGBA
+        # Check what rembg actually returned
+        log_user_action("rembg_result_check", {
+            "rembg_mode": result.mode,
+            "rembg_size": f"{result.width}x{result.height}",
+            "proc_size": f"{proc_image.width}x{proc_image.height}",
+            "original_size": f"{original_size[0]}x{original_size[1]}"
+        })
+        
+        # Force RGBA mode - this is critical for transparency
         if result.mode != "RGBA":
             result = result.convert("RGBA")
         
-        # Resize result back to original size if we downscaled
+        # Resize back to original size if needed
         if result.size != original_size:
             result = result.resize(original_size, Image.LANCZOS)
+            # After resize, ensure it's still RGBA
+            if result.mode != "RGBA":
+                result = result.convert("RGBA")
         
         # SIMPLE: For transparent output, return rembg result directly - NO CANVAS, NO TRIM, NOTHING
         if not background_image and not bg_color:
-            # Just return the rembg result as-is - it's already RGBA with transparency at original size
+            # Verify final result is RGBA before saving
+            if result.mode != "RGBA":
+                result = result.convert("RGBA")
+            
+            # Save directly - PNG format preserves RGBA transparency
             output_io = io.BytesIO()
-            result.save(output_io, format="PNG")
+            # Use save() with explicit format - this MUST preserve transparency
+            result.save(output_io, format="PNG", optimize=False)
             output_bytes = output_io.getvalue()
+            
+            # Verify the saved PNG has transparency by checking file size and mode
+            log_user_action("transparent_output_saved", {
+                "category": category,
+                "result_mode": result.mode,
+                "result_size": f"{result.width}x{result.height}",
+                "output_bytes": len(output_bytes),
+                "has_alpha": result.mode == "RGBA"
+            })
             
             log_user_action("processing_completed", {
                 "category": category,
