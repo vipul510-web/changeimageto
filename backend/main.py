@@ -1138,23 +1138,33 @@ async def remove_bg(
         if result.mode != "RGBA":
             result = result.convert("RGBA")
         
-        # CRITICAL FIX: Resize result back to original size
-        # rembg result is at proc_size, we need it at original_size
+        # Resize result back to original size if we downscaled
         if result.size != original_size:
-            # Use high-quality resampling to preserve transparency
             result = result.resize(original_size, Image.LANCZOS)
         
-        # Final verification
-        if result.mode != "RGBA":
-            result = result.convert("RGBA")
-
-        # For transparent output (no bg_color or background_image), return result directly
-        # Only trim/reposition when we need to composite on a background
+        # SIMPLE: For transparent output, return rembg result directly - NO CANVAS, NO TRIM, NOTHING
+        if not background_image and not bg_color:
+            # Just return the rembg result as-is - it's already RGBA with transparency at original size
+            output_io = io.BytesIO()
+            result.save(output_io, format="PNG")
+            output_bytes = output_io.getvalue()
+            
+            log_user_action("processing_completed", {
+                "category": category,
+                "bg_color": bg_color,
+                "action_type": "remove_background",
+                "output_size_bytes": len(output_bytes),
+                "output_size_mb": round(len(output_bytes) / (1024 * 1024), 2),
+                "processing_successful": True
+            })
+            
+            return Response(content=output_bytes, media_type="image/png")
+        
+        # Only do trimming/compositing if we have a background
         trimmed_result = result
         trim_offset_x = 0
         trim_offset_y = 0
         
-        # Only calculate trim if we're going to use it (background_image or bg_color)
         if background_image or bg_color:
             try:
                 alpha_channel = result.split()[-1]
@@ -1285,21 +1295,11 @@ async def remove_bg(
             
             canvas.paste(trimmed_result, (offset_x, offset_y), mask=trimmed_result.split()[-1])
             result = canvas
-        else:
-            # No background specified - return rembg result directly
-            # Result is already RGBA at original_size with transparent background
-            # No manipulation needed - this is exactly what rembg produces
-            # Just ensure it's RGBA and at correct size
-            if result.mode != "RGBA":
-                result = result.convert("RGBA")
-            if result.size != original_size:
-                result = result.resize(original_size, Image.LANCZOS)
-            
+        # If we reach here, we have a background (bg_color or background_image)
+        # Canvas creation only happens for backgrounds - transparent output already returned above
         output_io = io.BytesIO()
-        # Final check: result MUST be RGBA for transparency
         if result.mode != "RGBA":
             result = result.convert("RGBA")
-        # Save as PNG - PNG format preserves RGBA transparency
         result.save(output_io, format="PNG")
         output_bytes = output_io.getvalue()
         
