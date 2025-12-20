@@ -399,6 +399,273 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     </footer>
 
-    <script src="./script.js?v=20251220-1" defer></script>
+    <script>
+      // ============================================
+      // Feedback Popup System (same as main page)
+      // ============================================
+      (function() {
+        'use strict';
+        if (document.getElementById('feedback-popup')) return;
+        const popup = document.createElement('div');
+        popup.id = 'feedback-popup';
+        popup.className = 'feedback-popup';
+        popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;display:none;align-items:center;justify-content:center;';
+        popup.innerHTML = `<div class="feedback-popup-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);"></div><div class="feedback-popup-content" style="position:relative;background:var(--card,#12171d);border:1px solid var(--border,#1e2630);border-radius:16px;padding:32px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:1;"><button class="feedback-popup-close" id="feedback-close-btn" aria-label="Close feedback popup" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--muted,#9aa7b2);font-size:28px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all 0.2s ease;">&times;</button><h3 class="feedback-popup-title" style="font-size:24px;font-weight:700;color:var(--fg,#eaf0f6);margin:0 0 8px;">How was your experience?</h3><p class="feedback-popup-subtitle" style="font-size:14px;color:var(--muted,#9aa7b2);margin:0 0 24px;">We'd love to hear your feedback!</p><div class="feedback-rating" style="margin:24px 0;text-align:center;"><div class="feedback-stars" style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;"><button class="feedback-star" data-rating="1" aria-label="1 star" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button><button class="feedback-star" data-rating="2" aria-label="2 stars" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button><button class="feedback-star" data-rating="3" aria-label="3 stars" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button><button class="feedback-star" data-rating="4" aria-label="4 stars" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button><button class="feedback-star" data-rating="5" aria-label="5 stars" style="background:transparent;border:none;font-size:40px;cursor:pointer;padding:4px;transition:all 0.2s ease;filter:grayscale(100%) opacity(0.5);">⭐</button></div><p class="feedback-rating-text" id="feedback-rating-text" style="font-size:14px;color:var(--muted,#9aa7b2);margin:0;">Tap a star to rate</p></div><div class="feedback-comment-section" style="margin:24px 0;"><label for="feedback-comment" class="feedback-comment-label" style="display:block;font-size:14px;font-weight:600;color:var(--fg,#eaf0f6);margin-bottom:8px;">Your feedback (optional)</label><textarea id="feedback-comment" class="feedback-comment-input" placeholder="Tell us what you think..." rows="4" maxlength="1000" style="width:100%;padding:12px;background:var(--bg,#0b0f13);border:1px solid var(--border,#1e2630);border-radius:8px;color:var(--fg,#eaf0f6);font-family:inherit;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea><div class="feedback-char-count" style="font-size:12px;color:var(--muted,#9aa7b2);text-align:right;margin-top:4px;"><span id="feedback-char-count">0</span>/1000</div></div><div class="feedback-actions" style="display:flex;gap:12px;margin-top:24px;"><button class="feedback-btn feedback-btn-submit" id="feedback-submit-btn" disabled style="flex:1;padding:12px 24px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s ease;background:var(--accent,#6aa7ff);color:#001633;opacity:0.5;">Submit Feedback</button><button class="feedback-btn feedback-btn-skip" id="feedback-skip-btn" style="flex:1;padding:12px 24px;border:1px solid var(--border,#1e2630);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s ease;background:transparent;color:var(--muted,#9aa7b2);">Skip</button></div></div>`;
+        document.body.appendChild(popup);
+        let selectedRating = 0, hasShownFeedback = sessionStorage.getItem('feedbackShown') === 'true';
+        function logImpression(action) {
+          const apiBase = (['127.0.0.1','localhost'].includes(window.location.hostname) && window.location.port === '8080') ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+          fetch(apiBase + '/api/feedback/impression', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({page: window.location.pathname, operation: 'remove_background', action: action, userAgent: navigator.userAgent, timestamp: new Date().toISOString()})}).catch(() => {});
+        }
+        function showFeedbackPopup() {
+          if (hasShownFeedback) return;
+          const popupEl = document.getElementById('feedback-popup');
+          if (!popupEl) return;
+          logImpression('shown');
+          selectedRating = 0;
+          const commentEl = document.getElementById('feedback-comment');
+          if (commentEl) commentEl.value = '';
+          const charCountEl = document.getElementById('feedback-char-count');
+          if (charCountEl) charCountEl.textContent = '0';
+          const ratingTextEl = document.getElementById('feedback-rating-text');
+          if (ratingTextEl) ratingTextEl.textContent = 'Tap a star to rate';
+          const submitBtn = document.getElementById('feedback-submit-btn');
+          if (submitBtn) submitBtn.disabled = true;
+          document.querySelectorAll('.feedback-star').forEach(star => { star.classList.remove('active'); star.style.filter = 'grayscale(100%) opacity(0.5)'; });
+          popupEl.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+        }
+        function hideFeedbackPopup(action = 'closed') {
+          const popupEl = document.getElementById('feedback-popup');
+          if (popupEl) {
+            if (action === 'closed' && !hasShownFeedback) logImpression('closed');
+            popupEl.style.display = 'none';
+            document.body.style.overflow = '';
+          }
+        }
+        function submitFeedback() {
+          if (selectedRating === 0) return;
+          const commentEl = document.getElementById('feedback-comment');
+          const apiBase = (['127.0.0.1','localhost'].includes(window.location.hostname) && window.location.port === '8080') ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+          fetch(apiBase + '/api/feedback', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({rating: selectedRating, comment: commentEl ? commentEl.value.trim() : '', page: window.location.pathname, operation: 'remove_background', timestamp: new Date().toISOString(), userAgent: navigator.userAgent})}).catch(() => {});
+          logImpression('submitted');
+          hasShownFeedback = true;
+          sessionStorage.setItem('feedbackShown', 'true');
+          hideFeedbackPopup('submitted');
+          const thankYou = document.createElement('div');
+          thankYou.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--accent,#6aa7ff);color:#001633;padding:16px 24px;border-radius:8px;z-index:10001;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+          thankYou.textContent = 'Thank you for your feedback! 🙏';
+          document.body.appendChild(thankYou);
+          setTimeout(() => { thankYou.style.opacity = '0'; thankYou.style.transition = 'opacity 0.3s'; setTimeout(() => thankYou.remove(), 300); }, 2000);
+        }
+        function initFeedbackPopup() {
+          const popupEl = document.getElementById('feedback-popup');
+          if (!popupEl) return;
+          const closeBtn = document.getElementById('feedback-close-btn');
+          if (closeBtn) { closeBtn.addEventListener('click', () => { logImpression('closed'); hideFeedbackPopup('closed'); }); }
+          const overlay = popupEl.querySelector('.feedback-popup-overlay');
+          if (overlay) overlay.addEventListener('click', () => { logImpression('closed'); hideFeedbackPopup('closed'); });
+          document.querySelectorAll('.feedback-star').forEach(star => {
+            star.addEventListener('click', function() {
+              selectedRating = parseInt(this.dataset.rating);
+              document.querySelectorAll('.feedback-star').forEach((s, index) => {
+                if (index < selectedRating) { s.classList.add('active'); s.style.filter = 'grayscale(0%) opacity(1)'; } else { s.classList.remove('active'); s.style.filter = 'grayscale(100%) opacity(0.5)'; }
+              });
+              const ratingTexts = {1: 'Poor', 2: 'Fair', 3: 'Good', 4: 'Very Good', 5: 'Excellent'};
+              const ratingTextEl = document.getElementById('feedback-rating-text');
+              if (ratingTextEl) ratingTextEl.textContent = ratingTexts[selectedRating] || 'Tap a star to rate';
+              const submitBtn = document.getElementById('feedback-submit-btn');
+              if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; submitBtn.style.cursor = 'pointer'; }
+            });
+          });
+          const submitBtn = document.getElementById('feedback-submit-btn');
+          if (submitBtn) submitBtn.addEventListener('click', submitFeedback);
+          const skipBtn = document.getElementById('feedback-skip-btn');
+          if (skipBtn) skipBtn.addEventListener('click', () => { logImpression('skipped'); hasShownFeedback = true; sessionStorage.setItem('feedbackShown', 'true'); hideFeedbackPopup('skipped'); });
+          document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && popupEl.style.display !== 'none') { logImpression('closed'); hideFeedbackPopup('closed'); } });
+        }
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initFeedbackPopup); } else { initFeedbackPopup(); }
+        window.showFeedbackPopup = showFeedbackPopup;
+      })();
+
+      // Google Analytics event tracking function
+      function trackGAEvent(eventName, eventParams) {
+        window.dataLayer = window.dataLayer || [];
+        const eventData = {
+          'event': eventName,
+          'event_category': eventParams.event_category || 'engagement',
+          'event_label': eventParams.event_label || '',
+          'value': eventParams.value || 1
+        };
+        if (eventParams.page_path) eventData.page_path = eventParams.page_path;
+        if (eventParams.page_title) eventData.page_title = eventParams.page_title;
+        window.dataLayer.push(eventData);
+        if (typeof window.gtag === 'function') {
+          try {
+            window.gtag('event', eventName, eventParams);
+          } catch (e) {
+            console.warn('gtag call failed:', e);
+          }
+        }
+      }
+
+      // Use production endpoint - EXACT SAME AS WORKING PRODUCTION PAGE
+      document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const dropzone = document.getElementById('dropzone');
+        const processBtn = document.getElementById('process-btn');
+        const originalImg = document.getElementById('original-img');
+        const resultImg = document.getElementById('result-img');
+        const previewSection = document.getElementById('preview-section');
+        const resultWrapper = document.getElementById('result-wrapper');
+        const processPrompt = document.getElementById('process-prompt');
+        const downloadLink = document.getElementById('download-link');
+        const resetBtn = document.getElementById('reset-btn');
+        const categoryInput = document.getElementById('category');
+        let currentFile = null;
+
+        // Category buttons
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            categoryInput.value = this.dataset.cat;
+          });
+        });
+
+        // File input handling
+        fileInput.addEventListener('change', function(e) {
+          if (e.target.files.length > 0) {
+            currentFile = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              originalImg.src = e.target.result;
+              previewSection.hidden = false;
+              processPrompt.style.display = 'block';
+              resultWrapper.hidden = true;
+            };
+            reader.readAsDataURL(currentFile);
+            processBtn.disabled = false;
+          }
+        });
+
+        // Drag and drop
+        dropzone.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          dropzone.classList.add('drag');
+        });
+        dropzone.addEventListener('dragleave', function() {
+          dropzone.classList.remove('drag');
+        });
+        dropzone.addEventListener('drop', function(e) {
+          e.preventDefault();
+          dropzone.classList.remove('drag');
+          if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change'));
+          }
+        });
+
+        // Form submission - use production endpoint /api/remove-bg (returns JSON with base64)
+        form.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          if (!currentFile) return;
+
+          // Track CTA click in Google Analytics
+          if (typeof trackGAEvent === 'function') {
+            trackGAEvent('process_image_cta', {
+              'event_category': 'engagement',
+              'event_label': 'remove_background',
+              'page_path': window.location.pathname,
+              'page_title': document.title,
+              'value': 1
+            });
+          }
+
+          processBtn.disabled = true;
+          processBtn.textContent = 'Processing…';
+
+          const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+
+          const formData = new FormData();
+          formData.append('file', currentFile);
+          formData.append('category', categoryInput.value);
+
+          try {
+            const response = await fetch(`${API_BASE}/api/remove-bg`, {
+              method: 'POST',
+              body: formData,
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+              alert('Error: ' + data.error);
+              processBtn.disabled = false;
+              processBtn.textContent = 'Remove Background';
+              return;
+            }
+
+            // Show result image - EXACT SAME AS WORKING PRODUCTION PAGE
+            resultImg.src = data.test_image_base64;
+            downloadLink.href = data.test_image_base64;
+            downloadLink.download = `bg-removed-${Date.now()}.png`;
+
+            processPrompt.style.display = 'none';
+            resultWrapper.hidden = false;
+            processBtn.disabled = false;
+            processBtn.textContent = 'Remove Background';
+
+            // Track download link creation
+            if (typeof trackGAEvent === 'function') {
+              trackGAEvent('download_image', {
+                'event_category': 'engagement',
+                'event_label': 'remove_background',
+                'page_path': window.location.pathname,
+                'page_title': document.title,
+                'value': 1
+              });
+            }
+
+            // Show feedback popup after successful processing (with delay for better UX)
+            setTimeout(() => {
+              if (typeof window.showFeedbackPopup === 'function') {
+                window.showFeedbackPopup();
+              }
+            }, 2000);
+          } catch (error) {
+            alert('Error processing image: ' + error.message);
+            processBtn.disabled = false;
+            processBtn.textContent = 'Remove Background';
+          }
+        });
+
+        // Reset button
+        resetBtn.addEventListener('click', function() {
+          currentFile = null;
+          fileInput.value = '';
+          originalImg.src = '';
+          resultImg.src = '';
+          downloadLink.removeAttribute('href');
+          previewSection.hidden = true;
+          processBtn.disabled = true;
+        });
+
+        // Download link tracking
+        downloadLink.addEventListener('click', function() {
+          if (typeof trackGAEvent === 'function') {
+            trackGAEvent('download_image', {
+              'event_category': 'engagement',
+              'event_label': 'remove_background',
+              'page_path': window.location.pathname,
+              'page_title': document.title,
+              'value': 1
+            });
+          }
+        });
+      });
+    </script>
   </body>
 </html>
