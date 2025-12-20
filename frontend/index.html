@@ -137,6 +137,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<!-- Initialize dataLayer BEFORE GA loads (so early events are preserved) -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+</script>
+
 <!-- Google tag (gtag.js) - Load asynchronously after page load -->
 <script>
   // Load Google Analytics after page load to improve FCP
@@ -147,8 +152,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(script);
     
     script.onload = function() {
-      window.dataLayer = window.dataLayer || [];
+      // dataLayer already initialized above, just define gtag function
       function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag; // Make it globally available
       gtag('js', new Date());
       gtag('config', 'G-D3Q582VFCG');
     };
