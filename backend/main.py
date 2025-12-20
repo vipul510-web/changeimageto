@@ -1298,7 +1298,7 @@ async def remove_bg(
                 # Position is relative to center (as sent from frontend)
                 offset_x = int((canvas.width / 2) + foreground_x - (trimmed_result.width / 2))
                 offset_y = int((canvas.height / 2) + foreground_y - (trimmed_result.height / 2))
-        else:
+            else:
                 # Default: preserve original position instead of centering
                 offset_x = trim_offset_x
                 offset_y = trim_offset_y
