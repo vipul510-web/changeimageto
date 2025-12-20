@@ -1132,17 +1132,9 @@ async def remove_bg(
                 post_process_mask=True,
             )
         
-        # For transparent output, return result directly - EXACT SAME AS TEST
+        # For transparent output, return result directly - EXACT SAME AS TEST ENDPOINT
         if not background_image and not bg_color:
-            # Resize to original size if needed (same as test)
-            if result.size != original_size:
-                result = result.resize(original_size, Image.LANCZOS)
-            
-            # Ensure RGBA mode (same as test)
-            if result.mode != "RGBA":
-                result = result.convert("RGBA")
-            
-            # Save as PNG - EXACT SAME AS TEST ENDPOINT (no optimize parameter)
+            # EXACT SAME AS TEST ENDPOINT - no resize, just convert and save
             output_io = io.BytesIO()
             if result.mode != "RGBA":
                 result = result.convert("RGBA")
