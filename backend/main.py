@@ -1110,7 +1110,7 @@ async def remove_bg(
 
         # Downscale to protect memory for processing, but remember original_size for output
         proc_image = downscale_image_if_needed(image)
-        proc_size = proc_image.size
+        was_downscaled = proc_image.size != original_size
 
         async with PROCESS_SEM:
             result = remove(
@@ -1125,8 +1125,8 @@ async def remove_bg(
         if result.mode != "RGBA":
             result = result.convert("RGBA")
         
-        # Resize result back to original size BEFORE trimming/positioning
-        if result.size != original_size:
+        # Resize result back to original size if we downscaled for processing
+        if was_downscaled:
             result = result.resize(original_size, Image.LANCZOS)
 
         # For transparent output (no bg_color), don't trim - return result as-is to preserve positioning
