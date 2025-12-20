@@ -1153,22 +1153,23 @@ async def remove_bg(
             # Other mode - convert to RGBA
             result = result.convert("RGBA")
         
-        # Resize back to original size if needed
-        if result.size != original_size:
-            result = result.resize(original_size, Image.LANCZOS)
-            # After resize, ensure it's still RGBA
-            if result.mode != "RGBA":
-                result = result.convert("RGBA")
-        
-        # SIMPLE: For transparent output, return rembg result directly - NO CANVAS, NO TRIM, NOTHING
+        # For transparent output, return rembg result DIRECTLY without any resizing or manipulation
+        # This is the simplest possible path - just what rembg gives us
         if not background_image and not bg_color:
-            # Verify final result is RGBA before saving
+            # Return rembg result AS-IS - no resize, no conversion, nothing
+            # rembg result is already RGBA with transparency at proc_image size
+            # If user wants original size, they can resize on frontend
+            # But let's resize to original size to match user expectations
+            if result.size != original_size:
+                result = result.resize(original_size, Image.LANCZOS)
+            
+            # Ensure RGBA mode
             if result.mode != "RGBA":
                 result = result.convert("RGBA")
             
             # Save directly - PNG format preserves RGBA transparency
             output_io = io.BytesIO()
-            # Use save() with explicit format - this MUST preserve transparency
+            # CRITICAL: Save as PNG with transparency - do NOT use optimize as it might affect transparency
             result.save(output_io, format="PNG", optimize=False)
             output_bytes = output_io.getvalue()
             
