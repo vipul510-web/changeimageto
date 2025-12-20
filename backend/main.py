@@ -1142,8 +1142,10 @@ async def remove_bg(
             if result.mode != "RGBA":
                 result = result.convert("RGBA")
             
-            # Save as PNG - EXACT SAME AS TEST ENDPOINT
+            # Save as PNG - EXACT SAME AS TEST ENDPOINT (no optimize parameter)
             output_io = io.BytesIO()
+            if result.mode != "RGBA":
+                result = result.convert("RGBA")
             result.save(output_io, format="PNG")
             output_bytes = output_io.getvalue()
             
