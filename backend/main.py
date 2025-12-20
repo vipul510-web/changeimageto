@@ -1078,16 +1078,17 @@ async def remove_bg(
     try:
         contents = await file.read()
         file_size = len(contents)
-        # Open image and convert to RGBA to ensure we can handle transparency
+        # Open image - rembg works best with RGB input, not RGBA
+        # rembg will return RGBA with transparency, but it expects RGB input
         image = Image.open(io.BytesIO(contents))
-        # Convert to RGBA if not already (handles RGB, L, P modes)
-        if image.mode != "RGBA":
-            # If image has transparency info, preserve it
-            if image.mode in ("RGBA", "LA") or (image.mode == "P" and "transparency" in image.info):
-                image = image.convert("RGBA")
+        # Convert to RGB for rembg processing (rembg will add alpha channel)
+        if image.mode != "RGB":
+            if image.mode == "RGBA":
+                # If input has transparency, convert to RGB (rembg will recreate transparency)
+                image = image.convert("RGB")
             else:
-                # No transparency - convert RGB to RGBA (alpha will be 255 = opaque)
-                image = image.convert("RGBA")
+                # Convert other modes to RGB
+                image = image.convert("RGB")
         original_size = (image.width, image.height)
         
         # Log successful file processing
@@ -1132,7 +1133,6 @@ async def remove_bg(
             )
         
         # CRITICAL: rembg.remove() should return RGBA with transparent background
-        # But if it returns RGB, we need to handle it differently
         # Check what rembg actually returned
         log_user_action("rembg_result_check", {
             "rembg_mode": result.mode,
@@ -1141,17 +1141,39 @@ async def remove_bg(
             "original_size": f"{original_size[0]}x{original_size[1]}"
         })
         
-        # If rembg returned RGB (shouldn't happen, but handle it), we have a problem
-        # Because converting RGB->RGBA will make everything opaque (alpha=255)
-        if result.mode == "RGB":
-            # This is wrong - rembg should return RGBA
-            # But if it does return RGB, we can't create transparency from it
-            log_user_action("rembg_rgb_warning", {"message": "rembg returned RGB instead of RGBA!"})
-            # Force to RGBA - but this will make background opaque white (wrong!)
+        # Ensure RGBA mode
+        if result.mode != "RGBA":
+            log_user_action("rembg_mode_warning", {
+                "message": f"rembg returned {result.mode} instead of RGBA!",
+                "original_mode": result.mode
+            })
             result = result.convert("RGBA")
-        elif result.mode != "RGBA":
-            # Other mode - convert to RGBA
-            result = result.convert("RGBA")
+        
+        # Check alpha channel - if all pixels are opaque (alpha=255), we have a problem
+        alpha_channel = result.split()[-1]
+        alpha_array = np.array(alpha_channel)
+        min_alpha = int(alpha_array.min())
+        max_alpha = int(alpha_array.max())
+        mean_alpha = float(alpha_array.mean())
+        transparent_pixels = int(np.sum(alpha_array < 128))  # Count pixels with alpha < 50%
+        
+        log_user_action("alpha_channel_check", {
+            "min_alpha": min_alpha,
+            "max_alpha": max_alpha,
+            "mean_alpha": mean_alpha,
+            "transparent_pixels": transparent_pixels,
+            "total_pixels": alpha_array.size,
+            "has_transparency": transparent_pixels > 0
+        })
+        
+        # If all pixels are opaque (alpha >= 255), rembg didn't create transparency
+        # This means rembg returned an image with white background instead of transparent
+        if min_alpha >= 250:  # All pixels are nearly or fully opaque
+            log_user_action("rembg_no_transparency_warning", {
+                "message": "rembg result has no transparent pixels - all alpha values are >= 250!"
+            })
+            # We can't fix this - rembg didn't create transparency
+            # But we should still return it as RGBA so at least the format is correct
         
         # For transparent output, return rembg result DIRECTLY without any resizing or manipulation
         # This is the simplest possible path - just what rembg gives us
