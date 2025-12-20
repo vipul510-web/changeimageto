@@ -64,50 +64,6 @@
       @media(max-width:768px){.container{padding:16px}.uploader{padding:24px}}
     </style>
     
-    <!-- Preload critical resources immediately -->
-    <link rel="preload" as="image" href="/logo.png?v=20250921-1">
-    <link rel="preload" as="style" href="./styles.css?v=20250929-2">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" as="style">
-    
-    <!-- Load fonts with optimized technique -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
-    
-    <!-- Critical CSS for above-the-fold content -->
-    <style>
-      :root{--bg:#0b0f13;--fg:#eaf0f6;--muted:#9aa7b2;--accent:#6aa7ff;--card:#12171d;--border:#1e2630}
-      *{box-sizing:border-box}
-      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
-      .container{max-width:1000px;margin:0 auto;padding:24px}
-      .header h1{margin:0 0 8px}
-      .header p{margin:0;color:var(--muted)}
-      .logo-link{display:inline-flex;align-items:center;gap:10px;margin-bottom:10px;text-decoration:none;color:inherit}
-      .logo-img{height:36px;width:auto;display:block}
-      .top-nav a{color:#fff;text-decoration:none;font-weight:600}
-      .top-nav a:hover{text-decoration:underline}
-      .uploader{position:relative;border:2px dashed var(--border);border-radius:12px;padding:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card)}
-      .uploader input{position:absolute;inset:0;opacity:0;cursor:pointer;display:block;width:100%;height:100%}
-      .uploader-instructions{display:flex;flex-direction:column;align-items:center;color:var(--muted)}
-      .uploader.drag{border-color:var(--accent);background:#101826}
-      button, .btn{background:var(--accent);color:#001633;border:none;padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
-      .btn.secondary{background:transparent;color:var(--fg);border:1px solid var(--border)}
-      button[disabled]{opacity:.5;cursor:not-allowed}
-      .preview{margin-top:24px}
-      .preview-grid{display:grid;grid-template-columns:1fr;gap:16px}
-      @media(min-width:900px){.preview-grid{grid-template-columns:1fr 1fr}}
-      .checkerboard{background:conic-gradient(#cfd8e3 25%,transparent 0 50%,#cfd8e3 0 75%,transparent 0) 0 0/24px 24px; padding:12px;border-radius:12px}
-      .preview img{width:100%;height:auto;border-radius:8px;display:block}
-      .actions{margin-top:12px;display:flex;gap:12px;flex-wrap:wrap}
-      .actions .btn{flex:1;min-width:120px}
-      .actions a.btn{text-decoration:none;display:inline-block;text-align:center;cursor:pointer}
-      .actions a.btn:hover{text-decoration:none}
-      .seo{margin-top:40px;color:var(--muted)}
-      .seo a{color:#fff;text-decoration:none}
-      .seo a:hover{text-decoration:underline;color:var(--accent)}
-      .footer{border-top:1px solid var(--border);margin-top:40px;color:var(--muted)}
-      @media(max-width:768px){.container{padding:16px}.uploader{padding:24px}}
-    </style>
-    
     <!-- Load main stylesheet asynchronously -->
     <link rel="stylesheet" href="./styles.css?v=20250929-2" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="./styles.css?v=20250929-2"></noscript>
@@ -176,13 +132,13 @@ document.addEventListener("DOMContentLoaded", () => {
     <main class="container main">
       <form id="upload-form">
         <div class="controls">
-  <label>Photo Type</label>
-  <div class="category-buttons" role="group" aria-label="Choose photo type">
-    <button type="button" class="cat-btn active" data-cat="product" id="cat-product">Product / Object</button>
-    <button type="button" class="cat-btn" data-cat="portrait" id="cat-portrait">Portrait / People</button>
-  </div>
-  <input type="hidden" id="category" name="category" value="product" />
-</div>
+          <label>Photo Type</label>
+          <div class="category-buttons" role="group" aria-label="Choose photo type">
+            <button type="button" class="cat-btn active" data-cat="product" id="cat-product">Product / Object</button>
+            <button type="button" class="cat-btn" data-cat="portrait" id="cat-portrait">Portrait / People</button>
+          </div>
+          <input type="hidden" id="category" name="category" value="product" />
+        </div>
 
         <div class="uploader" id="dropzone">
           <input type="file" id="file-input" accept="image/*" />
@@ -211,7 +167,6 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="actions">
               <a id="download-link" download="bg-removed.png" class="btn">Download PNG</a>
               <button id="reset-btn" class="btn secondary" type="button">Try Another Image</button>
-              <a href="/convert-image-format.html" class="btn secondary" id="to-converter" style="display:none">Change Image Format</a>
             </div>
           </div>
         </div>
@@ -423,6 +378,181 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     </footer>
 
-    <script src="./script.js?v=20251220-1" defer></script>
+    <script>
+      // Google Analytics event tracking function
+      function trackGAEvent(eventName, eventParams) {
+        window.dataLayer = window.dataLayer || [];
+        const eventData = {
+          'event': eventName,
+          'event_category': eventParams.event_category || 'engagement',
+          'event_label': eventParams.event_label || '',
+          'value': eventParams.value || 1
+        };
+        if (eventParams.page_path) eventData.page_path = eventParams.page_path;
+        if (eventParams.page_title) eventData.page_title = eventParams.page_title;
+        window.dataLayer.push(eventData);
+        if (typeof window.gtag === 'function') {
+          try {
+            window.gtag('event', eventName, eventParams);
+          } catch (e) {
+            console.warn('gtag call failed:', e);
+          }
+        }
+      }
+
+      // Use production endpoint - EXACT SAME AS TEST PAGE BUT CALLS /api/remove-bg
+      document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const dropzone = document.getElementById('dropzone');
+        const processBtn = document.getElementById('process-btn');
+        const originalImg = document.getElementById('original-img');
+        const resultImg = document.getElementById('result-img');
+        const previewSection = document.getElementById('preview-section');
+        const resultWrapper = document.getElementById('result-wrapper');
+        const processPrompt = document.getElementById('process-prompt');
+        const downloadLink = document.getElementById('download-link');
+        const resetBtn = document.getElementById('reset-btn');
+        const categoryInput = document.getElementById('category');
+        let currentFile = null;
+
+        // Category buttons
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            categoryInput.value = this.dataset.cat;
+          });
+        });
+
+        // File input handling
+        fileInput.addEventListener('change', function(e) {
+          if (e.target.files.length > 0) {
+            currentFile = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              originalImg.src = e.target.result;
+              previewSection.hidden = false;
+              processPrompt.style.display = 'block';
+              resultWrapper.hidden = true;
+            };
+            reader.readAsDataURL(currentFile);
+            processBtn.disabled = false;
+          }
+        });
+
+        // Drag and drop
+        dropzone.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          dropzone.classList.add('drag');
+        });
+        dropzone.addEventListener('dragleave', function() {
+          dropzone.classList.remove('drag');
+        });
+        dropzone.addEventListener('drop', function(e) {
+          e.preventDefault();
+          dropzone.classList.remove('drag');
+          if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change'));
+          }
+        });
+
+        // Form submission - use production endpoint /api/remove-bg (returns blob)
+        form.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          if (!currentFile) return;
+
+          // Track CTA click in Google Analytics
+          if (typeof trackGAEvent === 'function') {
+            trackGAEvent('process_image_cta', {
+              'event_category': 'engagement',
+              'event_label': 'remove_background',
+              'page_path': window.location.pathname,
+              'page_title': document.title,
+              'value': 1
+            });
+          }
+
+          processBtn.disabled = true;
+          processBtn.textContent = 'Processing…';
+
+          const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+
+          const formData = new FormData();
+          formData.append('file', currentFile);
+          formData.append('category', categoryInput.value);
+
+          try {
+            const response = await fetch(`${API_BASE}/api/remove-bg`, {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(errorText || 'Processing failed');
+            }
+
+            // Production endpoint returns blob (image/png)
+            const blob = await response.blob();
+            const imageUrl = URL.createObjectURL(blob);
+            
+            // Show result image
+            resultImg.src = imageUrl;
+            downloadLink.href = imageUrl;
+            downloadLink.download = `bg-removed-${Date.now()}.png`;
+
+            processPrompt.style.display = 'none';
+            resultWrapper.hidden = false;
+            processBtn.disabled = false;
+            processBtn.textContent = 'Remove Background';
+
+            // Track download link creation
+            if (typeof trackGAEvent === 'function') {
+              trackGAEvent('download_image', {
+                'event_category': 'engagement',
+                'event_label': 'remove_background',
+                'page_path': window.location.pathname,
+                'page_title': document.title,
+                'value': 1
+              });
+            }
+          } catch (error) {
+            alert('Error processing image: ' + error.message);
+            processBtn.disabled = false;
+            processBtn.textContent = 'Remove Background';
+          }
+        });
+
+        // Reset button
+        resetBtn.addEventListener('click', function() {
+          currentFile = null;
+          fileInput.value = '';
+          originalImg.src = '';
+          resultImg.src = '';
+          if (downloadLink.href && downloadLink.href.startsWith('blob:')) {
+            URL.revokeObjectURL(downloadLink.href);
+          }
+          downloadLink.removeAttribute('href');
+          previewSection.hidden = true;
+          processBtn.disabled = true;
+        });
+
+        // Download link tracking
+        downloadLink.addEventListener('click', function() {
+          if (typeof trackGAEvent === 'function') {
+            trackGAEvent('download_image', {
+              'event_category': 'engagement',
+              'event_label': 'remove_background',
+              'page_path': window.location.pathname,
+              'page_title': document.title,
+              'value': 1
+            });
+          }
+        });
+      });
+    </script>
   </body>
 </html>

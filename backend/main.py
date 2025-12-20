@@ -1132,30 +1132,19 @@ async def remove_bg(
                 post_process_mask=True,
             )
         
-        # For transparent output, return result directly - EXACT SAME AS TEST ENDPOINT
+        # For transparent output, use EXACT TEST ENDPOINT CODE
         if not background_image and not bg_color:
-            # EXACT SAME AS TEST ENDPOINT - no resize, just convert and save
+            # EXACT COPY FROM TEST ENDPOINT - no changes whatsoever
             output_io = io.BytesIO()
             if result.mode != "RGBA":
                 result = result.convert("RGBA")
             result.save(output_io, format="PNG")
             output_bytes = output_io.getvalue()
             
-            # Verify the saved PNG has transparency by checking file size and mode
-            log_user_action("transparent_output_saved", {
-                "category": category,
-                "result_mode": result.mode,
-                "result_size": f"{result.width}x{result.height}",
-                "output_bytes": len(output_bytes),
-                "has_alpha": result.mode == "RGBA"
-            })
-            
             log_user_action("processing_completed", {
                 "category": category,
-                "bg_color": bg_color,
                 "action_type": "remove_background",
                 "output_size_bytes": len(output_bytes),
-                "output_size_mb": round(len(output_bytes) / (1024 * 1024), 2),
                 "processing_successful": True
             })
             
