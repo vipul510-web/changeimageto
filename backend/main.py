@@ -1078,7 +1078,16 @@ async def remove_bg(
     try:
         contents = await file.read()
         file_size = len(contents)
-        image = Image.open(io.BytesIO(contents)).convert("RGBA")
+        # Open image and convert to RGBA to ensure we can handle transparency
+        image = Image.open(io.BytesIO(contents))
+        # Convert to RGBA if not already (handles RGB, L, P modes)
+        if image.mode != "RGBA":
+            # If image has transparency info, preserve it
+            if image.mode in ("RGBA", "LA") or (image.mode == "P" and "transparency" in image.info):
+                image = image.convert("RGBA")
+            else:
+                # No transparency - convert RGB to RGBA (alpha will be 255 = opaque)
+                image = image.convert("RGBA")
         original_size = (image.width, image.height)
         
         # Log successful file processing
@@ -1133,9 +1142,11 @@ async def remove_bg(
         if was_downscaled:
             result = result.resize(original_size, Image.LANCZOS)
         
-        # Verify result is at original size and RGBA
-        assert result.size == original_size, f"Result size {result.size} != original {original_size}"
-        assert result.mode == "RGBA", f"Result mode {result.mode} != RGBA"
+        # Ensure result is RGBA and at original size
+        if result.mode != "RGBA":
+            result = result.convert("RGBA")
+        if result.size != original_size:
+            result = result.resize(original_size, Image.LANCZOS)
 
         # For transparent output (no bg_color or background_image), return result directly
         # Only trim/reposition when we need to composite on a background
