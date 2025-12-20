@@ -36,6 +36,52 @@ function logUserAction(action, details = {}) {
     }).catch(() => { /* ignore analytics failures */ });
 }
 
+// Google Analytics event tracking with fallback
+function trackGAEvent(eventName, eventParams) {
+    // Ensure dataLayer exists
+    window.dataLayer = window.dataLayer || [];
+    
+    // Check if gtag is available
+    if (typeof gtag === 'function') {
+        try {
+            gtag('event', eventName, eventParams);
+            console.log('GA Event tracked:', eventName, eventParams);
+        } catch (e) {
+            console.error('GA tracking error:', e);
+            // Fallback: push to dataLayer directly
+            window.dataLayer.push({
+                'event': eventName,
+                ...eventParams
+            });
+        }
+    } else {
+        // gtag not ready yet, push to dataLayer and wait for gtag
+        console.log('gtag not ready, queuing event:', eventName);
+        window.dataLayer.push({
+            'event': eventName,
+            ...eventParams
+        });
+        
+        // Try to wait for gtag to be available (max 5 seconds)
+        let attempts = 0;
+        const checkGtag = setInterval(() => {
+            attempts++;
+            if (typeof gtag === 'function') {
+                clearInterval(checkGtag);
+                try {
+                    gtag('event', eventName, eventParams);
+                    console.log('GA Event tracked (delayed):', eventName, eventParams);
+                } catch (e) {
+                    console.error('GA tracking error (delayed):', e);
+                }
+            } else if (attempts >= 50) { // 5 seconds max
+                clearInterval(checkGtag);
+                console.warn('gtag not available after 5 seconds, event may not be tracked:', eventName);
+            }
+        }, 100);
+    }
+}
+
 // Setup download link tracking once on page load
 function setupDownloadTracking() {
   const downloadLink = document.getElementById('download-link');
@@ -51,15 +97,13 @@ function setupDownloadTracking() {
                         'remove_background';
       
       // Track in Google Analytics
-      if (typeof gtag === 'function') {
-        gtag('event', 'download_image', {
-          'event_category': 'engagement',
-          'event_label': actionType,
-          'page_path': window.location.pathname,
-          'page_title': document.title,
-          'value': 1
-        });
-      }
+      trackGAEvent('download_image', {
+        'event_category': 'engagement',
+        'event_label': actionType,
+        'page_path': window.location.pathname,
+        'page_title': document.title,
+        'value': 1
+      });
       
       // Also log to backend analytics
       logUserAction('download_clicked', {
@@ -479,15 +523,13 @@ if (form) form.addEventListener('submit', async (e) => {
   }
   
   // Track CTA click in Google Analytics
-  if (typeof gtag === 'function') {
-    gtag('event', 'process_image_cta', {
-      'event_category': 'engagement',
-      'event_label': actionLabel,
-      'page_path': window.location.pathname,
-      'page_title': document.title,
-      'value': 1
-    });
-  }
+  trackGAEvent('process_image_cta', {
+    'event_category': 'engagement',
+    'event_label': actionLabel,
+    'page_path': window.location.pathname,
+    'page_title': document.title,
+    'value': 1
+  });
   
   enableProcess(false);
   processBtn.textContent = 'Processing…';
@@ -884,15 +926,13 @@ if (window.location.pathname === '/convert-image-format.html') {
       e.preventDefault(); if(!file) return;
       
       // Track CTA click in Google Analytics for convert format
-      if (typeof gtag === 'function') {
-        gtag('event', 'process_image_cta', {
-          'event_category': 'engagement',
-          'event_label': 'convert_format',
-          'page_path': window.location.pathname,
-          'page_title': document.title,
-          'value': 1
-        });
-      }
+      trackGAEvent('process_image_cta', {
+        'event_category': 'engagement',
+        'event_label': 'convert_format',
+        'page_path': window.location.pathname,
+        'page_title': document.title,
+        'value': 1
+      });
       
       btn.disabled = true; btn.textContent = 'Converting…';
       const body = new FormData();
@@ -918,15 +958,13 @@ if (window.location.pathname === '/convert-image-format.html') {
           downloadA.dataset.gaTracked = 'true';
           downloadA.addEventListener('click', function() {
             // Track in Google Analytics
-            if (typeof gtag === 'function') {
-              gtag('event', 'download_image', {
-                'event_category': 'engagement',
-                'event_label': 'convert_format',
-                'page_path': window.location.pathname,
-                'page_title': document.title,
-                'value': 1
-              });
-            }
+            trackGAEvent('download_image', {
+              'event_category': 'engagement',
+              'event_label': 'convert_format',
+              'page_path': window.location.pathname,
+              'page_title': document.title,
+              'value': 1
+            });
             
             // Also log to backend analytics
             logUserAction('download_clicked', {
