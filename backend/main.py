@@ -73,29 +73,42 @@ REALESRGAN_MODELS_PATH = os.getenv("REALESRGAN_MODELS_PATH", _default_models)
 def _check_realesrgan_ncnn_available():
     """Check if realesrgan-ncnn-vulkan binary is available"""
     global REALESRGAN_NCNN_PATH
-    if not os.path.exists(REALESRGAN_NCNN_PATH):
-        logger.warning(f"Real-ESRGAN binary not found at {REALESRGAN_NCNN_PATH}")
-        # Try alternative locations for local development
-        alt_paths = [
-            "./realesrgan-ncnn-vulkan",
-            os.path.join(os.getcwd(), "realesrgan-ncnn-vulkan"),
-            "/usr/local/bin/realesrgan-ncnn-vulkan",
-            os.path.expanduser("~/realesrgan-ncnn-vulkan"),
-        ]
-        for alt_path in alt_paths:
-            if os.path.exists(alt_path):
-                logger.info(f"Found Real-ESRGAN binary at alternative path: {alt_path}")
-                REALESRGAN_NCNN_PATH = alt_path
-                break
-        else:
-            return False
-    if not os.access(REALESRGAN_NCNN_PATH, os.X_OK):
-        try:
-            os.chmod(REALESRGAN_NCNN_PATH, 0o755)
-        except Exception as e:
-            logger.warning(f"Could not make Real-ESRGAN binary executable: {e}")
-            return False
-    return True
+    
+    # First check the configured path
+    if os.path.exists(REALESRGAN_NCNN_PATH) and os.access(REALESRGAN_NCNN_PATH, os.X_OK):
+        return True
+    
+    # Try alternative locations for local development
+    # Check relative to current working directory (where backend is run from)
+    cwd = os.getcwd()
+    alt_paths = [
+        os.path.join(cwd, "realesrgan-ncnn-vulkan"),  # In project root
+        "./realesrgan-ncnn-vulkan",  # Relative to cwd
+        os.path.join(os.path.dirname(__file__), "..", "realesrgan-ncnn-vulkan"),  # Relative to backend/main.py
+        os.path.join(os.path.dirname(__file__), "..", "..", "realesrgan-ncnn-vulkan"),  # If backend/ is a subdir
+        "/usr/local/bin/realesrgan-ncnn-vulkan",
+        os.path.expanduser("~/realesrgan-ncnn-vulkan"),
+        "/app/realesrgan-ncnn-vulkan",  # Docker path
+    ]
+    
+    for alt_path in alt_paths:
+        abs_path = os.path.abspath(alt_path)
+        if os.path.exists(abs_path):
+            logger.info(f"Found Real-ESRGAN binary at: {abs_path}")
+            # Make sure it's executable
+            if not os.access(abs_path, os.X_OK):
+                try:
+                    os.chmod(abs_path, 0o755)
+                    logger.info(f"Made binary executable: {abs_path}")
+                except Exception as e:
+                    logger.warning(f"Could not make Real-ESRGAN binary executable: {e}")
+                    continue
+            REALESRGAN_NCNN_PATH = abs_path
+            return True
+    
+    logger.warning(f"Real-ESRGAN binary not found. Checked paths: {alt_paths}")
+    logger.warning(f"Current working directory: {cwd}")
+    return False
 
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
 
