@@ -63,24 +63,32 @@ except Exception:
 _LAMA_MANAGER = None
 
 # Real-ESRGAN NCNN-Vulkan binary path (no PyTorch needed!)
-REALESRGAN_NCNN_PATH = os.getenv("REALESRGAN_NCNN_PATH", "/app/realesrgan-ncnn-vulkan")
-REALESRGAN_MODELS_PATH = os.getenv("REALESRGAN_MODELS_PATH", "/app/realesrgan-models")
+# Space savings: ~100MB total vs 5-10GB for PyTorch!
+# For local dev, check current directory first, then Docker path
+_default_binary = "./realesrgan-ncnn-vulkan" if os.path.exists("./realesrgan-ncnn-vulkan") else "/app/realesrgan-ncnn-vulkan"
+_default_models = "./realesrgan-models" if os.path.exists("./realesrgan-models") else "/app/realesrgan-models"
+REALESRGAN_NCNN_PATH = os.getenv("REALESRGAN_NCNN_PATH", _default_binary)
+REALESRGAN_MODELS_PATH = os.getenv("REALESRGAN_MODELS_PATH", _default_models)
 
 def _check_realesrgan_ncnn_available():
     """Check if realesrgan-ncnn-vulkan binary is available"""
+    global REALESRGAN_NCNN_PATH
     if not os.path.exists(REALESRGAN_NCNN_PATH):
         logger.warning(f"Real-ESRGAN binary not found at {REALESRGAN_NCNN_PATH}")
         # Try alternative locations for local development
         alt_paths = [
             "./realesrgan-ncnn-vulkan",
+            os.path.join(os.getcwd(), "realesrgan-ncnn-vulkan"),
             "/usr/local/bin/realesrgan-ncnn-vulkan",
             os.path.expanduser("~/realesrgan-ncnn-vulkan"),
         ]
         for alt_path in alt_paths:
             if os.path.exists(alt_path):
                 logger.info(f"Found Real-ESRGAN binary at alternative path: {alt_path}")
-                return True
-        return False
+                REALESRGAN_NCNN_PATH = alt_path
+                break
+        else:
+            return False
     if not os.access(REALESRGAN_NCNN_PATH, os.X_OK):
         try:
             os.chmod(REALESRGAN_NCNN_PATH, 0o755)
@@ -3527,6 +3535,7 @@ async def test_upscale(
         try:
             # Build command for realesrgan-ncnn-vulkan
             # Format: realesrgan-ncnn-vulkan -i input.png -o output.png -n model_name -s scale -f png
+            # Models are expected in the same directory as the binary or in REALESRGAN_MODELS_PATH
             cmd = [
                 REALESRGAN_NCNN_PATH,
                 "-i", input_path,
@@ -3537,12 +3546,41 @@ async def test_upscale(
                 "-t", "0",  # Auto tile size
             ]
             
+            # Add model path if models are in a separate directory
+            if os.path.exists(REALESRGAN_MODELS_PATH) and os.path.isdir(REALESRGAN_MODELS_PATH):
+                # The binary looks for models in ./models by default, but we can set working directory
+                # or copy models. For now, we'll run from the models directory's parent.
+                pass  # Models should be in ./models relative to binary or in current directory
+            
             # Add GPU ID if specified (for multi-GPU systems)
             gpu_id = os.getenv("REALESRGAN_GPU_ID", "0")
             if gpu_id != "auto":
                 cmd.extend(["-g", str(gpu_id)])
             
             logger.info(f"Running Real-ESRGAN NCNN: {' '.join(cmd)}")
+            logger.info(f"Binary path: {REALESRGAN_NCNN_PATH}, Models path: {REALESRGAN_MODELS_PATH}")
+            
+            # Set working directory - the binary looks for models in ./models/ relative to current directory
+            # We'll run from the directory containing the binary, and ensure models are accessible
+            binary_dir = os.path.dirname(os.path.abspath(REALESRGAN_NCNN_PATH)) or os.getcwd()
+            cwd = binary_dir
+            
+            # Ensure models are accessible - the binary expects models in ./models/ relative to binary
+            models_dir = os.path.join(binary_dir, "models")
+            if os.path.exists(REALESRGAN_MODELS_PATH) and os.path.isdir(REALESRGAN_MODELS_PATH):
+                if not os.path.exists(models_dir) or REALESRGAN_MODELS_PATH != models_dir:
+                    try:
+                        os.makedirs(models_dir, exist_ok=True)
+                        # Copy models to ./models/ next to binary if needed
+                        import shutil
+                        for model_file in os.listdir(REALESRGAN_MODELS_PATH):
+                            src = os.path.join(REALESRGAN_MODELS_PATH, model_file)
+                            dst = os.path.join(models_dir, model_file)
+                            if os.path.isfile(src) and (not os.path.exists(dst) or os.path.getmtime(src) > os.path.getmtime(dst)):
+                                shutil.copy2(src, dst)
+                                logger.debug(f"Copied model file: {model_file}")
+                    except Exception as e:
+                        logger.warning(f"Could not set up models directory: {e}")
             
             # Run the command
             result = subprocess.run(
@@ -3550,6 +3588,7 @@ async def test_upscale(
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5 minute timeout
+                cwd=cwd,
             )
             
             if result.returncode != 0:
