@@ -3182,16 +3182,24 @@ def detect_damage_v2(img_array: np.ndarray, method: str = "conservative") -> np.
     # This is a simplified approach - in practice, we'll use spatial methods
     
     # Strategy 2: Improved scratch detection using morphological operations
-    # Use more conservative thresholds
+    # Use adaptive thresholds based on image statistics
     mean_intensity = np.mean(gray)
     std_intensity = np.std(gray)
     
-    # Detect bright scratches (above mean + 1.5*std)
-    bright_thresh = mean_intensity + 1.5 * std_intensity
-    _, bright_mask = cv2.threshold(gray, int(bright_thresh), 255, cv2.THRESH_BINARY)
+    # Adjust thresholds based on detection mode
+    if method == "aggressive":
+        bright_multiplier = 1.2  # More sensitive
+        dark_multiplier = 1.2
+    else:
+        bright_multiplier = 1.5  # Conservative
+        dark_multiplier = 1.5
     
-    # Detect dark scratches (below mean - 1.5*std)
-    dark_thresh = mean_intensity - 1.5 * std_intensity
+    # Detect bright scratches (above mean + threshold*std)
+    bright_thresh = mean_intensity + bright_multiplier * std_intensity
+    _, bright_mask = cv2.threshold(gray, int(min(255, bright_thresh)), 255, cv2.THRESH_BINARY)
+    
+    # Detect dark scratches (below mean - threshold*std)
+    dark_thresh = mean_intensity - dark_multiplier * std_intensity
     _, dark_mask = cv2.threshold(gray, int(max(0, dark_thresh)), 255, cv2.THRESH_BINARY_INV)
     
     # Combine bright and dark scratch candidates
@@ -3359,19 +3367,29 @@ async def test_restore(
                     logger.info(f"Using conservative detection: {damage_pixels_conservative} pixels")
             
             # Check if we found any damage
-            if np.any(damage_mask > 0):
+            damage_pixel_count = np.sum(damage_mask > 0)
+            total_pixels = damage_mask.shape[0] * damage_mask.shape[1]
+            damage_percentage = (damage_pixel_count / total_pixels) * 100
+            
+            logger.info(f"Damage detection: {damage_pixel_count} pixels ({damage_percentage:.2f}% of image)")
+            
+            if damage_pixel_count > 0:
                 # Convert to BGR for OpenCV
                 img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
                 
                 # Calculate dynamic radius based on image size and damage area
                 max_side = max(img_bgr.shape[:2])
-                damage_ratio = np.sum(damage_mask > 0) / (img_bgr.shape[0] * img_bgr.shape[1])
+                damage_ratio = damage_pixel_count / total_pixels
+                
+                logger.info(f"Damage ratio: {damage_ratio:.4f}, Image size: {img_bgr.shape[:2]}")
                 
                 # Use smaller radius for smaller damage areas to avoid artifacts
                 if damage_ratio < 0.01:  # Less than 1% damage
                     dynamic_radius = int(max(2, min(5, max_side / 300)))
                 else:
                     dynamic_radius = int(max(3, min(8, max_side / 200)))
+                
+                logger.info(f"Using inpainting radius: {dynamic_radius}")
                 
                 # Try LaMa first (best quality) if available
                 if _get_lama_manager() is not None:
@@ -3404,8 +3422,9 @@ async def test_restore(
                 
                 # Convert back to RGB PIL Image
                 img = Image.fromarray(cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB))
+                logger.info(f"Damage removal completed. Processed {damage_pixel_count} pixels.")
             else:
-                logger.info("No damage detected in image")
+                logger.warning(f"No damage detected in image. Try 'aggressive' detection mode or check if image actually has visible damage.")
         
         # Step 2: Noise/Grain Removal
         if denoise:
