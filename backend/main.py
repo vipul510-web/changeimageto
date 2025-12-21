@@ -3558,8 +3558,14 @@ async def test_upscale(
             
             # Set working directory - the binary looks for models in ./models/ relative to current directory
             # We'll run from the directory containing the binary, and ensure models are accessible
-            binary_dir = os.path.dirname(os.path.abspath(REALESRGAN_NCNN_PATH)) or os.getcwd()
+            if os.path.isabs(REALESRGAN_NCNN_PATH):
+                binary_dir = os.path.dirname(REALESRGAN_NCNN_PATH)
+            else:
+                # Relative path - resolve from current working directory
+                binary_path_abs = os.path.abspath(REALESRGAN_NCNN_PATH)
+                binary_dir = os.path.dirname(binary_path_abs) or os.getcwd()
             cwd = binary_dir
+            logger.info(f"Binary directory: {binary_dir}, Binary path: {REALESRGAN_NCNN_PATH}")
             
             # Ensure models are accessible - the binary expects models in ./models/ relative to binary
             models_dir = os.path.join(binary_dir, "models")
