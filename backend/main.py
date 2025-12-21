@@ -20,6 +20,8 @@ from skimage import measure, filters, exposure
 from skimage.metrics import structural_similarity as ssim
 import sqlite3
 from enum import Enum
+import subprocess
+import shutil
 
 try:
     from google.cloud import storage
@@ -59,6 +61,21 @@ except Exception:
     HDStrategy = None
 
 _LAMA_MANAGER = None
+
+# Real-ESRGAN NCNN-Vulkan binary path (no PyTorch needed!)
+REALESRGAN_NCNN_PATH = os.getenv("REALESRGAN_NCNN_PATH", "/app/realesrgan-ncnn-vulkan")
+REALESRGAN_MODELS_PATH = os.getenv("REALESRGAN_MODELS_PATH", "/app/realesrgan-models")
+
+def _check_realesrgan_ncnn_available():
+    """Check if realesrgan-ncnn-vulkan binary is available"""
+    if not os.path.exists(REALESRGAN_NCNN_PATH):
+        return False
+    if not os.access(REALESRGAN_NCNN_PATH, os.X_OK):
+        try:
+            os.chmod(REALESRGAN_NCNN_PATH, 0o755)
+        except Exception:
+            return False
+    return True
 
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
 
@@ -3452,6 +3469,119 @@ async def test_restore(
     except Exception as e:
         logger.error(f"Test restore error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Photo restoration error: {str(e)}")
+
+
+@app.post("/api/test-upscale")
+async def test_upscale(
+    file: UploadFile = File(...),
+    scale: int = Form(4),
+    model: str = Form("realesrgan-x4plus"),
+):
+    """
+    Test endpoint for AI image upscaling using Real-ESRGAN NCNN-Vulkan (no PyTorch needed!).
+    Uses the same technology as Upscayl but without the heavy PyTorch dependency.
+    
+    Args:
+        file: Image file to upscale
+        scale: Upscale factor (2, 3, or 4). Default is 4.
+        model: Model name. Options: realesrgan-x4plus (default), realesrnet-x4plus, 
+               realesrgan-x4plus-anime, realesr-animevideov3
+    """
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    if scale not in [2, 3, 4]:
+        raise HTTPException(status_code=400, detail="Scale must be 2, 3, or 4")
+    
+    if not _check_realesrgan_ncnn_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Real-ESRGAN NCNN binary is not available. The binary needs to be installed in the Docker image."
+        )
+    
+    try:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+        original_size = img.size
+        
+        # Create temporary files for input and output
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_input:
+            img.save(tmp_input.name, format="PNG")
+            input_path = tmp_input.name
+        
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_output:
+            output_path = tmp_output.name
+        
+        try:
+            # Build command for realesrgan-ncnn-vulkan
+            # Format: realesrgan-ncnn-vulkan -i input.png -o output.png -n model_name -s scale -f png
+            cmd = [
+                REALESRGAN_NCNN_PATH,
+                "-i", input_path,
+                "-o", output_path,
+                "-n", model,
+                "-s", str(scale),
+                "-f", "png",
+                "-t", "0",  # Auto tile size
+            ]
+            
+            # Add GPU ID if specified (for multi-GPU systems)
+            gpu_id = os.getenv("REALESRGAN_GPU_ID", "0")
+            if gpu_id != "auto":
+                cmd.extend(["-g", str(gpu_id)])
+            
+            logger.info(f"Running Real-ESRGAN NCNN: {' '.join(cmd)}")
+            
+            # Run the command
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=300,  # 5 minute timeout
+            )
+            
+            if result.returncode != 0:
+                error_msg = result.stderr or result.stdout or "Unknown error"
+                logger.error(f"Real-ESRGAN NCNN failed: {error_msg}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Upscaling failed: {error_msg[:200]}"
+                )
+            
+            # Load the upscaled image
+            if not os.path.exists(output_path):
+                raise HTTPException(status_code=500, detail="Output file was not created")
+            
+            upscaled_img = Image.open(output_path).convert("RGB")
+            
+            # Verify the output size is reasonable
+            expected_size = (original_size[0] * scale, original_size[1] * scale)
+            if upscaled_img.size != expected_size:
+                logger.info(f"Output size {upscaled_img.size} != expected {expected_size}, resizing")
+                upscaled_img = upscaled_img.resize(expected_size, Image.Resampling.LANCZOS)
+            
+            buf = io.BytesIO()
+            upscaled_img.save(buf, format="PNG", optimize=False)
+            return Response(content=buf.getvalue(), media_type="image/png")
+            
+        finally:
+            # Clean up temporary files
+            try:
+                os.unlink(input_path)
+            except Exception:
+                pass
+            try:
+                os.unlink(output_path)
+            except Exception:
+                pass
+        
+    except HTTPException:
+        raise
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Upscaling timed out after 5 minutes")
+    except Exception as e:
+        logger.error(f"Test upscale error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upscale error: {str(e)}")
 
 
 @app.post("/api/remove-text")
