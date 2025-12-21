@@ -3161,6 +3161,196 @@ async def test_enhance(
         raise HTTPException(status_code=500, detail=f"Enhance image error: {str(e)}")
 
 
+def detect_damage(img_array: np.ndarray) -> np.ndarray:
+    """Automatically detect scratches and dust spots in an image"""
+    # Convert to grayscale for detection
+    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    
+    # Initialize damage mask
+    damage_mask = np.zeros(gray.shape, dtype=np.uint8)
+    
+    # Method 1: Detect scratches (linear artifacts)
+    # Scratches are typically bright or dark lines
+    # Use morphological operations to detect linear structures
+    
+    # Detect bright scratches (white lines)
+    _, bright_thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+    # Detect dark scratches (dark lines)
+    _, dark_thresh = cv2.threshold(gray, 55, 255, cv2.THRESH_BINARY_INV)
+    
+    # Combine bright and dark scratches
+    scratch_mask = cv2.bitwise_or(bright_thresh, dark_thresh)
+    
+    # Use morphological operations to enhance linear structures
+    # Horizontal kernel for horizontal scratches
+    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 1))
+    horizontal_lines = cv2.morphologyEx(scratch_mask, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
+    horizontal_lines = cv2.dilate(horizontal_lines, horizontal_kernel, iterations=2)
+    
+    # Vertical kernel for vertical scratches
+    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 25))
+    vertical_lines = cv2.morphologyEx(scratch_mask, cv2.MORPH_OPEN, vertical_kernel, iterations=2)
+    vertical_lines = cv2.dilate(vertical_lines, vertical_kernel, iterations=2)
+    
+    # Diagonal scratches (using rotated kernels)
+    kernel_45 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 1))
+    kernel_45 = cv2.getRotationMatrix2D((7, 0), 45, 1)
+    # Simplified: use line detection
+    lines = cv2.HoughLinesP(scratch_mask, 1, np.pi/180, threshold=50, minLineLength=30, maxLineGap=10)
+    if lines is not None:
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            cv2.line(damage_mask, (x1, y1), (x2, y2), 255, 2)
+    
+    # Combine all scratch detections
+    damage_mask = cv2.bitwise_or(damage_mask, horizontal_lines)
+    damage_mask = cv2.bitwise_or(damage_mask, vertical_lines)
+    
+    # Method 2: Detect dust spots (small circular/irregular bright or dark spots)
+    # Use adaptive thresholding to find spots that differ from surroundings
+    adaptive_thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                           cv2.THRESH_BINARY_INV, 11, 2)
+    
+    # Find contours of small spots
+    contours, _ = cv2.findContours(adaptive_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Filter for small spots (dust particles)
+    min_area = 5  # Minimum area for dust spot
+    max_area = 500  # Maximum area for dust spot (not too large)
+    
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if min_area < area < max_area:
+            # Draw filled contour on mask
+            cv2.drawContours(damage_mask, [contour], -1, 255, -1)
+    
+    # Method 3: Detect extreme outliers (very bright or very dark pixels)
+    # These are often scratches or dust
+    mean_val = np.mean(gray)
+    std_val = np.std(gray)
+    
+    # Pixels that are 3 standard deviations away from mean
+    outlier_mask = (gray > mean_val + 3*std_val) | (gray < mean_val - 3*std_val)
+    outlier_mask = outlier_mask.astype(np.uint8) * 255
+    
+    # Dilate outlier mask slightly
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    outlier_mask = cv2.dilate(outlier_mask, kernel, iterations=1)
+    
+    # Combine all damage detections
+    damage_mask = cv2.bitwise_or(damage_mask, outlier_mask)
+    
+    # Clean up the mask: remove very small isolated pixels
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    damage_mask = cv2.morphologyEx(damage_mask, cv2.MORPH_OPEN, kernel, iterations=1)
+    damage_mask = cv2.morphologyEx(damage_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+    
+    # Dilate slightly to ensure we cover the full damage area
+    damage_mask = cv2.dilate(damage_mask, kernel, iterations=1)
+    
+    return damage_mask
+
+
+@app.post("/api/test-restore")
+async def test_restore(
+    file: UploadFile = File(...),
+    remove_damage: bool = Form(True),
+    deblur: bool = Form(True),
+    denoise: bool = Form(True),
+    sharpen: float = Form(1.3),
+    contrast: float = Form(110.0),
+    brightness: float = Form(102.0),
+    deblur_strength: float = Form(1.5),
+    denoise_strength: float = Form(1.0),
+):
+    """Test endpoint for photo restoration: automatic damage removal, de-blur, and denoise"""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    try:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+        original_size = img.size
+        img = downscale_image_if_needed(img)
+        
+        # Convert to numpy array for OpenCV processing
+        img_array = np.array(img)
+        
+        # Step 1: Automatic damage removal (scratches, dust)
+        if remove_damage:
+            damage_mask = detect_damage(img_array)
+            
+            # Check if we found any damage
+            if np.any(damage_mask > 0):
+                # Convert to BGR for OpenCV
+                img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+                
+                # Use inpainting to remove damage
+                # Calculate dynamic radius based on image size
+                max_side = max(img_bgr.shape[:2])
+                dynamic_radius = int(max(3, min(10, max_side / 200)))
+                
+                # Try LaMa first (best quality) if available
+                if _get_lama_manager() is not None:
+                    inpainted = lama_inpaint_torch(img_bgr, damage_mask)
+                    logger.info("Used LaMa for damage removal")
+                elif _get_lama_session() is not None:
+                    inpainted = lama_inpaint_onnx(img_bgr, damage_mask)
+                    logger.info("Used LaMa ONNX for damage removal")
+                else:
+                    # Fallback to OpenCV inpainting
+                    inpainted = cv2.inpaint(img_bgr, damage_mask, dynamic_radius, cv2.INPAINT_TELEA)
+                    # Second pass with NS for better structure
+                    inpainted = cv2.inpaint(inpainted, damage_mask, dynamic_radius, cv2.INPAINT_NS)
+                    logger.info("Used OpenCV for damage removal")
+                
+                # Convert back to RGB PIL Image
+                img = Image.fromarray(cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB))
+            else:
+                logger.info("No damage detected in image")
+        
+        # Step 2: Noise/Grain Removal
+        if denoise:
+            if denoise_strength >= 0.5:
+                img = img.filter(ImageFilter.MedianFilter(size=3))
+            if denoise_strength >= 1.0:
+                img = img.filter(ImageFilter.GaussianBlur(radius=0.5))
+        
+        # Step 3: De-blur
+        if deblur:
+            unsharp_percent = int(100 + (deblur_strength * 50))
+            img = img.filter(ImageFilter.UnsharpMask(
+                radius=2,
+                percent=unsharp_percent,
+                threshold=3
+            ))
+        
+        # Step 4: Traditional enhancements
+        if sharpen != 1.0:
+            sharp_enh = ImageEnhance.Sharpness(img)
+            img = sharp_enh.enhance(max(0.0, float(sharpen)))
+        
+        if contrast != 100.0:
+            cont_enh = ImageEnhance.Contrast(img)
+            img = cont_enh.enhance(max(0.0, float(contrast)) / 100.0)
+        
+        if brightness != 100.0:
+            bri_enh = ImageEnhance.Brightness(img)
+            img = bri_enh.enhance(max(0.0, float(brightness)) / 100.0)
+        
+        # Resize back to original if downscaled
+        if img.size != original_size:
+            img = img.resize(original_size, Image.Resampling.LANCZOS)
+        
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Test restore error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Photo restoration error: {str(e)}")
+
+
 @app.post("/api/remove-text")
 async def remove_text(
     request: Request,

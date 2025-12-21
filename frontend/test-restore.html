@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test Photo Restoration - Damage Removal</title>
+    <meta name="description" content="Test page for photo restoration with automatic damage removal (scratches, dust)">
+    <link rel="canonical" href="https://www.changeimageto.com/test-restore.html" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+      :root{--bg:#0b0f13;--fg:#eaf0f6;--muted:#9aa7b2;--accent:#6aa7ff;--card:#12171d;--border:#1e2630}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+      .container{max-width:1200px;margin:0 auto;padding:24px}
+      .header h1{margin:0 0 8px}
+      .header p{margin:0;color:var(--muted)}
+      .logo-link{display:inline-flex;align-items:center;gap:10px;margin-bottom:10px;text-decoration:none;color:inherit}
+      .logo-img{height:36px;width:auto;display:block}
+      .uploader{position:relative;border:2px dashed var(--border);border-radius:12px;padding:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card)}
+      .uploader input{position:absolute;inset:0;opacity:0;cursor:pointer;display:block;width:100%;height:100%}
+      .uploader-instructions{display:flex;flex-direction:column;align-items:center;color:var(--muted)}
+      .uploader.drag{border-color:var(--accent);background:#101826}
+      button, .btn{background:var(--accent);color:#001633;border:none;padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+      .btn.secondary{background:transparent;color:var(--fg);border:1px solid var(--border)}
+      button[disabled]{opacity:.5;cursor:not-allowed}
+      .preview{margin-top:24px}
+      .preview-grid{display:grid;grid-template-columns:1fr;gap:16px}
+      @media(min-width:900px){.preview-grid{grid-template-columns:1fr 1fr}}
+      .preview img{width:100%;height:auto;border-radius:8px;display:block}
+      .actions{margin-top:12px;display:flex;gap:12px;flex-wrap:wrap}
+      .controls{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+      .controls label{display:block;margin-bottom:8px;font-weight:600;color:var(--fg)}
+      .control-group{margin-bottom:16px}
+      .control-row{display:flex;align-items:center;gap:12px;margin-top:8px}
+      .control-row label{flex:0 0 140px;font-weight:400}
+      .control-row input[type="range"]{flex:1}
+      .control-row input[type="number"]{width:80px;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--fg)}
+      .control-row input[type="checkbox"]{width:20px;height:20px;cursor:pointer}
+      .control-row span{flex:0 0 60px;text-align:right;color:var(--muted);font-size:14px}
+    </style>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="./logo.png?v=20250921-1" alt="ChangeImageTo" class="logo-img" loading="eager" width="200" height="68" /></a>
+      <h1>Test Photo Restoration</h1>
+      <p>Automatic damage removal (scratches, dust), de-blur, and denoise</p>
+    </header>
+
+    <main class="container main">
+      <form id="upload-form">
+        <div class="controls">
+          <div class="control-group">
+            <label>Restoration Controls</label>
+            <div class="control-row">
+              <label>Remove Damage (Scratches/Dust):</label>
+              <input type="checkbox" id="remove-damage" checked>
+              <span></span>
+            </div>
+            <div class="control-row">
+              <label>De-blur:</label>
+              <input type="checkbox" id="deblur" checked>
+              <span></span>
+            </div>
+            <div class="control-row">
+              <label>De-blur Strength:</label>
+              <input type="range" id="deblur-strength" min="0.5" max="3.0" step="0.1" value="1.5">
+              <input type="number" id="deblur-strength-value" min="0.5" max="3.0" step="0.1" value="1.5">
+              <span id="deblur-strength-display">1.5</span>
+            </div>
+            <div class="control-row">
+              <label>Remove Noise/Grain:</label>
+              <input type="checkbox" id="denoise" checked>
+              <span></span>
+            </div>
+            <div class="control-row">
+              <label>Denoise Strength:</label>
+              <input type="range" id="denoise-strength" min="0.5" max="2.0" step="0.1" value="1.0">
+              <input type="number" id="denoise-strength-value" min="0.5" max="2.0" step="0.1" value="1.0">
+              <span id="denoise-strength-display">1.0</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label>Enhancement Controls</label>
+            <div class="control-row">
+              <label>Sharpen:</label>
+              <input type="range" id="sharpen" min="0.5" max="2.0" step="0.1" value="1.3">
+              <input type="number" id="sharpen-value" min="0.5" max="2.0" step="0.1" value="1.3">
+              <span id="sharpen-display">1.3</span>
+            </div>
+            <div class="control-row">
+              <label>Contrast:</label>
+              <input type="range" id="contrast" min="80" max="150" step="5" value="110">
+              <input type="number" id="contrast-value" min="80" max="150" step="5" value="110">
+              <span id="contrast-display">110%</span>
+            </div>
+            <div class="control-row">
+              <label>Brightness:</label>
+              <input type="range" id="brightness" min="80" max="120" step="2" value="102">
+              <input type="number" id="brightness-value" min="80" max="120" step="2" value="102">
+              <span id="brightness-display">102%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="uploader" id="dropzone">
+          <input type="file" id="file-input" accept="image/*" />
+          <div class="uploader-instructions">
+            <strong>Drop image here</strong>
+            <span>or click to browse</span>
+          </div>
+        </div>
+
+        <button id="process-btn" type="submit" disabled>Restore Photo</button>
+      </form>
+
+      <section class="preview" id="preview-section" hidden>
+        <div class="preview-grid">
+          <div>
+            <h3>Original</h3>
+            <img id="original-img" alt="Original preview" />
+          </div>
+          <div>
+            <h3>Restored</h3>
+            <p id="process-prompt" class="prompt">Press "Restore Photo" to process.</p>
+            <div id="result-wrapper" hidden>
+              <img id="result-img" alt="Restored result" />
+              <div class="actions">
+                <a id="download-link" download="restored.png" class="btn">Download PNG</a>
+                <button id="reset-btn" class="btn secondary" type="button">Try Another Image</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const dropzone = document.getElementById('dropzone');
+        const processBtn = document.getElementById('process-btn');
+        const originalImg = document.getElementById('original-img');
+        const resultImg = document.getElementById('result-img');
+        const previewSection = document.getElementById('preview-section');
+        const resultWrapper = document.getElementById('result-wrapper');
+        const processPrompt = document.getElementById('process-prompt');
+        const downloadLink = document.getElementById('download-link');
+        const resetBtn = document.getElementById('reset-btn');
+        let currentFile = null;
+
+        // Sync sliders with number inputs
+        function syncControls() {
+          const controls = [
+            { slider: 'sharpen', number: 'sharpen-value', display: 'sharpen-display', format: v => v.toFixed(1) },
+            { slider: 'contrast', number: 'contrast-value', display: 'contrast-display', format: v => v + '%' },
+            { slider: 'brightness', number: 'brightness-value', display: 'brightness-display', format: v => v + '%' },
+            { slider: 'deblur-strength', number: 'deblur-strength-value', display: 'deblur-strength-display', format: v => v.toFixed(1) },
+            { slider: 'denoise-strength', number: 'denoise-strength-value', display: 'denoise-strength-display', format: v => v.toFixed(1) }
+          ];
+
+          controls.forEach(({ slider, number, display, format }) => {
+            const sliderEl = document.getElementById(slider);
+            const numberEl = document.getElementById(number);
+            const displayEl = document.getElementById(display);
+
+            if (sliderEl && numberEl && displayEl) {
+              sliderEl.addEventListener('input', function() {
+                const val = parseFloat(this.value);
+                numberEl.value = val;
+                displayEl.textContent = format(val);
+              });
+
+              numberEl.addEventListener('input', function() {
+                const val = parseFloat(this.value);
+                sliderEl.value = val;
+                displayEl.textContent = format(val);
+              });
+            }
+          });
+        }
+        syncControls();
+
+        // File input handling
+        fileInput.addEventListener('change', function(e) {
+          if (e.target.files.length > 0) {
+            currentFile = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              originalImg.src = e.target.result;
+              previewSection.hidden = false;
+              processPrompt.style.display = 'block';
+              resultWrapper.hidden = true;
+            };
+            reader.readAsDataURL(currentFile);
+            processBtn.disabled = false;
+          }
+        });
+
+        // Drag and drop
+        dropzone.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          dropzone.classList.add('drag');
+        });
+        dropzone.addEventListener('dragleave', function() {
+          dropzone.classList.remove('drag');
+        });
+        dropzone.addEventListener('drop', function(e) {
+          e.preventDefault();
+          dropzone.classList.remove('drag');
+          if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change'));
+          }
+        });
+
+        // Form submission
+        form.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          if (!currentFile) return;
+
+          processBtn.disabled = true;
+          processBtn.textContent = 'Processing…';
+
+          const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+
+          const formData = new FormData();
+          formData.append('file', currentFile);
+          formData.append('remove_damage', document.getElementById('remove-damage').checked);
+          formData.append('deblur', document.getElementById('deblur').checked);
+          formData.append('denoise', document.getElementById('denoise').checked);
+          formData.append('sharpen', document.getElementById('sharpen').value);
+          formData.append('contrast', document.getElementById('contrast').value);
+          formData.append('brightness', document.getElementById('brightness').value);
+          formData.append('deblur_strength', document.getElementById('deblur-strength').value);
+          formData.append('denoise_strength', document.getElementById('denoise-strength').value);
+
+          try {
+            const response = await fetch(`${API_BASE}/api/test-restore`, {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(errorText || 'Processing failed');
+            }
+
+            const blob = await response.blob();
+            const imageUrl = URL.createObjectURL(blob);
+            
+            resultImg.src = imageUrl;
+            downloadLink.href = imageUrl;
+            downloadLink.download = `restored-${Date.now()}.png`;
+
+            processPrompt.style.display = 'none';
+            resultWrapper.hidden = false;
+            processBtn.disabled = false;
+            processBtn.textContent = 'Restore Photo';
+          } catch (error) {
+            alert('Error processing image: ' + error.message);
+            processBtn.disabled = false;
+            processBtn.textContent = 'Restore Photo';
+          }
+        });
+
+        // Reset button
+        resetBtn.addEventListener('click', function() {
+          currentFile = null;
+          fileInput.value = '';
+          originalImg.src = '';
+          resultImg.src = '';
+          if (downloadLink.href && downloadLink.href.startsWith('blob:')) {
+            URL.revokeObjectURL(downloadLink.href);
+          }
+          downloadLink.removeAttribute('href');
+          previewSection.hidden = true;
+          processBtn.disabled = true;
+        });
+      });
+    </script>
+  </body>
+</html>
