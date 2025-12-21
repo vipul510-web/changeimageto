@@ -62,6 +62,31 @@ except Exception:
 
 _LAMA_MANAGER = None
 
+# Upscayl/Real-ESRGAN NCNN-Vulkan binary path (for local testing)
+# Upscayl uses Real-ESRGAN NCNN under the hood
+UPSCAYL_NCNN_PATH = os.getenv("UPSCAYL_NCNN_PATH", "./realesrgan-ncnn-vulkan")
+UPSCAYL_MODELS_PATH = os.getenv("UPSCAYL_MODELS_PATH", "./realesrgan-models")
+
+def _check_upscayl_ncnn_available():
+    """Check if Upscayl NCNN binary is available (same as Real-ESRGAN NCNN)"""
+    # Check multiple possible locations
+    possible_paths = [
+        UPSCAYL_NCNN_PATH,
+        "./realesrgan-ncnn-vulkan",
+        os.path.join(os.getcwd(), "realesrgan-ncnn-vulkan"),
+        os.path.join(os.path.dirname(__file__), "..", "realesrgan-ncnn-vulkan"),
+        "/usr/local/bin/realesrgan-ncnn-vulkan",
+    ]
+    
+    for path in possible_paths:
+        abs_path = os.path.abspath(path) if not os.path.isabs(path) else path
+        if os.path.exists(abs_path) and os.access(abs_path, os.X_OK):
+            logger.info(f"Found Upscayl NCNN binary at: {abs_path}")
+            return abs_path
+    
+    logger.warning(f"Upscayl NCNN binary not found. Checked: {possible_paths}")
+    return None
+
 app = FastAPI(title="BG Remover", description="Simple background removal API", version="1.0.0")
 
 @app.get("/")
@@ -3537,6 +3562,159 @@ async def test_restore(
     except Exception as e:
         logger.error(f"Test restore error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Photo restoration error: {str(e)}")
+
+
+@app.post("/api/test-upscayl")
+async def test_upscayl(
+    file: UploadFile = File(...),
+    scale: int = Form(4),
+    model: str = Form("realesrgan-x4plus"),
+):
+    """
+    Test endpoint for Upscayl (Real-ESRGAN NCNN) image upscaling.
+    Tests if Upscayl can restore/upscale images as claimed.
+    
+    Args:
+        file: Image file to upscale
+        scale: Upscale factor (2, 3, or 4). Default is 4.
+        model: Model name. Options: realesrgan-x4plus (default), realesrnet-x4plus, 
+               realesrgan-x4plus-anime, realesr-animevideov3
+    """
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    if scale not in [2, 3, 4]:
+        raise HTTPException(status_code=400, detail="Scale must be 2, 3, or 4")
+    
+    binary_path = _check_upscayl_ncnn_available()
+    if not binary_path:
+        raise HTTPException(
+            status_code=503,
+            detail="Upscayl NCNN binary not available. Download from: https://github.com/xinntao/Real-ESRGAN/releases"
+        )
+    
+    try:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+        original_size = img.size
+        
+        # Create temporary files for input and output
+        tmp_dir = tempfile.gettempdir()
+        input_path = os.path.join(tmp_dir, f"upscayl_input_{os.getpid()}.png")
+        output_path = os.path.join(tmp_dir, f"upscayl_output_{os.getpid()}.png")
+        
+        # Save input image
+        img.save(input_path, format="PNG")
+        logger.info(f"Saved input image to: {input_path} ({img.size})")
+        
+        try:
+            # Build command for realesrgan-ncnn-vulkan (Upscayl backend)
+            cmd = [
+                binary_path,
+                "-i", input_path,
+                "-o", output_path,
+                "-n", model,
+                "-s", str(scale),
+                "-f", "png",
+                "-t", "0",  # Auto tile size
+            ]
+            
+            # Add GPU ID if specified
+            gpu_id = os.getenv("UPSCAYL_GPU_ID", "0")
+            if gpu_id != "auto":
+                cmd.extend(["-g", str(gpu_id)])
+            
+            logger.info(f"Running Upscayl NCNN: {' '.join(cmd)}")
+            
+            # Set working directory to where models are located
+            binary_dir = os.path.dirname(os.path.abspath(binary_path)) or os.getcwd()
+            models_dir = os.path.join(binary_dir, "models")
+            
+            # Ensure models are accessible
+            if os.path.exists(UPSCAYL_MODELS_PATH) and os.path.isdir(UPSCAYL_MODELS_PATH):
+                if not os.path.exists(models_dir) or UPSCAYL_MODELS_PATH != models_dir:
+                    try:
+                        os.makedirs(models_dir, exist_ok=True)
+                        import shutil
+                        for model_file in os.listdir(UPSCAYL_MODELS_PATH):
+                            src = os.path.join(UPSCAYL_MODELS_PATH, model_file)
+                            dst = os.path.join(models_dir, model_file)
+                            if os.path.isfile(src) and (not os.path.exists(dst) or os.path.getmtime(src) > os.path.getmtime(dst)):
+                                shutil.copy2(src, dst)
+                                logger.debug(f"Copied model file: {model_file}")
+                    except Exception as e:
+                        logger.warning(f"Could not set up models directory: {e}")
+            
+            # Run the command
+            logger.info(f"Working directory: {binary_dir}")
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=300,  # 5 minute timeout
+                cwd=binary_dir,
+            )
+            
+            if result.returncode != 0:
+                error_msg = result.stderr or result.stdout or "Unknown error"
+                logger.error(f"Upscayl NCNN failed (return code {result.returncode}): {error_msg}")
+                logger.error(f"Command was: {' '.join(cmd)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Upscaling failed: {error_msg[:500]}"
+                )
+            
+            # Check if output file exists and is valid
+            if not os.path.exists(output_path):
+                logger.error(f"Output file not created at {output_path}")
+                logger.error(f"Command stdout: {result.stdout}")
+                logger.error(f"Command stderr: {result.stderr}")
+                raise HTTPException(status_code=500, detail="Output file was not created. Check logs for details.")
+            
+            # Check file size
+            file_size = os.path.getsize(output_path)
+            if file_size == 0:
+                logger.error(f"Output file is empty: {output_path}")
+                raise HTTPException(status_code=500, detail="Output file is empty. Processing may have failed.")
+            
+            logger.info(f"Output file created successfully: {output_path} ({file_size} bytes)")
+            
+            # Load the upscaled image
+            try:
+                upscaled_img = Image.open(output_path).convert("RGB")
+                logger.info(f"Loaded upscaled image: {upscaled_img.size} (original: {original_size})")
+            except Exception as e:
+                logger.error(f"Failed to load output image: {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to load output image: {str(e)}")
+            
+            # Verify the output size is reasonable
+            expected_size = (original_size[0] * scale, original_size[1] * scale)
+            if upscaled_img.size != expected_size:
+                logger.info(f"Output size {upscaled_img.size} != expected {expected_size}, resizing")
+                upscaled_img = upscaled_img.resize(expected_size, Image.Resampling.LANCZOS)
+            
+            buf = io.BytesIO()
+            upscaled_img.save(buf, format="PNG", optimize=False)
+            return Response(content=buf.getvalue(), media_type="image/png")
+            
+        finally:
+            # Clean up temporary files
+            try:
+                os.unlink(input_path)
+            except Exception:
+                pass
+            try:
+                os.unlink(output_path)
+            except Exception:
+                pass
+        
+    except HTTPException:
+        raise
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Upscaling timed out after 5 minutes")
+    except Exception as e:
+        logger.error(f"Test upscayl error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upscayl error: {str(e)}")
 
 
 @app.post("/api/remove-text")
