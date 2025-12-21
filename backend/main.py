@@ -3185,65 +3185,107 @@ def detect_damage_v2(img_array: np.ndarray, method: str = "conservative") -> np.
     # Use adaptive thresholds based on image statistics
     mean_intensity = np.mean(gray)
     std_intensity = np.std(gray)
+    median_intensity = np.median(gray)
     
     # Adjust thresholds based on detection mode
     if method == "aggressive":
-        bright_multiplier = 1.2  # More sensitive
-        dark_multiplier = 1.2
+        bright_multiplier = 0.8  # Much more sensitive for scratches
+        dark_multiplier = 0.8
+        # Also use percentile-based thresholds for better detection
+        bright_percentile = 85  # Top 15% intensity
+        dark_percentile = 15   # Bottom 15% intensity
     else:
-        bright_multiplier = 1.5  # Conservative
-        dark_multiplier = 1.5
+        bright_multiplier = 1.2  # More sensitive than before
+        dark_multiplier = 1.2
+        bright_percentile = 90
+        dark_percentile = 10
     
-    # Detect bright scratches (above mean + threshold*std)
+    # Method 1: Statistical thresholding
     bright_thresh = mean_intensity + bright_multiplier * std_intensity
-    _, bright_mask = cv2.threshold(gray, int(min(255, bright_thresh)), 255, cv2.THRESH_BINARY)
+    _, bright_mask1 = cv2.threshold(gray, int(min(255, bright_thresh)), 255, cv2.THRESH_BINARY)
     
-    # Detect dark scratches (below mean - threshold*std)
     dark_thresh = mean_intensity - dark_multiplier * std_intensity
-    _, dark_mask = cv2.threshold(gray, int(max(0, dark_thresh)), 255, cv2.THRESH_BINARY_INV)
+    _, dark_mask1 = cv2.threshold(gray, int(max(0, dark_thresh)), 255, cv2.THRESH_BINARY_INV)
     
-    # Combine bright and dark scratch candidates
-    scratch_candidates = cv2.bitwise_or(bright_mask, dark_mask)
+    # Method 2: Percentile-based thresholding (catches more scratches)
+    bright_percentile_val = np.percentile(gray, bright_percentile)
+    dark_percentile_val = np.percentile(gray, dark_percentile)
+    _, bright_mask2 = cv2.threshold(gray, int(bright_percentile_val), 255, cv2.THRESH_BINARY)
+    _, dark_mask2 = cv2.threshold(gray, int(dark_percentile_val), 255, cv2.THRESH_BINARY_INV)
+    
+    # Method 3: Detect scratches as lines that differ significantly from local median
+    # This catches scratches that might not be extreme outliers globally
+    local_median = cv2.medianBlur(gray, 15)  # Local median over larger area
+    diff_from_local = cv2.absdiff(gray, local_median)
+    _, local_diff_mask = cv2.threshold(diff_from_local, int(std_intensity * 0.8), 255, cv2.THRESH_BINARY)
+    
+    # Combine all methods
+    scratch_candidates = cv2.bitwise_or(bright_mask1, dark_mask1)
+    scratch_candidates = cv2.bitwise_or(scratch_candidates, bright_mask2)
+    scratch_candidates = cv2.bitwise_or(scratch_candidates, dark_mask2)
+    scratch_candidates = cv2.bitwise_or(scratch_candidates, local_diff_mask)
     
     # Use morphological operations to find linear structures
+    # Make kernels longer to catch more scratches
     # Horizontal scratches
-    h_kernel_size = max(15, int(w / 30))  # Adaptive kernel size
+    h_kernel_size = max(20, int(w / 20))  # Longer kernels for better detection
     horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (h_kernel_size, 1))
-    h_lines = cv2.morphologyEx(scratch_candidates, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
-    h_lines = cv2.dilate(h_lines, horizontal_kernel, iterations=1)
+    h_lines = cv2.morphologyEx(scratch_candidates, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
+    h_lines = cv2.dilate(h_lines, horizontal_kernel, iterations=2)
     
     # Vertical scratches
-    v_kernel_size = max(15, int(h / 30))
+    v_kernel_size = max(20, int(h / 20))
     vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, v_kernel_size))
-    v_lines = cv2.morphologyEx(scratch_candidates, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
-    v_lines = cv2.dilate(v_lines, vertical_kernel, iterations=1)
+    v_lines = cv2.morphologyEx(scratch_candidates, cv2.MORPH_OPEN, vertical_kernel, iterations=2)
+    v_lines = cv2.dilate(v_lines, vertical_kernel, iterations=2)
     
-    # Diagonal scratches using Hough line detection
-    # Only detect lines that are clearly linear (not part of image content)
-    edges = cv2.Canny(gray, 50, 150)
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=max(30, int(min(h, w) / 20)), 
-                            minLineLength=max(20, int(min(h, w) / 15)), maxLineGap=5)
+    # Diagonal scratches (45 and 135 degrees)
+    diag_kernel_size = max(15, int(min(h, w) / 25))
+    # Create diagonal kernels
+    diag_kernel_45 = np.zeros((diag_kernel_size, diag_kernel_size), np.uint8)
+    cv2.line(diag_kernel_45, (0, diag_kernel_size-1), (diag_kernel_size-1, 0), 255, 1)
+    diag_lines_45 = cv2.morphologyEx(scratch_candidates, cv2.MORPH_OPEN, diag_kernel_45, iterations=1)
+    
+    diag_kernel_135 = np.zeros((diag_kernel_size, diag_kernel_size), np.uint8)
+    cv2.line(diag_kernel_135, (0, 0), (diag_kernel_size-1, diag_kernel_size-1), 255, 1)
+    diag_lines_135 = cv2.morphologyEx(scratch_candidates, cv2.MORPH_OPEN, diag_kernel_135, iterations=1)
+    
+    # Diagonal scratches using Hough line detection (more sensitive)
+    # Use lower thresholds to catch more scratches
+    edges = cv2.Canny(gray, 30, 100)  # Lower thresholds for more edge detection
+    hough_threshold = max(20, int(min(h, w) / 30))  # Lower threshold
+    min_line_length = max(15, int(min(h, w) / 20))  # Shorter lines
+    max_line_gap = 8  # Allow larger gaps
+    
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=hough_threshold, 
+                            minLineLength=min_line_length, maxLineGap=max_line_gap)
     
     scratch_mask = np.zeros_like(gray)
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
             length = np.sqrt((x2-x1)**2 + (y2-y1)**2)
-            # Only mark long, thin lines as scratches
-            if length > max(30, min(h, w) / 10):
-                # Check if this line area has high contrast (likely a scratch)
+            # Accept shorter lines too (scratches can be short)
+            if length > max(20, min(h, w) / 15):
+                # Check if this line area differs from surroundings
                 line_mask = np.zeros_like(gray)
-                cv2.line(line_mask, (x1, y1), (x2, y2), 255, 2)
+                cv2.line(line_mask, (x1, y1), (x2, y2), 255, 3)  # Thicker line for region check
                 line_region = gray[line_mask > 0]
                 if len(line_region) > 0:
-                    line_std = np.std(line_region)
-                    # High std in a thin line suggests a scratch
-                    if line_std > std_intensity * 0.8:
-                        cv2.line(scratch_mask, (x1, y1), (x2, y2), 255, 1)
+                    # Check if line is significantly different from local area
+                    line_mean = np.mean(line_region)
+                    # Get surrounding area
+                    kernel = np.ones((15, 15), np.float32) / 225
+                    local_mean = cv2.filter2D(gray.astype(np.float32), -1, kernel)
+                    # Check if line differs from local mean
+                    if abs(line_mean - local_mean[y1, x1]) > std_intensity * 0.5:
+                        cv2.line(scratch_mask, (x1, y1), (x2, y2), 255, 2)  # Thicker for better coverage
     
     # Combine all scratch detections
     scratch_mask = cv2.bitwise_or(scratch_mask, h_lines)
     scratch_mask = cv2.bitwise_or(scratch_mask, v_lines)
+    scratch_mask = cv2.bitwise_or(scratch_mask, diag_lines_45)
+    scratch_mask = cv2.bitwise_or(scratch_mask, diag_lines_135)
     
     # Strategy 3: Dust spot detection (small isolated spots)
     # Use median filter to create a "clean" version
@@ -3383,11 +3425,39 @@ async def test_restore(
                 
                 logger.info(f"Damage ratio: {damage_ratio:.4f}, Image size: {img_bgr.shape[:2]}")
                 
-                # Use smaller radius for smaller damage areas to avoid artifacts
-                if damage_ratio < 0.01:  # Less than 1% damage
-                    dynamic_radius = int(max(2, min(5, max_side / 300)))
+                # Calculate radius based on damage type and size
+                # Scratches need larger radius because they're thin but long
+                # Check if we have mostly linear damage (scratches) vs spots (dust)
+                # Count connected components to estimate scratch vs spot ratio
+                contours, _ = cv2.findContours(damage_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                if contours:
+                    # Calculate aspect ratio of damage regions
+                    aspect_ratios = []
+                    for contour in contours:
+                        if cv2.contourArea(contour) > 10:  # Ignore tiny noise
+                            x, y, w_cont, h_cont = cv2.boundingRect(contour)
+                            if min(w_cont, h_cont) > 0:
+                                aspect = max(w_cont, h_cont) / min(w_cont, h_cont)
+                                aspect_ratios.append(aspect)
+                    
+                    avg_aspect = np.mean(aspect_ratios) if aspect_ratios else 1.0
+                    # High aspect ratio = linear (scratches), low = circular (dust)
+                    is_mostly_scratches = avg_aspect > 3.0
+                    
+                    if is_mostly_scratches:
+                        # Scratches: use larger radius to cover the width
+                        dynamic_radius = int(max(5, min(12, max_side / 100)))  # Much larger for scratches
+                        logger.info(f"Detected mostly scratches (avg aspect ratio: {avg_aspect:.2f}), using larger radius")
+                    else:
+                        # Spots/dust: smaller radius
+                        if damage_ratio < 0.01:
+                            dynamic_radius = int(max(3, min(6, max_side / 200)))
+                        else:
+                            dynamic_radius = int(max(4, min(8, max_side / 150)))
+                        logger.info(f"Detected mostly spots (avg aspect ratio: {avg_aspect:.2f})")
                 else:
-                    dynamic_radius = int(max(3, min(8, max_side / 200)))
+                    # Fallback
+                    dynamic_radius = int(max(5, min(10, max_side / 150)))
                 
                 logger.info(f"Using inpainting radius: {dynamic_radius}")
                 
