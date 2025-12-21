@@ -72,10 +72,11 @@
             <div class="control-row">
               <label>Model:</label>
               <select id="model">
-                <option value="realesrgan-x4plus" selected>Real-ESRGAN x4+ (General)</option>
-                <option value="realesrnet-x4plus">Real-ESRNet x4+ (PSNR-focused)</option>
+                <option value="realesrgan-x4plus" selected>Real-ESRGAN x4+ (General - Best Quality)</option>
                 <option value="realesrgan-x4plus-anime">Real-ESRGAN Anime (Anime/Cartoon)</option>
-                <option value="realesr-animevideov3">Real-ESR Anime Video v3</option>
+                <option value="realesr-animevideov3-x2">Real-ESR Anime Video v3 (2x)</option>
+                <option value="realesr-animevideov3-x3">Real-ESR Anime Video v3 (3x)</option>
+                <option value="realesr-animevideov3-x4">Real-ESR Anime Video v3 (4x)</option>
               </select>
               <span></span>
             </div>
@@ -184,8 +185,23 @@
 
           const formData = new FormData();
           formData.append('file', currentFile);
-          formData.append('scale', document.getElementById('scale').value);
-          formData.append('model', document.getElementById('model').value);
+          const scaleValue = document.getElementById('scale').value;
+          formData.append('scale', scaleValue);
+          
+          // Handle model selection - some models have scale in their name
+          let modelValue = document.getElementById('model').value;
+          // If model has scale suffix (x2, x3, x4), use that scale
+          if (modelValue.includes('-x2')) {
+            modelValue = modelValue.replace('-x2', '');
+            formData.append('scale', '2');
+          } else if (modelValue.includes('-x3')) {
+            modelValue = modelValue.replace('-x3', '');
+            formData.append('scale', '3');
+          } else if (modelValue.includes('-x4')) {
+            modelValue = modelValue.replace('-x4', '');
+            formData.append('scale', '4');
+          }
+          formData.append('model', modelValue);
 
           try {
             const response = await fetch(`${API_BASE}/api/test-upscayl`, {
