@@ -480,7 +480,7 @@ const form = document.getElementById('upload-form');
 if (form) form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if(!currentFile) return;
-  
+
   // Get page type and action details for tracking
   const pageType = getPageType();
   const targetColor = document.body.getAttribute('data-target-color') || document.getElementById('bg-color')?.value;
@@ -629,6 +629,11 @@ if (form) form.addEventListener('submit', async (e) => {
       if (preset === 'soft') { body.append('sharpen', '1.0'); body.append('contrast', '105'); body.append('brightness', '100'); }
       if (preset === 'balanced') { body.append('sharpen', '1.3'); body.append('contrast', '110'); body.append('brightness', '102'); }
       if (preset === 'strong') { body.append('sharpen', '1.6'); body.append('contrast', '120'); body.append('brightness', '105'); }
+      // Add de-blur and denoise parameters
+      body.append('deblur', document.getElementById('deblur')?.checked !== false ? 'true' : 'false');
+      body.append('denoise', document.getElementById('denoise')?.checked !== false ? 'true' : 'false');
+      body.append('deblur_strength', document.getElementById('deblur-strength')?.value || '1.5');
+      body.append('denoise_strength', document.getElementById('denoise-strength')?.value || '1.0');
     } else if (window.location.pathname === '/remove-text-from-image.html') {
       endpoint = '/api/remove-text';
     
@@ -650,13 +655,13 @@ if (form) form.addEventListener('submit', async (e) => {
         if (backgroundBlur && backgroundBlur.value) body.append('background_blur', backgroundBlur.value);
       } else {
         // Check for solid color background
-        var hidden = document.getElementById('bg-color');
-        if(hidden) body.append('bg_color', hidden.value);
-        // If a swatch is active, prefer that color
-        var activeSwatch = document.querySelector('#color-palette .swatch.active');
-        if(activeSwatch){ body.append('bg_color', activeSwatch.getAttribute('data-color')); }
-        var pageColor = document.body.getAttribute('data-target-color');
-        if(pageColor) body.append('bg_color', pageColor);
+      var hidden = document.getElementById('bg-color');
+      if(hidden) body.append('bg_color', hidden.value);
+      // If a swatch is active, prefer that color
+      var activeSwatch = document.querySelector('#color-palette .swatch.active');
+      if(activeSwatch){ body.append('bg_color', activeSwatch.getAttribute('data-color')); }
+      var pageColor = document.body.getAttribute('data-target-color');
+      if(pageColor) body.append('bg_color', pageColor);
       }
     }
 
@@ -685,7 +690,7 @@ if (form) form.addEventListener('submit', async (e) => {
           downloadLink.download = `enhanced-${Date.now()}.png`;
         } else if (pageType === 'remove_text') {
           downloadLink.download = `text-removed-${Date.now()}.png`;
-
+        
         } else {
           downloadLink.download = `bg-removed-${Date.now()}.png`;
         }

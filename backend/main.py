@@ -3028,26 +3028,58 @@ async def enhance_image(
     sharpen: float = Form(1.0),
     contrast: float = Form(105.0),
     brightness: float = Form(100.0),
+    deblur: bool = Form(True),
+    denoise: bool = Form(True),
+    deblur_strength: float = Form(1.5),
+    denoise_strength: float = Form(1.0),
 ):
-    """Simple photo enhancement: unsharp + mild contrast/brightness tweaks."""
+    """Enhanced photo processing with de-blur, noise removal, and traditional enhancements."""
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
     try:
         contents = await file.read()
         img = Image.open(io.BytesIO(contents)).convert("RGB")
+        original_size = img.size
         img = downscale_image_if_needed(img)
-        # Sharpen
+        
+        # Step 1: Noise/Grain Removal (apply first, before sharpening)
+        if denoise:
+            # Apply median filter for salt-and-pepper noise removal
+            if denoise_strength >= 0.5:
+                img = img.filter(ImageFilter.MedianFilter(size=3))
+            
+            # Additional denoising: slight Gaussian blur then sharpen (removes grain)
+            if denoise_strength >= 1.0:
+                # Very light Gaussian blur to smooth grain
+                img = img.filter(ImageFilter.GaussianBlur(radius=0.5))
+        
+        # Step 2: De-blur (unsharp mask for de-blurring)
+        if deblur:
+            # Apply unsharp mask filter for de-blurring
+            unsharp_percent = int(100 + (deblur_strength * 50))  # 100-200% range
+            img = img.filter(ImageFilter.UnsharpMask(
+                radius=2,
+                percent=unsharp_percent,
+                threshold=3
+            ))
+        
+        # Step 3: Traditional enhancements (sharpness, contrast, brightness)
         if sharpen != 1.0:
             sharp_enh = ImageEnhance.Sharpness(img)
             img = sharp_enh.enhance(max(0.0, float(sharpen)))
-        # Contrast
+        
         if contrast != 100.0:
             cont_enh = ImageEnhance.Contrast(img)
             img = cont_enh.enhance(max(0.0, float(contrast)) / 100.0)
-        # Brightness
+        
         if brightness != 100.0:
             bri_enh = ImageEnhance.Brightness(img)
             img = bri_enh.enhance(max(0.0, float(brightness)) / 100.0)
+        
+        # Resize back to original if downscaled
+        if img.size != original_size:
+            img = img.resize(original_size, Image.Resampling.LANCZOS)
+        
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         return Response(content=buf.getvalue(), media_type="image/png")

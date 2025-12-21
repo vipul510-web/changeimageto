@@ -68,12 +68,46 @@ document.addEventListener("DOMContentLoaded", () => {
     <main class="container main">
       <form id="upload-form">
         <div class="controls">
-          <label>Enhancement Presets</label>
-          <select id="enhance-preset" aria-label="Enhancement Level">
-            <option value="soft">Soft</option>
-            <option value="balanced" selected>Balanced</option>
-            <option value="strong">Strong</option>
-          </select>
+          <div style="margin-bottom:20px">
+            <label>Enhancement Presets</label>
+            <select id="enhance-preset" aria-label="Enhancement Level">
+              <option value="soft">Soft</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="strong">Strong</option>
+            </select>
+          </div>
+
+          <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border,#1e2630)">
+            <label style="margin-bottom:16px;display:block;font-weight:600">Advanced Controls</label>
+            
+            <div style="margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+                <label style="flex:0 0 140px;font-weight:400">De-blur:</label>
+                <input type="checkbox" id="deblur" checked style="width:20px;height:20px;cursor:pointer">
+                <span style="flex:1"></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <label style="flex:0 0 140px;font-weight:400">De-blur Strength:</label>
+                <input type="range" id="deblur-strength" min="0.5" max="3.0" step="0.1" value="1.5" style="flex:1">
+                <input type="number" id="deblur-strength-value" min="0.5" max="3.0" step="0.1" value="1.5" style="width:80px;padding:6px;background:var(--bg,#0b0f13);border:1px solid var(--border,#1e2630);border-radius:6px;color:var(--fg,#eaf0f6)">
+                <span style="flex:0 0 50px;text-align:right;color:var(--muted,#9aa7b2);font-size:14px" id="deblur-strength-display">1.5</span>
+              </div>
+            </div>
+
+            <div style="margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+                <label style="flex:0 0 140px;font-weight:400">Remove Noise/Grain:</label>
+                <input type="checkbox" id="denoise" checked style="width:20px;height:20px;cursor:pointer">
+                <span style="flex:1"></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <label style="flex:0 0 140px;font-weight:400">Denoise Strength:</label>
+                <input type="range" id="denoise-strength" min="0.5" max="2.0" step="0.1" value="1.0" style="flex:1">
+                <input type="number" id="denoise-strength-value" min="0.5" max="2.0" step="0.1" value="1.0" style="width:80px;padding:6px;background:var(--bg,#0b0f13);border:1px solid var(--border,#1e2630);border-radius:6px;color:var(--fg,#eaf0f6)">
+                <span style="flex:0 0 50px;text-align:right;color:var(--muted,#9aa7b2);font-size:14px" id="denoise-strength-display">1.0</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="uploader" id="dropzone">
@@ -244,6 +278,38 @@ document.addEventListener("DOMContentLoaded", () => {
     </footer>
 
     <script src="./script.js?v=20251220-1" defer></script>
+    <script>
+      // Sync sliders with number inputs for advanced controls
+      document.addEventListener('DOMContentLoaded', function() {
+        function syncControls() {
+          const controls = [
+            { slider: 'deblur-strength', number: 'deblur-strength-value', display: 'deblur-strength-display', format: v => v.toFixed(1) },
+            { slider: 'denoise-strength', number: 'denoise-strength-value', display: 'denoise-strength-display', format: v => v.toFixed(1) }
+          ];
+
+          controls.forEach(({ slider, number, display, format }) => {
+            const sliderEl = document.getElementById(slider);
+            const numberEl = document.getElementById(number);
+            const displayEl = document.getElementById(display);
+
+            if (sliderEl && numberEl && displayEl) {
+              sliderEl.addEventListener('input', function() {
+                const val = parseFloat(this.value);
+                numberEl.value = val;
+                displayEl.textContent = format(val);
+              });
+
+              numberEl.addEventListener('input', function() {
+                const val = parseFloat(this.value);
+                sliderEl.value = val;
+                displayEl.textContent = format(val);
+              });
+            }
+          });
+        }
+        syncControls();
+      });
+    </script>
   </body>
 </html>
 
