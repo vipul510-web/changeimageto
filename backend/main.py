@@ -3525,12 +3525,14 @@ async def test_upscale(
         original_size = img.size
         
         # Create temporary files for input and output
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_input:
-            img.save(tmp_input.name, format="PNG")
-            input_path = tmp_input.name
+        # Use absolute paths to avoid issues with working directory changes
+        tmp_dir = tempfile.gettempdir()
+        input_path = os.path.join(tmp_dir, f"realesrgan_input_{os.getpid()}.png")
+        output_path = os.path.join(tmp_dir, f"realesrgan_output_{os.getpid()}.png")
         
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_output:
-            output_path = tmp_output.name
+        # Save input image
+        img.save(input_path, format="PNG")
+        logger.info(f"Saved input image to: {input_path} ({img.size})")
         
         try:
             # Build command for realesrgan-ncnn-vulkan
@@ -3545,12 +3547,6 @@ async def test_upscale(
                 "-f", "png",
                 "-t", "0",  # Auto tile size
             ]
-            
-            # Add model path if models are in a separate directory
-            if os.path.exists(REALESRGAN_MODELS_PATH) and os.path.isdir(REALESRGAN_MODELS_PATH):
-                # The binary looks for models in ./models by default, but we can set working directory
-                # or copy models. For now, we'll run from the models directory's parent.
-                pass  # Models should be in ./models relative to binary or in current directory
             
             # Add GPU ID if specified (for multi-GPU systems)
             gpu_id = os.getenv("REALESRGAN_GPU_ID", "0")
@@ -3583,6 +3579,7 @@ async def test_upscale(
                         logger.warning(f"Could not set up models directory: {e}")
             
             # Run the command
+            logger.info(f"Working directory: {cwd}, Binary: {REALESRGAN_NCNN_PATH}")
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -3593,17 +3590,35 @@ async def test_upscale(
             
             if result.returncode != 0:
                 error_msg = result.stderr or result.stdout or "Unknown error"
-                logger.error(f"Real-ESRGAN NCNN failed: {error_msg}")
+                logger.error(f"Real-ESRGAN NCNN failed (return code {result.returncode}): {error_msg}")
+                logger.error(f"Command was: {' '.join(cmd)}")
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Upscaling failed: {error_msg[:200]}"
+                    detail=f"Upscaling failed: {error_msg[:500]}"
                 )
             
-            # Load the upscaled image
+            # Check if output file exists and is valid
             if not os.path.exists(output_path):
-                raise HTTPException(status_code=500, detail="Output file was not created")
+                logger.error(f"Output file not created at {output_path}")
+                logger.error(f"Command stdout: {result.stdout}")
+                logger.error(f"Command stderr: {result.stderr}")
+                raise HTTPException(status_code=500, detail="Output file was not created. Check logs for details.")
             
-            upscaled_img = Image.open(output_path).convert("RGB")
+            # Check file size
+            file_size = os.path.getsize(output_path)
+            if file_size == 0:
+                logger.error(f"Output file is empty: {output_path}")
+                raise HTTPException(status_code=500, detail="Output file is empty. Processing may have failed.")
+            
+            logger.info(f"Output file created successfully: {output_path} ({file_size} bytes)")
+            
+            # Load the upscaled image
+            try:
+                upscaled_img = Image.open(output_path).convert("RGB")
+                logger.info(f"Loaded upscaled image: {upscaled_img.size}")
+            except Exception as e:
+                logger.error(f"Failed to load output image: {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to load output image: {str(e)}")
             
             # Verify the output size is reasonable
             expected_size = (original_size[0] * scale, original_size[1] * scale)
