@@ -207,11 +207,24 @@
               throw new Error(errorMsg);
             }
 
+            // Check content type first
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.startsWith('image/')) {
+              const errorText = await response.text();
+              throw new Error(`Server returned ${contentType} instead of image. Error: ${errorText.substring(0, 200)}`);
+            }
+            
             const blob = await response.blob();
             
             // Check if we got an actual image
             if (blob.size === 0) {
               throw new Error('Received empty response from server');
+            }
+            
+            // Verify it's actually an image by checking blob type
+            if (!blob.type.startsWith('image/')) {
+              const text = await blob.text();
+              throw new Error(`Response is not an image. Content: ${text.substring(0, 200)}`);
             }
             
             const imageUrl = URL.createObjectURL(blob);
