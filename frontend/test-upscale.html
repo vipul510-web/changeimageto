@@ -178,7 +178,10 @@
           processBtn.textContent = 'Processing… (This may take 30-60 seconds)';
 
           const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-          const API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+          // Try to detect backend port from current page, fallback to 8000
+          const currentPort = window.location.port || '8080';
+          const backendPort = currentPort === '8080' ? '8000' : currentPort;
+          const API_BASE = isLocal ? `http://127.0.0.1:${backendPort}` : 'https://bgremover-backend-121350814881.us-central1.run.app';
 
           const formData = new FormData();
           formData.append('file', currentFile);
@@ -193,25 +196,45 @@
 
             if (!response.ok) {
               const errorText = await response.text();
-              throw new Error(errorText || 'Processing failed');
+              let errorMsg = errorText || 'Processing failed';
+              // Try to parse JSON error if possible
+              try {
+                const errorJson = JSON.parse(errorText);
+                errorMsg = errorJson.detail || errorMsg;
+              } catch (e) {
+                // Not JSON, use as-is
+              }
+              throw new Error(errorMsg);
             }
 
             const blob = await response.blob();
+            
+            // Check if we got an actual image
+            if (blob.size === 0) {
+              throw new Error('Received empty response from server');
+            }
+            
             const imageUrl = URL.createObjectURL(blob);
+            
+            resultImg.onerror = function() {
+              alert('Failed to load upscaled image. The image format may be invalid.');
+              processBtn.disabled = false;
+              processBtn.textContent = 'Upscale Image';
+            };
             
             resultImg.src = imageUrl;
             resultImg.onload = function() {
               resultSize.textContent = `${resultImg.naturalWidth} × ${resultImg.naturalHeight} pixels`;
+              processPrompt.style.display = 'none';
+              resultWrapper.hidden = false;
+              processBtn.disabled = false;
+              processBtn.textContent = 'Upscale Image';
             };
             downloadLink.href = imageUrl;
             downloadLink.download = `upscaled-${Date.now()}.png`;
-
-            processPrompt.style.display = 'none';
-            resultWrapper.hidden = false;
-            processBtn.disabled = false;
-            processBtn.textContent = 'Upscale Image';
           } catch (error) {
-            alert('Error processing image: ' + error.message);
+            console.error('Upscale error:', error);
+            alert('Error processing image: ' + error.message + '\n\nCheck browser console for details.');
             processBtn.disabled = false;
             processBtn.textContent = 'Upscale Image';
           }

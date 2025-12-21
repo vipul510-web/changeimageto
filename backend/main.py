@@ -69,11 +69,23 @@ REALESRGAN_MODELS_PATH = os.getenv("REALESRGAN_MODELS_PATH", "/app/realesrgan-mo
 def _check_realesrgan_ncnn_available():
     """Check if realesrgan-ncnn-vulkan binary is available"""
     if not os.path.exists(REALESRGAN_NCNN_PATH):
+        logger.warning(f"Real-ESRGAN binary not found at {REALESRGAN_NCNN_PATH}")
+        # Try alternative locations for local development
+        alt_paths = [
+            "./realesrgan-ncnn-vulkan",
+            "/usr/local/bin/realesrgan-ncnn-vulkan",
+            os.path.expanduser("~/realesrgan-ncnn-vulkan"),
+        ]
+        for alt_path in alt_paths:
+            if os.path.exists(alt_path):
+                logger.info(f"Found Real-ESRGAN binary at alternative path: {alt_path}")
+                return True
         return False
     if not os.access(REALESRGAN_NCNN_PATH, os.X_OK):
         try:
             os.chmod(REALESRGAN_NCNN_PATH, 0o755)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Could not make Real-ESRGAN binary executable: {e}")
             return False
     return True
 
