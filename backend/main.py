@@ -1629,8 +1629,6 @@ async def submit_feedback(request: Request):
             INSERT INTO user_feedback (rating, comment, page, operation, user_agent)
             VALUES (?, ?, ?, ?, ?)
         ''', (rating, comment, page, operation, user_agent))
-        save_db_changes(conn)
-        conn.close()
         
         # Log impression as submitted
         try:
@@ -1638,10 +1636,11 @@ async def submit_feedback(request: Request):
                 INSERT INTO feedback_impressions (page, operation, user_agent, action)
                 VALUES (?, ?, ?, 'submitted')
             ''', (page, operation, user_agent))
-            save_db_changes(conn)
         except Exception as e:
             logger.warning(f"Failed to log feedback impression: {e}")
         
+        # Save all changes and sync to Cloud Storage
+        save_db_changes(conn)
         conn.close()
         
         # Also log for analytics
@@ -3056,6 +3055,77 @@ async def enhance_image(
         raise
     except Exception as e:
         log_user_action("enhance_image_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Enhance image error: {str(e)}")
+
+
+@app.post("/api/test-enhance")
+async def test_enhance(
+    file: UploadFile = File(...),
+    sharpen: float = Form(1.0),
+    contrast: float = Form(105.0),
+    brightness: float = Form(100.0),
+    deblur: bool = Form(True),
+    denoise: bool = Form(True),
+    deblur_strength: float = Form(1.5),
+    denoise_strength: float = Form(1.0),
+):
+    """Test endpoint for enhanced image processing with de-blur and noise removal"""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    try:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+        original_size = img.size
+        img = downscale_image_if_needed(img)
+        
+        # Step 1: Noise/Grain Removal (apply first, before sharpening)
+        if denoise:
+            # Apply median filter for salt-and-pepper noise removal
+            if denoise_strength >= 0.5:
+                # Use MedianFilter for noise removal
+                img = img.filter(ImageFilter.MedianFilter(size=3))
+            
+            # Additional denoising: slight Gaussian blur then sharpen (removes grain)
+            if denoise_strength >= 1.0:
+                # Very light Gaussian blur to smooth grain
+                img = img.filter(ImageFilter.GaussianBlur(radius=0.5))
+        
+        # Step 2: De-blur (unsharp mask for de-blurring)
+        if deblur:
+            # Apply unsharp mask filter for de-blurring
+            # UnsharpMask parameters: radius, percent, threshold
+            # Higher percent = stronger de-blur effect
+            unsharp_percent = int(100 + (deblur_strength * 50))  # 100-200% range
+            img = img.filter(ImageFilter.UnsharpMask(
+                radius=2,
+                percent=unsharp_percent,
+                threshold=3
+            ))
+        
+        # Step 3: Traditional enhancements (sharpness, contrast, brightness)
+        if sharpen != 1.0:
+            sharp_enh = ImageEnhance.Sharpness(img)
+            img = sharp_enh.enhance(max(0.0, float(sharpen)))
+        
+        if contrast != 100.0:
+            cont_enh = ImageEnhance.Contrast(img)
+            img = cont_enh.enhance(max(0.0, float(contrast)) / 100.0)
+        
+        if brightness != 100.0:
+            bri_enh = ImageEnhance.Brightness(img)
+            img = bri_enh.enhance(max(0.0, float(brightness)) / 100.0)
+        
+        # Resize back to original if downscaled
+        if img.size != original_size:
+            img = img.resize(original_size, Image.Resampling.LANCZOS)
+        
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Test enhance error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Enhance image error: {str(e)}")
 
 
