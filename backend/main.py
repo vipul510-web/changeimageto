@@ -2997,12 +2997,6 @@ async def upscale_image(
         raise HTTPException(status_code=500, detail=f"Upscaling error: {str(e)}")
 
 
-@app.post("/api/test-upscale")
-async def test_upscale():
-    """Test endpoint to verify upscaling functionality"""
-    return {"message": "Upscaling endpoint is working"}
-
-
 # ----------------------------
 # New simple image tools
 # ----------------------------
@@ -3537,9 +3531,10 @@ async def test_upscale(
         try:
             # Build command for realesrgan-ncnn-vulkan
             # Format: realesrgan-ncnn-vulkan -i input.png -o output.png -n model_name -s scale -f png
-            # Models are expected in the same directory as the binary or in REALESRGAN_MODELS_PATH
+            # Use absolute path for binary to avoid issues
+            binary_abs_path = os.path.abspath(REALESRGAN_NCNN_PATH) if not os.path.isabs(REALESRGAN_NCNN_PATH) else REALESRGAN_NCNN_PATH
             cmd = [
-                REALESRGAN_NCNN_PATH,
+                binary_abs_path,
                 "-i", input_path,
                 "-o", output_path,
                 "-n", model,
