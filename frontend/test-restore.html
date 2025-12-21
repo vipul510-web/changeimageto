@@ -61,6 +61,14 @@
               <span></span>
             </div>
             <div class="control-row">
+              <label>Detection Mode:</label>
+              <select id="detection-mode" style="padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--fg);">
+                <option value="conservative">Conservative (Safer)</option>
+                <option value="aggressive">Aggressive (More Detection)</option>
+              </select>
+              <span></span>
+            </div>
+            <div class="control-row">
               <label>De-blur:</label>
               <input type="checkbox" id="deblur" checked>
               <span></span>
@@ -233,6 +241,7 @@
           const formData = new FormData();
           formData.append('file', currentFile);
           formData.append('remove_damage', document.getElementById('remove-damage').checked);
+          formData.append('detection_mode', document.getElementById('detection-mode').value);
           formData.append('deblur', document.getElementById('deblur').checked);
           formData.append('denoise', document.getElementById('denoise').checked);
           formData.append('sharpen', document.getElementById('sharpen').value);

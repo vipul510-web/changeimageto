@@ -3161,100 +3161,162 @@ async def test_enhance(
         raise HTTPException(status_code=500, detail=f"Enhance image error: {str(e)}")
 
 
-def detect_damage(img_array: np.ndarray) -> np.ndarray:
-    """Automatically detect scratches and dust spots in an image"""
-    # Convert to grayscale for detection
+def detect_damage_v2(img_array: np.ndarray, method: str = "conservative") -> np.ndarray:
+    """
+    Improved automatic damage detection with multiple strategies.
+    
+    Args:
+        img_array: RGB image array
+        method: "conservative" (safer, fewer false positives) or "aggressive" (more detection)
+    
+    Returns:
+        Binary mask where white (255) indicates damage
+    """
     gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    h, w = gray.shape
+    damage_mask = np.zeros((h, w), dtype=np.uint8)
     
-    # Initialize damage mask
-    damage_mask = np.zeros(gray.shape, dtype=np.uint8)
+    # Strategy 1: Frequency domain filtering for scratches (FFT-based)
+    # Scratches appear as strong lines in frequency domain
+    f_transform = np.fft.fft2(gray)
+    f_shift = np.fft.fftshift(f_transform)
+    magnitude = np.abs(f_shift)
     
-    # Method 1: Detect scratches (linear artifacts)
-    # Scratches are typically bright or dark lines
-    # Use morphological operations to detect linear structures
+    # Create a mask to filter out strong linear patterns (scratches)
+    # This is a simplified approach - in practice, we'll use spatial methods
     
-    # Detect bright scratches (white lines)
-    _, bright_thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
-    # Detect dark scratches (dark lines)
-    _, dark_thresh = cv2.threshold(gray, 55, 255, cv2.THRESH_BINARY_INV)
+    # Strategy 2: Improved scratch detection using morphological operations
+    # Use more conservative thresholds
+    mean_intensity = np.mean(gray)
+    std_intensity = np.std(gray)
     
-    # Combine bright and dark scratches
-    scratch_mask = cv2.bitwise_or(bright_thresh, dark_thresh)
+    # Detect bright scratches (above mean + 1.5*std)
+    bright_thresh = mean_intensity + 1.5 * std_intensity
+    _, bright_mask = cv2.threshold(gray, int(bright_thresh), 255, cv2.THRESH_BINARY)
     
-    # Use morphological operations to enhance linear structures
-    # Horizontal kernel for horizontal scratches
-    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 1))
-    horizontal_lines = cv2.morphologyEx(scratch_mask, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
-    horizontal_lines = cv2.dilate(horizontal_lines, horizontal_kernel, iterations=2)
+    # Detect dark scratches (below mean - 1.5*std)
+    dark_thresh = mean_intensity - 1.5 * std_intensity
+    _, dark_mask = cv2.threshold(gray, int(max(0, dark_thresh)), 255, cv2.THRESH_BINARY_INV)
     
-    # Vertical kernel for vertical scratches
-    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 25))
-    vertical_lines = cv2.morphologyEx(scratch_mask, cv2.MORPH_OPEN, vertical_kernel, iterations=2)
-    vertical_lines = cv2.dilate(vertical_lines, vertical_kernel, iterations=2)
+    # Combine bright and dark scratch candidates
+    scratch_candidates = cv2.bitwise_or(bright_mask, dark_mask)
     
-    # Diagonal scratches (using rotated kernels)
-    kernel_45 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 1))
-    kernel_45 = cv2.getRotationMatrix2D((7, 0), 45, 1)
-    # Simplified: use line detection
-    lines = cv2.HoughLinesP(scratch_mask, 1, np.pi/180, threshold=50, minLineLength=30, maxLineGap=10)
+    # Use morphological operations to find linear structures
+    # Horizontal scratches
+    h_kernel_size = max(15, int(w / 30))  # Adaptive kernel size
+    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (h_kernel_size, 1))
+    h_lines = cv2.morphologyEx(scratch_candidates, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
+    h_lines = cv2.dilate(h_lines, horizontal_kernel, iterations=1)
+    
+    # Vertical scratches
+    v_kernel_size = max(15, int(h / 30))
+    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, v_kernel_size))
+    v_lines = cv2.morphologyEx(scratch_candidates, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
+    v_lines = cv2.dilate(v_lines, vertical_kernel, iterations=1)
+    
+    # Diagonal scratches using Hough line detection
+    # Only detect lines that are clearly linear (not part of image content)
+    edges = cv2.Canny(gray, 50, 150)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=max(30, int(min(h, w) / 20)), 
+                            minLineLength=max(20, int(min(h, w) / 15)), maxLineGap=5)
+    
+    scratch_mask = np.zeros_like(gray)
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
-            cv2.line(damage_mask, (x1, y1), (x2, y2), 255, 2)
+            length = np.sqrt((x2-x1)**2 + (y2-y1)**2)
+            # Only mark long, thin lines as scratches
+            if length > max(30, min(h, w) / 10):
+                # Check if this line area has high contrast (likely a scratch)
+                line_mask = np.zeros_like(gray)
+                cv2.line(line_mask, (x1, y1), (x2, y2), 255, 2)
+                line_region = gray[line_mask > 0]
+                if len(line_region) > 0:
+                    line_std = np.std(line_region)
+                    # High std in a thin line suggests a scratch
+                    if line_std > std_intensity * 0.8:
+                        cv2.line(scratch_mask, (x1, y1), (x2, y2), 255, 1)
     
     # Combine all scratch detections
-    damage_mask = cv2.bitwise_or(damage_mask, horizontal_lines)
-    damage_mask = cv2.bitwise_or(damage_mask, vertical_lines)
+    scratch_mask = cv2.bitwise_or(scratch_mask, h_lines)
+    scratch_mask = cv2.bitwise_or(scratch_mask, v_lines)
     
-    # Method 2: Detect dust spots (small circular/irregular bright or dark spots)
-    # Use adaptive thresholding to find spots that differ from surroundings
-    adaptive_thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                           cv2.THRESH_BINARY_INV, 11, 2)
+    # Strategy 3: Dust spot detection (small isolated spots)
+    # Use median filter to create a "clean" version
+    median_filtered = cv2.medianBlur(gray, 5)
+    diff = cv2.absdiff(gray, median_filtered)
     
-    # Find contours of small spots
-    contours, _ = cv2.findContours(adaptive_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Threshold the difference to find spots
+    _, spot_mask = cv2.threshold(diff, int(mean_intensity * 0.3), 255, cv2.THRESH_BINARY)
     
-    # Filter for small spots (dust particles)
-    min_area = 5  # Minimum area for dust spot
-    max_area = 500  # Maximum area for dust spot (not too large)
+    # Find contours and filter by size (dust spots are small)
+    contours, _ = cv2.findContours(spot_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    dust_mask = np.zeros_like(gray)
+    min_dust_area = 3
+    max_dust_area = int(min(h, w) * min(h, w) * 0.001)  # Adaptive max area
     
     for contour in contours:
         area = cv2.contourArea(contour)
-        if min_area < area < max_area:
-            # Draw filled contour on mask
-            cv2.drawContours(damage_mask, [contour], -1, 255, -1)
+        if min_dust_area < area < max_dust_area:
+            # Check circularity (dust spots are roughly circular)
+            perimeter = cv2.arcLength(contour, True)
+            if perimeter > 0:
+                circularity = 4 * np.pi * area / (perimeter * perimeter)
+                if circularity > 0.3:  # Roughly circular
+                    cv2.drawContours(dust_mask, [contour], -1, 255, -1)
     
-    # Method 3: Detect extreme outliers (very bright or very dark pixels)
-    # These are often scratches or dust
-    mean_val = np.mean(gray)
-    std_val = np.std(gray)
+    # Strategy 4: Statistical outlier detection (conservative)
+    # Only detect extreme outliers that are clearly damage
+    if method == "aggressive":
+        outlier_threshold = 2.5
+    else:
+        outlier_threshold = 3.5  # More conservative
     
-    # Pixels that are 3 standard deviations away from mean
-    outlier_mask = (gray > mean_val + 3*std_val) | (gray < mean_val - 3*std_val)
+    outlier_mask = ((gray > mean_intensity + outlier_threshold * std_intensity) | 
+                    (gray < mean_intensity - outlier_threshold * std_intensity))
     outlier_mask = outlier_mask.astype(np.uint8) * 255
     
-    # Dilate outlier mask slightly
+    # Only keep outliers that are isolated (not part of image structure)
+    # Use opening to remove outliers that are part of larger structures
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-    outlier_mask = cv2.dilate(outlier_mask, kernel, iterations=1)
+    outlier_mask = cv2.morphologyEx(outlier_mask, cv2.MORPH_OPEN, kernel, iterations=2)
     
-    # Combine all damage detections
+    # Combine all damage types
+    damage_mask = cv2.bitwise_or(scratch_mask, dust_mask)
     damage_mask = cv2.bitwise_or(damage_mask, outlier_mask)
     
-    # Clean up the mask: remove very small isolated pixels
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    # Clean up: remove very small isolated pixels
     damage_mask = cv2.morphologyEx(damage_mask, cv2.MORPH_OPEN, kernel, iterations=1)
-    damage_mask = cv2.morphologyEx(damage_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+    # Close small gaps
+    damage_mask = cv2.morphologyEx(damage_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
     
-    # Dilate slightly to ensure we cover the full damage area
-    damage_mask = cv2.dilate(damage_mask, kernel, iterations=1)
+    # Final cleanup: remove damage that's too large (likely image content, not damage)
+    contours, _ = cv2.findContours(damage_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    final_mask = np.zeros_like(damage_mask)
+    max_damage_area = int(h * w * 0.01)  # Max 1% of image area
     
-    return damage_mask
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area < max_damage_area:
+            cv2.drawContours(final_mask, [contour], -1, 255, -1)
+    
+    # Slight dilation to ensure full coverage
+    final_mask = cv2.dilate(final_mask, kernel, iterations=1)
+    
+    return final_mask
+
+
+def detect_damage(img_array: np.ndarray) -> np.ndarray:
+    """Wrapper for backward compatibility - uses improved v2 detection"""
+    return detect_damage_v2(img_array, method="conservative")
 
 
 @app.post("/api/test-restore")
 async def test_restore(
     file: UploadFile = File(...),
     remove_damage: bool = Form(True),
+    detection_mode: str = Form("conservative"),
     deblur: bool = Form(True),
     denoise: bool = Form(True),
     sharpen: float = Form(1.3),
@@ -3277,17 +3339,43 @@ async def test_restore(
         
         # Step 1: Automatic damage removal (scratches, dust)
         if remove_damage:
-            damage_mask = detect_damage(img_array)
+            # Use the specified detection mode
+            detection_method = detection_mode if detection_mode in ["conservative", "aggressive"] else "conservative"
+            
+            # Try multiple detection strategies
+            damage_mask_conservative = detect_damage_v2(img_array, method="conservative")
+            damage_mask_aggressive = detect_damage_v2(img_array, method="aggressive")
+            
+            # Use user-selected mode, or auto-select based on detection
+            if detection_method == "aggressive":
+                damage_mask = damage_mask_aggressive
+                logger.info(f"Using aggressive detection: {np.sum(damage_mask > 0)} pixels")
+            else:
+                damage_pixels_conservative = np.sum(damage_mask_conservative > 0)
+                damage_pixels_aggressive = np.sum(damage_mask_aggressive > 0)
+                
+                # If conservative finds very little, use aggressive
+                if damage_pixels_conservative < (img_array.shape[0] * img_array.shape[1] * 0.001):
+                    damage_mask = damage_mask_aggressive
+                    logger.info(f"Auto-switched to aggressive detection: {damage_pixels_aggressive} pixels")
+                else:
+                    damage_mask = damage_mask_conservative
+                    logger.info(f"Using conservative detection: {damage_pixels_conservative} pixels")
             
             # Check if we found any damage
             if np.any(damage_mask > 0):
                 # Convert to BGR for OpenCV
                 img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
                 
-                # Use inpainting to remove damage
-                # Calculate dynamic radius based on image size
+                # Calculate dynamic radius based on image size and damage area
                 max_side = max(img_bgr.shape[:2])
-                dynamic_radius = int(max(3, min(10, max_side / 200)))
+                damage_ratio = np.sum(damage_mask > 0) / (img_bgr.shape[0] * img_bgr.shape[1])
+                
+                # Use smaller radius for smaller damage areas to avoid artifacts
+                if damage_ratio < 0.01:  # Less than 1% damage
+                    dynamic_radius = int(max(2, min(5, max_side / 300)))
+                else:
+                    dynamic_radius = int(max(3, min(8, max_side / 200)))
                 
                 # Try LaMa first (best quality) if available
                 if _get_lama_manager() is not None:
@@ -3297,11 +3385,26 @@ async def test_restore(
                     inpainted = lama_inpaint_onnx(img_bgr, damage_mask)
                     logger.info("Used LaMa ONNX for damage removal")
                 else:
-                    # Fallback to OpenCV inpainting
-                    inpainted = cv2.inpaint(img_bgr, damage_mask, dynamic_radius, cv2.INPAINT_TELEA)
-                    # Second pass with NS for better structure
-                    inpainted = cv2.inpaint(inpainted, damage_mask, dynamic_radius, cv2.INPAINT_NS)
-                    logger.info("Used OpenCV for damage removal")
+                    # Enhanced OpenCV inpainting with better post-processing
+                    # First pass: Telea (faster, good for small areas)
+                    inpainted_telea = cv2.inpaint(img_bgr, damage_mask, dynamic_radius, cv2.INPAINT_TELEA)
+                    # Second pass: NS (better structure preservation)
+                    inpainted_ns = cv2.inpaint(img_bgr, damage_mask, dynamic_radius, cv2.INPAINT_NS)
+                    
+                    # Blend the two results (NS is better for structure, Telea for texture)
+                    inpainted = cv2.addWeighted(inpainted_telea, 0.4, inpainted_ns, 0.6, 0)
+                    
+                    # Apply post-processing with soft blending (like remove-painted-areas)
+                    inpainted = post_process_inpainted_result(img_bgr, inpainted, damage_mask)
+                    
+                    # Additional soft blending to reduce artifacts
+                    soft_mask = damage_mask.astype(np.float32) / 255.0
+                    soft_mask = cv2.GaussianBlur(soft_mask, (0, 0), sigmaX=4, sigmaY=4)
+                    soft_mask_3 = np.repeat(soft_mask[:, :, None], 3, axis=2)
+                    inpainted = (soft_mask_3 * inpainted.astype(np.float32) + 
+                                (1.0 - soft_mask_3) * img_bgr.astype(np.float32)).astype(np.uint8)
+                    
+                    logger.info(f"Used OpenCV for damage removal (radius={dynamic_radius})")
                 
                 # Convert back to RGB PIL Image
                 img = Image.fromarray(cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB))
