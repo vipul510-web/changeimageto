@@ -102,3 +102,547 @@
 2025-09-16 22:41:48,697 - INFO - USER_ACTION: {"timestamp": "2025-09-16T22:41:48.697379", "action": "frontend_analytics", "details": {"timestamp": "2025-09-16T20:41:48.695Z", "action": "file_uploaded", "page": "/change-image-background-to-blue.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36", "details": {"filename": "044f0093-8ef7-457b-bf94-484f0c195f73-EDIT.jpg", "file_size": 64164, "file_type": "image/jpeg", "page_type": "color_specific"}}}
 2025-09-16 22:41:52,209 - INFO - USER_ACTION: {"timestamp": "2025-09-16T22:41:52.209231", "action": "frontend_analytics", "details": {"timestamp": "2025-09-16T20:41:52.203Z", "action": "page_visit", "page": "/change-color-of-image.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36", "details": {"page_type": "color_change", "url": "http://localhost:8080/change-color-of-image.html", "referrer": "http://localhost:8080/"}}}
 2025-09-16 22:41:54,000 - INFO - USER_ACTION: {"timestamp": "2025-09-16T22:41:53.999998", "action": "frontend_analytics", "details": {"timestamp": "2025-09-16T20:41:53.998Z", "action": "page_visit", "page": "/", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36", "details": {"page_type": "remove_background", "url": "http://localhost:8080/", "referrer": "http://localhost:8080/change-color-of-image.html"}}}
+2025-12-20 19:15:34,098 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 19:15:34,162 - INFO - Background model warmup tasks started
+2025-12-20 19:15:34,168 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 19:15:34,170 - INFO - Starting database initialization in background...
+2025-12-20 19:15:34,170 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 19:15:34,307 - INFO - Database tables initialized
+2025-12-20 19:15:34,307 - INFO - Database synced to Cloud Storage
+2025-12-20 19:28:34,769 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 19:28:34,828 - INFO - Background model warmup tasks started
+2025-12-20 19:28:34,828 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 19:28:34,828 - INFO - Starting database initialization in background...
+2025-12-20 19:28:34,828 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 19:28:34,832 - INFO - Database tables initialized
+2025-12-20 19:28:34,832 - INFO - Database synced to Cloud Storage
+2025-12-20 19:28:38,786 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 19:28:38,824 - INFO - Background model warmup tasks started
+2025-12-20 19:28:38,825 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 19:28:38,825 - INFO - Starting database initialization in background...
+2025-12-20 19:28:38,825 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 19:28:38,826 - INFO - Database tables initialized
+2025-12-20 19:28:38,826 - INFO - Database synced to Cloud Storage
+2025-12-20 19:36:04,738 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 19:36:04,788 - INFO - Background model warmup tasks started
+2025-12-20 19:36:04,788 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 19:36:04,788 - INFO - Starting database initialization in background...
+2025-12-20 19:36:04,788 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 19:36:04,793 - INFO - Database tables initialized
+2025-12-20 19:36:04,793 - INFO - Database synced to Cloud Storage
+2025-12-20 19:39:09,426 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 19:39:09,488 - INFO - Background model warmup tasks started
+2025-12-20 19:39:09,488 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 19:39:09,488 - INFO - Starting database initialization in background...
+2025-12-20 19:39:09,488 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 19:39:09,493 - INFO - Database tables initialized
+2025-12-20 19:39:09,494 - INFO - Database synced to Cloud Storage
+2025-12-20 19:39:38,999 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 19:39:39,038 - INFO - Background model warmup tasks started
+2025-12-20 19:39:39,038 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 19:39:39,038 - INFO - Starting database initialization in background...
+2025-12-20 19:39:39,038 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 19:39:39,040 - INFO - Database tables initialized
+2025-12-20 19:39:39,040 - INFO - Database synced to Cloud Storage
+2025-12-20 19:48:33,349 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 19:48:33,427 - INFO - Background model warmup tasks started
+2025-12-20 19:48:33,427 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 19:48:33,428 - INFO - Starting database initialization in background...
+2025-12-20 19:48:33,428 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 19:48:33,437 - INFO - Database tables initialized
+2025-12-20 19:48:33,512 - INFO - Database synced to Cloud Storage
+2025-12-20 19:49:15,735 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 19:49:15,782 - INFO - Background model warmup tasks started
+2025-12-20 19:49:15,782 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 19:49:15,782 - INFO - Starting database initialization in background...
+2025-12-20 19:49:15,782 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 19:49:15,783 - INFO - Database tables initialized
+2025-12-20 19:49:15,784 - INFO - Database synced to Cloud Storage
+2025-12-20 19:58:16,199 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 19:58:16,240 - INFO - Background model warmup tasks started
+2025-12-20 19:58:16,241 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 19:58:16,241 - INFO - Starting database initialization in background...
+2025-12-20 19:58:16,241 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 19:58:16,246 - INFO - Database tables initialized
+2025-12-20 19:58:16,246 - INFO - Database synced to Cloud Storage
+2025-12-20 20:04:09,663 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:09.662190", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:09.604Z", "action": "page_visit", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "url": "http://localhost:8080/test-rembg.html", "referrer": "direct"}}}
+2025-12-20 20:04:10,703 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:10.703492", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:10.674Z", "action": "page_visit", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "url": "http://localhost:8080/test-rembg.html", "referrer": "direct"}}}
+2025-12-20 20:04:18,829 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:18.828539", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:18.810Z", "action": "file_uploaded", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"filename": "5daab0274d4a324905f935a48c7c59212d36af14.png", "file_size": 1568736, "file_type": "image/png", "page_type": "unknown"}}}
+2025-12-20 20:04:18,835 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:18.834943", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:18.822Z", "action": "file_uploaded", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"filename": "5daab0274d4a324905f935a48c7c59212d36af14.png", "file_size": 1568736, "file_type": "image/png", "page_type": "unknown"}}}
+2025-12-20 20:04:19,549 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:19.549073", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:19.546Z", "action": "processing_started", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "filename": "5daab0274d4a324905f935a48c7c59212d36af14.png", "file_size": 1568736, "category": "product", "action_type": "remove_background"}}}
+2025-12-20 20:04:20,688 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:20.688218", "action": "request_started", "details": {"client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "filename": "5daab0274d4a324905f935a48c7c59212d36af14.png", "content_type": "image/png", "category": "product", "bg_color": null, "has_bg_color": false, "has_background_image": false}}
+2025-12-20 20:04:20,719 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:20.719649", "action": "file_processed", "details": {"filename": "5daab0274d4a324905f935a48c7c59212d36af14.png", "file_size_bytes": 1568736, "file_size_mb": 1.5, "image_dimensions": "1200x1200", "category": "product"}}
+2025-12-20 20:04:20,719 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:20.719793", "action": "processing_started", "details": {"category": "product", "model": "u2netp", "bg_color": null, "action_type": "remove_background"}}
+2025-12-20 20:04:21,591 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:21.591283", "action": "transparent_output_saved", "details": {"category": "product", "result_mode": "RGBA", "result_size": "1200x1200", "output_bytes": 1005358, "has_alpha": true}}
+2025-12-20 20:04:21,591 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:21.591449", "action": "processing_completed", "details": {"category": "product", "bg_color": null, "action_type": "remove_background", "output_size_bytes": 1005358, "output_size_mb": 0.96, "processing_successful": true}}
+2025-12-20 20:04:21,607 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:21.607408", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:21.604Z", "action": "download_link_created", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "category": "product", "action_type": "remove_background", "filename": "bg-removed-1766257461604.png"}}}
+2025-12-20 20:04:21,607 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:21.607712", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:21.605Z", "action": "processing_completed", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "output_size": 1005358, "processing_successful": true, "category": "product", "action_type": "remove_background"}}}
+2025-12-20 20:04:26,627 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:26.627676", "action": "feedback_impression", "details": {"action": "shown", "page": "/test-rembg.html", "operation": "unknown"}}
+2025-12-20 20:04:28,921 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:28.921073", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:28.917Z", "action": "page_visit", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "url": "http://localhost:8080/test-rembg.html", "referrer": "direct"}}}
+2025-12-20 20:04:32,085 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:32.085635", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:32.073Z", "action": "file_uploaded", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"filename": "7f4948b4abaee9b36e616a2b029c2883.webp", "file_size": 46388, "file_type": "image/webp", "page_type": "unknown"}}}
+2025-12-20 20:04:32,088 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:32.088712", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:32.075Z", "action": "file_uploaded", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"filename": "7f4948b4abaee9b36e616a2b029c2883.webp", "file_size": 46388, "file_type": "image/webp", "page_type": "unknown"}}}
+2025-12-20 20:04:32,761 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:32.761885", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:32.760Z", "action": "processing_started", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "filename": "7f4948b4abaee9b36e616a2b029c2883.webp", "file_size": 46388, "category": "product", "action_type": "remove_background"}}}
+2025-12-20 20:04:32,765 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:32.764956", "action": "request_started", "details": {"client_ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "filename": "7f4948b4abaee9b36e616a2b029c2883.webp", "content_type": "image/webp", "category": "product", "bg_color": null, "has_bg_color": false, "has_background_image": false}}
+2025-12-20 20:04:32,771 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:32.771255", "action": "file_processed", "details": {"filename": "7f4948b4abaee9b36e616a2b029c2883.webp", "file_size_bytes": 46388, "file_size_mb": 0.04, "image_dimensions": "1080x1440", "category": "product"}}
+2025-12-20 20:04:32,771 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:32.771673", "action": "processing_started", "details": {"category": "product", "model": "u2netp", "bg_color": null, "action_type": "remove_background"}}
+2025-12-20 20:04:33,949 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:33.948864", "action": "transparent_output_saved", "details": {"category": "product", "result_mode": "RGBA", "result_size": "1080x1440", "output_bytes": 742231, "has_alpha": true}}
+2025-12-20 20:04:33,949 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:33.949398", "action": "processing_completed", "details": {"category": "product", "bg_color": null, "action_type": "remove_background", "output_size_bytes": 742231, "output_size_mb": 0.71, "processing_successful": true}}
+2025-12-20 20:04:35,075 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:35.075329", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:33.953Z", "action": "download_link_created", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "category": "product", "action_type": "remove_background", "filename": "bg-removed-1766257473953.png"}}}
+2025-12-20 20:04:35,075 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:35.075872", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:04:33.954Z", "action": "processing_completed", "page": "/test-rembg.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "output_size": 742231, "processing_successful": true, "category": "product", "action_type": "remove_background"}}}
+2025-12-20 20:04:38,976 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:04:38.976554", "action": "feedback_impression", "details": {"action": "shown", "page": "/test-rembg.html", "operation": "unknown"}}
+2025-12-20 20:06:20,475 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:06:20.472460", "action": "feedback_impression", "details": {"action": "closed", "page": "/test-rembg.html", "operation": "unknown"}}
+2025-12-20 20:06:20,497 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:06:20.497022", "action": "feedback_impression", "details": {"action": "closed", "page": "/test-rembg.html", "operation": "unknown"}}
+2025-12-20 20:06:38,990 - INFO - USER_ACTION: {"timestamp": "2025-12-20T20:06:38.989177", "action": "frontend_analytics", "details": {"timestamp": "2025-12-20T19:06:38.918Z", "action": "page_visit", "page": "/remove-background-for-amazon.html", "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36", "details": {"page_type": "unknown", "url": "http://localhost:8080/remove-background-for-amazon.html", "referrer": "http://localhost:8080/test-rembg.html"}}}
+2025-12-20 20:09:14,573 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 20:09:14,639 - INFO - Background model warmup tasks started
+2025-12-20 20:09:14,639 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 20:09:14,639 - INFO - Starting database initialization in background...
+2025-12-20 20:09:14,639 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 20:09:14,645 - INFO - Database tables initialized
+2025-12-20 20:09:14,645 - INFO - Database synced to Cloud Storage
+2025-12-20 20:11:14,169 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 20:11:14,253 - INFO - Background model warmup tasks started
+2025-12-20 20:11:14,253 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 20:11:14,254 - INFO - Starting database initialization in background...
+2025-12-20 20:11:14,254 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 20:11:14,266 - INFO - Database tables initialized
+2025-12-20 20:11:14,266 - INFO - Database synced to Cloud Storage
+2025-12-20 20:12:50,869 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 20:12:50,915 - INFO - Background model warmup tasks started
+2025-12-20 20:12:50,915 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 20:12:50,915 - INFO - Starting database initialization in background...
+2025-12-20 20:12:50,915 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 20:12:50,916 - INFO - Database tables initialized
+2025-12-20 20:12:50,916 - INFO - Database synced to Cloud Storage
+2025-12-20 20:22:22,256 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 20:22:22,324 - INFO - Background model warmup tasks started
+2025-12-20 20:22:22,324 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 20:22:22,324 - INFO - Starting database initialization in background...
+2025-12-20 20:22:22,324 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 20:22:22,332 - INFO - Database tables initialized
+2025-12-20 20:22:22,332 - INFO - Database synced to Cloud Storage
+2025-12-20 20:26:08,617 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 20:26:08,660 - INFO - Background model warmup tasks started
+2025-12-20 20:26:08,660 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 20:26:08,661 - INFO - Starting database initialization in background...
+2025-12-20 20:26:08,661 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 20:26:08,662 - INFO - Database tables initialized
+2025-12-20 20:26:08,662 - INFO - Database synced to Cloud Storage
+2025-12-20 21:51:16,608 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 21:51:16,669 - INFO - Background model warmup tasks started
+2025-12-20 21:51:16,669 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 21:51:16,669 - INFO - Starting database initialization in background...
+2025-12-20 21:51:16,669 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 21:51:16,676 - INFO - Database tables initialized
+2025-12-20 21:51:16,677 - INFO - Database synced to Cloud Storage
+2025-12-20 21:51:43,454 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 21:51:43,500 - INFO - Background model warmup tasks started
+2025-12-20 21:51:43,500 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 21:51:43,500 - INFO - Starting database initialization in background...
+2025-12-20 21:51:43,500 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 21:51:43,501 - INFO - Database tables initialized
+2025-12-20 21:51:43,501 - INFO - Database synced to Cloud Storage
+2025-12-20 21:55:28,980 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 21:55:29,018 - INFO - Background model warmup tasks started
+2025-12-20 21:55:29,018 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 21:55:29,018 - INFO - Starting database initialization in background...
+2025-12-20 21:55:29,018 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 21:55:29,022 - INFO - Database tables initialized
+2025-12-20 21:55:29,022 - INFO - Database synced to Cloud Storage
+2025-12-20 22:52:36,013 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 22:52:36,083 - INFO - Background model warmup tasks started
+2025-12-20 22:52:36,083 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 22:52:36,083 - INFO - Starting database initialization in background...
+2025-12-20 22:52:36,084 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 22:52:36,085 - INFO - Database tables initialized
+2025-12-20 22:52:36,085 - INFO - Database synced to Cloud Storage
+2025-12-20 22:52:44,351 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 22:52:44,411 - INFO - Background model warmup tasks started
+2025-12-20 22:52:44,411 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 22:52:44,411 - INFO - Starting database initialization in background...
+2025-12-20 22:52:44,411 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 22:52:45,037 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-20 22:52:45,073 - INFO - Background model warmup tasks started
+2025-12-20 22:52:45,073 - INFO - Database initialization scheduled (non-blocking)
+2025-12-20 22:52:45,073 - INFO - Starting database initialization in background...
+2025-12-20 22:52:45,073 - INFO - Cloud Storage not configured, using local database only
+2025-12-20 22:52:45,074 - INFO - Database tables initialized
+2025-12-20 22:52:45,074 - INFO - Database synced to Cloud Storage
+2025-12-21 10:04:43,770 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 10:04:43,811 - INFO - Background model warmup tasks started
+2025-12-21 10:04:43,811 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 10:04:43,812 - INFO - Starting database initialization in background...
+2025-12-21 10:04:43,812 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 10:04:43,819 - INFO - Database tables initialized
+2025-12-21 10:04:43,819 - INFO - Database synced to Cloud Storage
+2025-12-21 10:05:48,624 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 10:05:48,666 - INFO - Background model warmup tasks started
+2025-12-21 10:05:48,666 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 10:05:48,666 - INFO - Starting database initialization in background...
+2025-12-21 10:05:48,666 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 10:05:48,667 - INFO - Database tables initialized
+2025-12-21 10:05:48,667 - INFO - Database synced to Cloud Storage
+2025-12-21 10:14:44,329 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 10:14:44,417 - INFO - Background model warmup tasks started
+2025-12-21 10:14:44,418 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 10:14:44,418 - INFO - Starting database initialization in background...
+2025-12-21 10:14:44,418 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 10:14:44,425 - INFO - Database tables initialized
+2025-12-21 10:14:44,425 - INFO - Database synced to Cloud Storage
+2025-12-21 11:36:18,675 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 11:36:18,712 - INFO - Background model warmup tasks started
+2025-12-21 11:36:18,712 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 11:36:18,712 - INFO - Starting database initialization in background...
+2025-12-21 11:36:18,712 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 11:36:18,717 - INFO - Database tables initialized
+2025-12-21 11:36:18,717 - INFO - Database synced to Cloud Storage
+2025-12-21 11:37:02,186 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 11:37:02,225 - INFO - Background model warmup tasks started
+2025-12-21 11:37:02,225 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 11:37:02,225 - INFO - Starting database initialization in background...
+2025-12-21 11:37:02,225 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 11:37:02,227 - INFO - Database tables initialized
+2025-12-21 11:37:02,227 - INFO - Database synced to Cloud Storage
+2025-12-21 11:45:47,979 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 11:45:48,077 - INFO - Background model warmup tasks started
+2025-12-21 11:45:48,077 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 11:45:48,078 - INFO - Starting database initialization in background...
+2025-12-21 11:45:48,079 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 11:45:48,093 - INFO - Database tables initialized
+2025-12-21 11:45:48,094 - INFO - Database synced to Cloud Storage
+2025-12-21 11:51:58,838 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 11:51:58,879 - INFO - Background model warmup tasks started
+2025-12-21 11:51:58,879 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 11:51:58,880 - INFO - Starting database initialization in background...
+2025-12-21 11:51:58,880 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 11:51:58,885 - INFO - Database tables initialized
+2025-12-21 11:51:58,885 - INFO - Database synced to Cloud Storage
+2025-12-21 11:54:40,647 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 11:54:40,695 - INFO - Background model warmup tasks started
+2025-12-21 11:54:40,695 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 11:54:40,695 - INFO - Starting database initialization in background...
+2025-12-21 11:54:40,695 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 11:54:40,700 - INFO - Database tables initialized
+2025-12-21 11:54:40,700 - INFO - Database synced to Cloud Storage
+2025-12-21 11:54:59,081 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 11:54:59,155 - INFO - Background model warmup tasks started
+2025-12-21 11:54:59,155 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 11:54:59,155 - INFO - Starting database initialization in background...
+2025-12-21 11:54:59,156 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 11:54:59,302 - INFO - Database tables initialized
+2025-12-21 11:54:59,303 - INFO - Database synced to Cloud Storage
+2025-12-21 11:56:17,033 - INFO - Used OpenCV for damage removal
+2025-12-21 12:00:37,665 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 12:00:37,735 - INFO - Background model warmup tasks started
+2025-12-21 12:00:37,735 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 12:00:37,735 - INFO - Starting database initialization in background...
+2025-12-21 12:00:37,735 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 12:00:37,746 - INFO - Database tables initialized
+2025-12-21 12:00:37,746 - INFO - Database synced to Cloud Storage
+2025-12-21 12:00:52,873 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 12:00:52,914 - INFO - Background model warmup tasks started
+2025-12-21 12:00:52,914 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 12:00:52,914 - INFO - Starting database initialization in background...
+2025-12-21 12:00:52,914 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 12:00:52,916 - INFO - Database tables initialized
+2025-12-21 12:00:52,916 - INFO - Database synced to Cloud Storage
+2025-12-21 12:01:03,522 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 12:01:03,567 - INFO - Background model warmup tasks started
+2025-12-21 12:01:03,567 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 12:01:03,568 - INFO - Starting database initialization in background...
+2025-12-21 12:01:03,568 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 12:01:03,568 - INFO - Database tables initialized
+2025-12-21 12:01:03,569 - INFO - Database synced to Cloud Storage
+2025-12-21 12:01:12,604 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 12:01:12,676 - INFO - Background model warmup tasks started
+2025-12-21 12:01:12,676 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 12:01:12,676 - INFO - Starting database initialization in background...
+2025-12-21 12:01:12,676 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 12:01:12,678 - INFO - Database tables initialized
+2025-12-21 12:01:12,678 - INFO - Database synced to Cloud Storage
+2025-12-21 12:11:13,764 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 12:11:13,803 - INFO - Background model warmup tasks started
+2025-12-21 12:11:13,803 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 12:11:13,804 - INFO - Starting database initialization in background...
+2025-12-21 12:11:13,804 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 12:11:13,809 - INFO - Database tables initialized
+2025-12-21 12:11:13,809 - INFO - Database synced to Cloud Storage
+2025-12-21 12:11:32,591 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 12:11:32,679 - INFO - Background model warmup tasks started
+2025-12-21 12:11:32,679 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 12:11:32,680 - INFO - Starting database initialization in background...
+2025-12-21 12:11:32,680 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 12:11:32,685 - INFO - Database tables initialized
+2025-12-21 12:11:32,685 - INFO - Database synced to Cloud Storage
+2025-12-21 12:11:56,428 - INFO - Using conservative detection: 9491 pixels
+2025-12-21 12:11:56,491 - INFO - Used OpenCV for damage removal (radius=3)
+2025-12-21 12:12:08,510 - INFO - Using aggressive detection: 9491 pixels
+2025-12-21 12:12:08,566 - INFO - Used OpenCV for damage removal (radius=3)
+2025-12-21 12:12:11,436 - INFO - Using aggressive detection: 9491 pixels
+2025-12-21 12:12:11,488 - INFO - Used OpenCV for damage removal (radius=3)
+2025-12-21 16:28:08,060 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:28:08,117 - INFO - Background model warmup tasks started
+2025-12-21 16:28:08,117 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:28:08,117 - INFO - Starting database initialization in background...
+2025-12-21 16:28:08,117 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:28:08,123 - INFO - Database tables initialized
+2025-12-21 16:28:08,123 - INFO - Database synced to Cloud Storage
+2025-12-21 16:28:18,951 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:28:19,004 - INFO - Background model warmup tasks started
+2025-12-21 16:28:19,009 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:28:19,009 - INFO - Starting database initialization in background...
+2025-12-21 16:28:19,010 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:28:19,011 - INFO - Database tables initialized
+2025-12-21 16:28:19,011 - INFO - Database synced to Cloud Storage
+2025-12-21 16:28:24,261 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:28:24,326 - INFO - Background model warmup tasks started
+2025-12-21 16:28:24,326 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:28:24,326 - INFO - Starting database initialization in background...
+2025-12-21 16:28:24,327 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:28:24,328 - INFO - Database tables initialized
+2025-12-21 16:28:24,328 - INFO - Database synced to Cloud Storage
+2025-12-21 16:38:15,648 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:38:15,723 - INFO - Background model warmup tasks started
+2025-12-21 16:38:15,723 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:38:15,723 - INFO - Starting database initialization in background...
+2025-12-21 16:38:15,723 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:38:15,730 - INFO - Database tables initialized
+2025-12-21 16:38:15,730 - INFO - Database synced to Cloud Storage
+2025-12-21 16:41:29,480 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:41:29,522 - INFO - Background model warmup tasks started
+2025-12-21 16:41:29,522 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:41:29,522 - INFO - Starting database initialization in background...
+2025-12-21 16:41:29,522 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:41:29,527 - INFO - Database tables initialized
+2025-12-21 16:41:29,527 - INFO - Database synced to Cloud Storage
+2025-12-21 16:41:35,220 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:41:35,276 - INFO - Background model warmup tasks started
+2025-12-21 16:41:35,276 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:41:35,276 - INFO - Starting database initialization in background...
+2025-12-21 16:41:35,276 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:41:35,277 - INFO - Database tables initialized
+2025-12-21 16:41:35,277 - INFO - Database synced to Cloud Storage
+2025-12-21 16:41:44,356 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:41:44,441 - INFO - Background model warmup tasks started
+2025-12-21 16:41:44,441 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:41:44,442 - INFO - Starting database initialization in background...
+2025-12-21 16:41:44,442 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:41:44,444 - INFO - Database tables initialized
+2025-12-21 16:41:44,444 - INFO - Database synced to Cloud Storage
+2025-12-21 16:42:25,685 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:42:25,724 - INFO - Background model warmup tasks started
+2025-12-21 16:42:25,724 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:42:25,724 - INFO - Starting database initialization in background...
+2025-12-21 16:42:25,724 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:42:25,730 - INFO - Database tables initialized
+2025-12-21 16:42:25,730 - INFO - Database synced to Cloud Storage
+2025-12-21 16:42:43,761 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:42:43,799 - INFO - Background model warmup tasks started
+2025-12-21 16:42:43,799 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:42:43,799 - INFO - Starting database initialization in background...
+2025-12-21 16:42:43,799 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:42:43,800 - INFO - Database tables initialized
+2025-12-21 16:42:43,800 - INFO - Database synced to Cloud Storage
+2025-12-21 16:45:14,067 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:45:14,107 - INFO - Background model warmup tasks started
+2025-12-21 16:45:14,107 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:45:14,107 - INFO - Starting database initialization in background...
+2025-12-21 16:45:14,107 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:45:14,112 - INFO - Database tables initialized
+2025-12-21 16:45:14,112 - INFO - Database synced to Cloud Storage
+2025-12-21 16:45:35,848 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:45:35,912 - INFO - Background model warmup tasks started
+2025-12-21 16:45:35,912 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:45:35,912 - INFO - Starting database initialization in background...
+2025-12-21 16:45:35,912 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:45:35,914 - INFO - Database tables initialized
+2025-12-21 16:45:35,914 - INFO - Database synced to Cloud Storage
+2025-12-21 16:45:42,671 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:45:42,711 - INFO - Background model warmup tasks started
+2025-12-21 16:45:42,711 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:45:42,711 - INFO - Starting database initialization in background...
+2025-12-21 16:45:42,711 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:45:42,712 - INFO - Database tables initialized
+2025-12-21 16:45:42,712 - INFO - Database synced to Cloud Storage
+2025-12-21 16:48:13,460 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:48:13,501 - INFO - Background model warmup tasks started
+2025-12-21 16:48:13,502 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:48:13,502 - INFO - Starting database initialization in background...
+2025-12-21 16:48:13,502 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:48:13,507 - INFO - Database tables initialized
+2025-12-21 16:48:13,507 - INFO - Database synced to Cloud Storage
+2025-12-21 16:48:15,485 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:48:15,525 - INFO - Background model warmup tasks started
+2025-12-21 16:48:15,525 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:48:15,525 - INFO - Starting database initialization in background...
+2025-12-21 16:48:15,525 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:48:15,526 - INFO - Database tables initialized
+2025-12-21 16:48:15,526 - INFO - Database synced to Cloud Storage
+2025-12-21 16:48:25,588 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:48:25,647 - INFO - Background model warmup tasks started
+2025-12-21 16:48:25,647 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:48:25,648 - INFO - Starting database initialization in background...
+2025-12-21 16:48:25,648 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:48:25,649 - INFO - Database tables initialized
+2025-12-21 16:48:25,649 - INFO - Database synced to Cloud Storage
+2025-12-21 16:48:37,401 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:48:37,763 - INFO - Background model warmup tasks started
+2025-12-21 16:48:37,763 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:48:37,764 - INFO - Starting database initialization in background...
+2025-12-21 16:48:37,764 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:48:38,553 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:48:38,900 - INFO - Background model warmup tasks started
+2025-12-21 16:48:38,900 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:48:38,901 - INFO - Starting database initialization in background...
+2025-12-21 16:48:38,901 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:48:38,902 - INFO - Database tables initialized
+2025-12-21 16:48:38,902 - INFO - Database synced to Cloud Storage
+2025-12-21 16:49:04,988 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:49:05,029 - INFO - Background model warmup tasks started
+2025-12-21 16:49:05,029 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:49:05,029 - INFO - Starting database initialization in background...
+2025-12-21 16:49:05,029 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:49:05,033 - INFO - Database tables initialized
+2025-12-21 16:49:05,033 - INFO - Database synced to Cloud Storage
+2025-12-21 16:49:41,690 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:49:41,731 - INFO - Background model warmup tasks started
+2025-12-21 16:49:41,731 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:49:41,731 - INFO - Starting database initialization in background...
+2025-12-21 16:49:41,731 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:49:41,732 - INFO - Database tables initialized
+2025-12-21 16:49:41,732 - INFO - Database synced to Cloud Storage
+2025-12-21 16:49:58,737 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:49:58,884 - INFO - Background model warmup tasks started
+2025-12-21 16:49:58,885 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:49:58,885 - INFO - Starting database initialization in background...
+2025-12-21 16:49:58,886 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:49:58,892 - INFO - Database tables initialized
+2025-12-21 16:49:58,893 - INFO - Database synced to Cloud Storage
+2025-12-21 16:50:05,423 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:50:05,462 - INFO - Background model warmup tasks started
+2025-12-21 16:50:05,462 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:50:05,462 - INFO - Starting database initialization in background...
+2025-12-21 16:50:05,462 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:50:05,463 - INFO - Database tables initialized
+2025-12-21 16:50:05,463 - INFO - Database synced to Cloud Storage
+2025-12-21 16:51:16,720 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:51:16,768 - INFO - Background model warmup tasks started
+2025-12-21 16:51:16,768 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:51:16,769 - INFO - Starting database initialization in background...
+2025-12-21 16:51:16,769 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:51:16,774 - INFO - Database tables initialized
+2025-12-21 16:51:16,775 - INFO - Database synced to Cloud Storage
+2025-12-21 16:51:21,070 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:51:21,117 - INFO - Background model warmup tasks started
+2025-12-21 16:51:21,117 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:51:21,118 - INFO - Starting database initialization in background...
+2025-12-21 16:51:21,118 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:51:21,119 - INFO - Database tables initialized
+2025-12-21 16:51:21,119 - INFO - Database synced to Cloud Storage
+2025-12-21 16:51:41,248 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:51:41,292 - INFO - Background model warmup tasks started
+2025-12-21 16:51:41,292 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:51:41,292 - INFO - Starting database initialization in background...
+2025-12-21 16:51:41,292 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:51:41,298 - INFO - Database tables initialized
+2025-12-21 16:51:41,298 - INFO - Database synced to Cloud Storage
+2025-12-21 16:52:14,560 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:52:14,609 - INFO - Background model warmup tasks started
+2025-12-21 16:52:14,609 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:52:14,609 - INFO - Starting database initialization in background...
+2025-12-21 16:52:14,609 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:52:14,614 - INFO - Database tables initialized
+2025-12-21 16:52:14,614 - INFO - Database synced to Cloud Storage
+2025-12-21 16:52:21,022 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:52:21,094 - INFO - Background model warmup tasks started
+2025-12-21 16:52:21,094 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:52:21,094 - INFO - Starting database initialization in background...
+2025-12-21 16:52:21,094 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:52:21,095 - INFO - Database tables initialized
+2025-12-21 16:52:21,095 - INFO - Database synced to Cloud Storage
+2025-12-21 16:52:47,286 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:52:47,352 - INFO - Background model warmup tasks started
+2025-12-21 16:52:47,352 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:52:47,352 - INFO - Starting database initialization in background...
+2025-12-21 16:52:47,352 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:52:47,359 - INFO - Database tables initialized
+2025-12-21 16:52:47,359 - INFO - Database synced to Cloud Storage
+2025-12-21 16:54:14,892 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:54:15,072 - INFO - Background model warmup tasks started
+2025-12-21 16:54:15,073 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:54:15,073 - INFO - Starting database initialization in background...
+2025-12-21 16:54:15,073 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:54:15,081 - INFO - Database tables initialized
+2025-12-21 16:54:15,082 - INFO - Database synced to Cloud Storage
+2025-12-21 16:54:31,380 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:54:31,477 - INFO - Background model warmup tasks started
+2025-12-21 16:54:31,477 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:54:31,478 - INFO - Starting database initialization in background...
+2025-12-21 16:54:31,478 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:54:31,483 - INFO - Database tables initialized
+2025-12-21 16:54:31,484 - INFO - Database synced to Cloud Storage
+2025-12-21 16:54:47,019 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:54:47,056 - INFO - Background model warmup tasks started
+2025-12-21 16:54:47,056 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:54:47,056 - INFO - Starting database initialization in background...
+2025-12-21 16:54:47,056 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:54:47,057 - INFO - Database tables initialized
+2025-12-21 16:54:47,057 - INFO - Database synced to Cloud Storage
+2025-12-21 16:55:11,917 - WARNING - Real-ESRGAN binary not found at /app/realesrgan-ncnn-vulkan
+2025-12-21 16:56:10,664 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:56:10,732 - INFO - Background model warmup tasks started
+2025-12-21 16:56:10,732 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:56:10,732 - INFO - Starting database initialization in background...
+2025-12-21 16:56:10,732 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:56:10,738 - INFO - Database tables initialized
+2025-12-21 16:56:10,738 - INFO - Database synced to Cloud Storage
+2025-12-21 16:56:24,582 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:56:24,622 - INFO - Background model warmup tasks started
+2025-12-21 16:56:24,622 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:56:24,622 - INFO - Starting database initialization in background...
+2025-12-21 16:56:24,622 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:56:24,623 - INFO - Database tables initialized
+2025-12-21 16:56:24,623 - INFO - Database synced to Cloud Storage
+2025-12-21 16:56:42,598 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:56:42,643 - INFO - Background model warmup tasks started
+2025-12-21 16:56:42,643 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:56:42,643 - INFO - Starting database initialization in background...
+2025-12-21 16:56:42,643 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:56:42,644 - INFO - Database tables initialized
+2025-12-21 16:56:42,644 - INFO - Database synced to Cloud Storage
+2025-12-21 16:57:34,192 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 16:57:34,234 - INFO - Background model warmup tasks started
+2025-12-21 16:57:34,234 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 16:57:34,234 - INFO - Starting database initialization in background...
+2025-12-21 16:57:34,235 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 16:57:34,239 - INFO - Database tables initialized
+2025-12-21 16:57:34,239 - INFO - Database synced to Cloud Storage
+2025-12-21 16:58:21,200 - INFO - Found Real-ESRGAN binary at: /Users/vipulagarwal/Documents/remback/realesrgan-ncnn-vulkan
+2025-12-21 16:58:21,400 - INFO - Saved input image to: /var/folders/1f/qvjl_r7n421cdbnzly6hrcjh0000gn/T/realesrgan_input_70975.png ((600, 548))
+2025-12-21 16:58:21,400 - INFO - Running Real-ESRGAN NCNN: /Users/vipulagarwal/Documents/remback/realesrgan-ncnn-vulkan -i /var/folders/1f/qvjl_r7n421cdbnzly6hrcjh0000gn/T/realesrgan_input_70975.png -o /var/folders/1f/qvjl_r7n421cdbnzly6hrcjh0000gn/T/realesrgan_output_70975.png -n realesrgan-x4plus -s 4 -f png -t 0 -g 0
+2025-12-21 16:58:21,400 - INFO - Binary path: /Users/vipulagarwal/Documents/remback/realesrgan-ncnn-vulkan, Models path: /app/realesrgan-models
+2025-12-21 16:58:21,400 - INFO - Binary directory: /Users/vipulagarwal/Documents/remback, Binary path: /Users/vipulagarwal/Documents/remback/realesrgan-ncnn-vulkan
+2025-12-21 16:58:21,400 - INFO - Working directory: /Users/vipulagarwal/Documents/remback, Binary: /Users/vipulagarwal/Documents/remback/realesrgan-ncnn-vulkan
+2025-12-21 16:58:29,656 - INFO - Output file created successfully: /var/folders/1f/qvjl_r7n421cdbnzly6hrcjh0000gn/T/realesrgan_output_70975.png (8395335 bytes)
+2025-12-21 16:58:29,805 - INFO - Loaded upscaled image: (2400, 2192)
+2025-12-21 17:00:12,812 - INFO - Saved input image to: /var/folders/1f/qvjl_r7n421cdbnzly6hrcjh0000gn/T/realesrgan_input_70975.png ((582, 564))
+2025-12-21 17:00:12,813 - INFO - Running Real-ESRGAN NCNN: /Users/vipulagarwal/Documents/remback/realesrgan-ncnn-vulkan -i /var/folders/1f/qvjl_r7n421cdbnzly6hrcjh0000gn/T/realesrgan_input_70975.png -o /var/folders/1f/qvjl_r7n421cdbnzly6hrcjh0000gn/T/realesrgan_output_70975.png -n realesrgan-x4plus -s 4 -f png -t 0 -g 0
+2025-12-21 17:00:12,813 - INFO - Binary path: /Users/vipulagarwal/Documents/remback/realesrgan-ncnn-vulkan, Models path: /app/realesrgan-models
+2025-12-21 17:00:12,813 - INFO - Binary directory: /Users/vipulagarwal/Documents/remback, Binary path: /Users/vipulagarwal/Documents/remback/realesrgan-ncnn-vulkan
+2025-12-21 17:00:12,813 - INFO - Working directory: /Users/vipulagarwal/Documents/remback, Binary: /Users/vipulagarwal/Documents/remback/realesrgan-ncnn-vulkan
+2025-12-21 17:00:21,070 - INFO - Output file created successfully: /var/folders/1f/qvjl_r7n421cdbnzly6hrcjh0000gn/T/realesrgan_output_70975.png (8452779 bytes)
+2025-12-21 17:00:21,231 - INFO - Loaded upscaled image: (2328, 2256)
+2025-12-21 17:05:11,288 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 17:05:11,331 - INFO - Background model warmup tasks started
+2025-12-21 17:05:11,331 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 17:05:11,332 - INFO - Starting database initialization in background...
+2025-12-21 17:05:11,332 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 17:05:11,338 - INFO - Database tables initialized
+2025-12-21 17:05:11,338 - INFO - Database synced to Cloud Storage
+2025-12-21 17:05:29,152 - INFO - Logging initialized. Log file: app.log, K_SERVICE: None, ENVIRONMENT: None
+2025-12-21 17:05:29,192 - INFO - Background model warmup tasks started
+2025-12-21 17:05:29,192 - INFO - Database initialization scheduled (non-blocking)
+2025-12-21 17:05:29,192 - INFO - Starting database initialization in background...
+2025-12-21 17:05:29,192 - INFO - Cloud Storage not configured, using local database only
+2025-12-21 17:05:29,193 - INFO - Database tables initialized
+2025-12-21 17:05:29,193 - INFO - Database synced to Cloud Storage

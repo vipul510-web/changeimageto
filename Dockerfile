@@ -15,16 +15,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Download Real-ESRGAN NCNN-Vulkan binary (no PyTorch needed!)
-# This is much lighter than PyTorch (~50-100MB vs 5-10GB)
-RUN mkdir -p /app/realesrgan-models && \
-    wget -q https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip -O /tmp/realesrgan.zip && \
-    unzip -q /tmp/realesrgan.zip -d /tmp/realesrgan && \
-    find /tmp/realesrgan -name "realesrgan-ncnn-vulkan" -type f -executable -exec mv {} /app/ \; && \
-    find /tmp/realesrgan -name "*.param" -o -name "*.bin" | head -20 | xargs -I {} mv {} /app/realesrgan-models/ 2>/dev/null || true && \
-    chmod +x /app/realesrgan-ncnn-vulkan && \
-    rm -rf /tmp/realesrgan /tmp/realesrgan.zip || echo "Real-ESRGAN binary download failed, will be optional"
-
 # Set working directory
 WORKDIR /app
 

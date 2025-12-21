@@ -41,6 +41,12 @@ PRIORITY_RULES = [
     (r"^change-color-of-image\.html$", 0.9, "daily"),
     (r"^convert-image-format\.html$", 0.9, "weekly"),
     
+    # SEO-focused pages (nano-banana and gemini)
+    (r"^nano-banana-change-image\.html$", 0.85, "weekly"),
+    (r"^nano-banana-change-image-.*\.html$", 0.85, "weekly"),
+    (r"^gemini-change-image-.*\.html$", 0.85, "weekly"),
+    (r"^how-to-change-the-aspect-ratio-of-an-image-in-gemini\.html$", 0.85, "weekly"),
+    
     # Color-specific pages (lower priority)
     (r"change-image-background-to-.*\.html$", 0.8, "weekly"),
     
