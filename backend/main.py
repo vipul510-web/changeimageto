@@ -217,55 +217,30 @@ def log_user_action(action: str, details: dict):
     }
     logger.info(f"USER_ACTION: {json.dumps(log_entry)}")
 
-def _find_vtracer_binary():
-    """Find vtracer binary in common locations"""
-    possible_paths = [
-        'vtracer',
-        '/usr/local/bin/vtracer',
-        '/usr/bin/vtracer',
-        os.path.join(os.getcwd(), 'vtracer'),
-    ]
-    
-    for path in possible_paths:
-        if shutil.which(path):
-            return path
-    
-    return None
-
 def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, max_colors: int = 32) -> str:
     """
-    Convert a raster image to true vectorized SVG using vtracer (visioncortex).
-    Uses professional-grade vectorization algorithm for high-quality results.
+    Convert a raster image to true vectorized SVG using Potrace.
+    Potrace is well-established and works excellently for vectorization.
     
     Args:
         image: PIL Image to vectorize
-        simplify_tolerance: Not used with vtracer (vtracer has its own optimization)
-        max_colors: Color precision (vtracer uses color_precision parameter)
+        simplify_tolerance: Potrace optimization parameter
+        max_colors: Maximum number of colors for color images
     
     Returns:
         SVG XML string with vector paths
     """
     try:
+        import potrace
+        import numpy as np
+    except ImportError:
+        raise RuntimeError("potrace library not available. Please install: pip install potrace")
+    
+    try:
         original_width, original_height = image.size
-        logger.info(f"Starting vtracer vectorization: original size={original_width}x{original_height}")
+        logger.info(f"Starting Potrace vectorization: original size={original_width}x{original_height}, max_colors={max_colors}")
         
-        # Try to find binary first (faster, no compilation needed)
-        vtracer_bin = _find_vtracer_binary()
-        use_python_lib = False
-        
-        if vtracer_bin:
-            logger.info(f"Using vtracer binary: {vtracer_bin}")
-        else:
-            # Fallback to Python library
-            try:
-                import vtracer
-                use_python_lib = True
-                logger.info("Using vtracer Python library")
-            except (ImportError, ModuleNotFoundError) as e:
-                logger.error(f"vtracer Python library not available: {e}")
-                raise RuntimeError("vtracer not found. Binary not in PATH and Python library not available. Please ensure vtracer is installed.")
-        
-        # Convert image to RGB if needed (vtracer works with RGB)
+        # Convert to RGB if needed
         if image.mode == 'RGBA':
             # Convert RGBA to RGB with white background
             rgb_image = Image.new('RGB', image.size, (255, 255, 255))
@@ -274,87 +249,105 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, 
         elif image.mode != 'RGB':
             image = image.convert('RGB')
         
-        # Save image to temporary file for vtracer
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_input:
-            image.save(tmp_input.name, format='PNG')
-            input_path = tmp_input.name
-        
-        # Create temporary output file
-        with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as tmp_output:
-            output_path = tmp_output.name
-        
-        try:
-            logger.info("Calling vtracer to vectorize image...")
-            color_precision = min(max(max_colors // 4, 4), 8)  # Range 4-8 for good quality
+        # For color images, we'll use color quantization and trace each color layer
+        # For simplicity and better quality, we can convert to grayscale first or use color quantization
+        if max_colors > 2:
+            # Color image: quantize colors and trace each layer
+            logger.info(f"Processing color image with up to {max_colors} colors")
             
-            if use_python_lib:
-                # Use Python library
-                import vtracer
-                vtracer.convert_image_to_svg_py(
-                    input_path,
-                    output_path,
-                    colormode='color',
-                    hierarchical='stacked',
-                    mode='spline',
-                    filter_speckle=4,
-                    color_precision=color_precision,
-                    layer_difference=16,
-                    corner_threshold=60,
-                    length_threshold=4.0,
-                    max_iterations=10,
-                    splice_threshold=45,
-                    path_precision=2,
-                )
-            else:
-                # Use binary via subprocess
-                cmd = [
-                    vtracer_bin,
-                    '--input', input_path,
-                    '--output', output_path,
-                    '--colormode', 'color',
-                    '--hierarchical', 'stacked',
-                    '--mode', 'spline',
-                    '--filter_speckle', '4',
-                    '--color_precision', str(color_precision),
-                    '--gradient_step', '16',
-                    '--corner_threshold', '60',
-                    '--segment_length', '4.0',
-                    '--splice_threshold', '45',
-                    '--path_precision', '2',
-                ]
+            # Quantize the image
+            quantized = image.quantize(colors=min(max_colors, 256), method=Image.Quantize.MEDIANCUT)
+            quantized_rgb = quantized.convert('RGB')
+            
+            # Get unique colors
+            pixels = np.array(quantized_rgb)
+            unique_colors = np.unique(pixels.reshape(-1, 3), axis=0)
+            
+            logger.info(f"Found {len(unique_colors)} unique colors after quantization")
+            
+            # Build SVG with layers for each color
+            svg_parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{original_width}" height="{original_height}" viewBox="0 0 {original_width} {original_height}">']
+            
+            # Trace each color layer (from darkest to lightest for proper layering)
+            color_layers = sorted(unique_colors, key=lambda c: sum(c))
+            
+            for color_idx, color in enumerate(color_layers):
+                # Create mask for this color
+                mask = np.all(pixels == color, axis=2).astype(np.uint8) * 255
                 
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=300,  # 5 minute timeout
+                # Skip if too few pixels
+                if np.sum(mask) < 100:  # Minimum area threshold
+                    continue
+                
+                # Convert to PIL Image for potrace
+                mask_image = Image.fromarray(mask, mode='L')
+                
+                # Trace with potrace
+                bitmap = potrace.Bitmap(np.array(mask_image))
+                path = bitmap.trace(
+                    turdsize=2,      # Remove small speckles
+                    optcurve=True,   # Optimize curves
+                    opttolerance=simplify_tolerance,  # Tolerance for optimization
+                    alphamax=1.0,    # Corner threshold
                 )
                 
-                if result.returncode != 0:
-                    error_msg = result.stderr or result.stdout or "Unknown error"
-                    logger.error(f"vtracer failed: {error_msg}")
-                    raise RuntimeError(f"vtracer conversion failed: {error_msg}")
+                # Convert path to SVG path string with color
+                if len(path) > 0:
+                    r, g, b = int(color[0]), int(color[1]), int(color[2])
+                    svg_parts.append(f'  <g fill="rgb({r},{g},{b})" stroke="none">')
+                    
+                    for curve in path:
+                        svg_path = f'M {curve.start_point.x},{curve.start_point.y} '
+                        for segment in curve.segments:
+                            if segment.is_corner:
+                                svg_path += f'L {segment.c.x},{segment.c.y} L {segment.end_point.x},{segment.end_point.y} '
+                            else:
+                                svg_path += f'C {segment.c1.x},{segment.c1.y} {segment.c2.x},{segment.c2.y} {segment.end_point.x},{segment.end_point.y} '
+                        svg_parts.append(f'    <path d="{svg_path}Z"/>')
+                    
+                    svg_parts.append('  </g>')
             
-            # Read the generated SVG
-            with open(output_path, 'r', encoding='utf-8') as f:
-                svg_content = f.read()
+            svg_parts.append('</svg>')
+            svg_content = '\n'.join(svg_parts)
             
-            logger.info(f"vtracer vectorization complete: output size={len(svg_content)} bytes")
-            return svg_content
+        else:
+            # Grayscale/B&W image: direct tracing (faster, better quality)
+            logger.info("Processing grayscale/black & white image")
             
-        finally:
-            # Clean up temporary files
-            try:
-                os.unlink(input_path)
-            except Exception:
-                pass
-            try:
-                os.unlink(output_path)
-            except Exception:
-                pass
+            # Convert to grayscale
+            gray = image.convert('L')
+            bitmap = potrace.Bitmap(np.array(gray))
+            
+            # Trace
+            path = bitmap.trace(
+                turdsize=2,
+                optcurve=True,
+                opttolerance=simplify_tolerance,
+                alphamax=1.0,
+            )
+            
+            # Build SVG
+            svg_parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{original_width}" height="{original_height}" viewBox="0 0 {original_width} {original_height}">']
+            svg_parts.append('  <g fill="black" stroke="none">')
+            
+            for curve in path:
+                svg_path = f'M {curve.start_point.x},{curve.start_point.y} '
+                for segment in curve.segments:
+                    if segment.is_corner:
+                        svg_path += f'L {segment.c.x},{segment.c.y} L {segment.end_point.x},{segment.end_point.y} '
+                    else:
+                        svg_path += f'C {segment.c1.x},{segment.c1.y} {segment.c2.x},{segment.c2.y} {segment.end_point.x},{segment.end_point.y} '
+                svg_parts.append(f'    <path d="{svg_path}Z"/>')
+            
+            svg_parts.append('  </g>')
+            svg_parts.append('</svg>')
+            svg_content = '\n'.join(svg_parts)
+        
+        logger.info(f"Potrace vectorization complete: output size={len(svg_content)} bytes")
+        return svg_content
         
     except Exception as e:
-        logger.error(f"vtracer vectorization error: {str(e)}", exc_info=True)
+        logger.error(f"Potrace vectorization error: {str(e)}", exc_info=True)
         raise
 
 # Background warmup for LaMa to reduce first-hit latency on Remove People
