@@ -1965,13 +1965,31 @@ async def convert_format(
     target = (target_format or "png").lower()
     if target == "jpeg":
         target = "jpg"
-    supported_targets = {"png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "ppm", "pgm"}
+    supported_targets = {"png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "ppm", "pgm", "svg"}
     if target not in supported_targets:
         raise HTTPException(status_code=400, detail=f"Unsupported target_format. Use one of: {sorted(supported_targets)}")
 
     try:
         contents = await file.read()
+        # Check if input is SVG
+        if file.filename and file.filename.lower().endswith('.svg'):
+            # Handle SVG input - convert SVG to raster first if target is not SVG
+            if target == "svg":
+                # SVG to SVG - just return as-is (or validate)
+                return Response(content=contents, media_type="image/svg+xml")
+            else:
+                # SVG to raster - need to render SVG first
+                try:
+                    from PIL import Image as PILImage
+                    import xml.etree.ElementTree as ET
+                    # Try to parse and render SVG (basic approach)
+                    # For production, consider using cairosvg or similar
+                    raise HTTPException(status_code=400, detail="SVG to raster conversion requires additional libraries. Please convert SVG to PNG first using another tool.")
+                except Exception as e:
+                    raise HTTPException(status_code=400, detail=f"SVG input processing error: {str(e)}")
         image = Image.open(io.BytesIO(contents))
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid image file")
 
@@ -1987,7 +2005,7 @@ async def convert_format(
     })
 
     # Decide mode based on transparency setting and target
-    supports_alpha = target in {"png", "webp", "tiff", "ico", "gif"}
+    supports_alpha = target in {"png", "webp", "tiff", "ico", "gif", "svg"}
     keep_alpha = bool(transparent and supports_alpha)
 
     try:
@@ -2063,6 +2081,24 @@ async def convert_format(
                 converted = converted.convert("L")
             save_format = "PPM"
             params.update({"bits": 8})
+        elif target == "svg":
+            # Convert raster image to SVG by embedding as base64 data URI
+            # This creates an SVG wrapper with the image embedded
+            import base64
+            buf_png = io.BytesIO()
+            if keep_alpha:
+                converted.save(buf_png, format="PNG")
+            else:
+                converted.save(buf_png, format="PNG")
+            png_data = base64.b64encode(buf_png.getvalue()).decode('utf-8')
+            width, height = converted.size
+            svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
+  <image width="{width}" height="{height}" xlink:href="data:image/png;base64,{png_data}"/>
+</svg>'''
+            out = svg_content.encode('utf-8')
+            media = "image/svg+xml"
+            return Response(content=out, media_type=media)
         else:
             save_format = "PNG"
 
@@ -2077,18 +2113,22 @@ async def convert_format(
             "output_size_bytes": len(out),
         })
 
-        media = {
-            "png": "image/png",
-            "jpg": "image/jpeg",
-            "webp": "image/webp",
-            "bmp": "image/bmp",
-            "gif": "image/gif",
-            "tiff": "image/tiff",
-            "ico": "image/x-icon",
-            "ppm": "image/x-portable-pixmap",
-            "pgm": "image/x-portable-graymap",
-        }[target]
-        return Response(content=out, media_type=media)
+        if target == "svg":
+            # Already handled above
+            pass
+        else:
+            media = {
+                "png": "image/png",
+                "jpg": "image/jpeg",
+                "webp": "image/webp",
+                "bmp": "image/bmp",
+                "gif": "image/gif",
+                "tiff": "image/tiff",
+                "ico": "image/x-icon",
+                "ppm": "image/x-portable-pixmap",
+                "pgm": "image/x-portable-graymap",
+            }[target]
+            return Response(content=out, media_type=media)
 
     except Exception as e:
         log_user_action("convert_error", {"message": str(e)})
@@ -2270,7 +2310,13 @@ class BlogStatus(Enum):
     REJECTED = "rejected"
 
 # Database configuration - must be defined before functions that use it
-DB_FILE = 'blog_management.db'
+# Use absolute path in production to avoid issues with working directory
+if os.getenv("K_SERVICE") or os.getenv("ENVIRONMENT") == "production":
+    # In Cloud Run, use /tmp for ephemeral storage (will be lost on restart if not synced!)
+    # But we MUST sync to Cloud Storage for persistence
+    DB_FILE = os.path.join(os.getenv("TMPDIR", "/tmp"), "blog_management.db")
+else:
+    DB_FILE = 'blog_management.db'
 DB_BUCKET_PATH = 'data/blog_management.db'  # Path in Cloud Storage
 
 def init_blog_db():
@@ -2345,8 +2391,10 @@ def init_blog_db():
 def sync_db_from_storage():
     """Download database from Cloud Storage if it exists"""
     if not BLOG_BUCKET or storage is None:
-        logger.info("Cloud Storage not configured, using local database only")
-        return
+        logger.warning("⚠️  Cloud Storage not configured, using local database only")
+        logger.warning(f"   BLOG_BUCKET={BLOG_BUCKET}, storage={storage is not None}")
+        logger.warning("   ⚠️  WARNING: In Cloud Run, local database will be LOST on restart!")
+        return False
     
     try:
         client = get_storage_client()
@@ -2354,31 +2402,41 @@ def sync_db_from_storage():
         blob = bucket.blob(DB_BUCKET_PATH)
         
         if blob.exists():
-            logger.info(f"Downloading database from Cloud Storage: {DB_BUCKET_PATH}")
+            logger.info(f"📥 Downloading database from Cloud Storage: {DB_BUCKET_PATH}")
             blob.download_to_filename(DB_FILE)
-            logger.info("Database downloaded successfully from Cloud Storage")
+            logger.info("✅ Database downloaded successfully from Cloud Storage")
+            return True
         else:
-            logger.info("No existing database in Cloud Storage, starting fresh")
+            logger.info("ℹ️  No existing database in Cloud Storage, starting fresh")
+            return False
     except Exception as e:
-        logger.warning(f"Failed to sync database from Cloud Storage: {e}. Using local database.")
+        logger.error(f"❌ Failed to sync database from Cloud Storage: {e}")
+        logger.error("   ⚠️  Using local database - data may be lost on restart!")
+        return False
 
 def sync_db_to_storage():
     """Upload database to Cloud Storage"""
     if not BLOG_BUCKET or storage is None:
-        return
+        logger.warning("⚠️  CRITICAL: Cloud Storage not configured! Database changes will be LOST on restart!")
+        logger.warning(f"   BLOG_BUCKET={BLOG_BUCKET}, storage={storage is not None}")
+        return False
     
     try:
         if not os.path.exists(DB_FILE):
-            return
+            logger.warning(f"Database file {DB_FILE} does not exist, cannot sync")
+            return False
         
         client = get_storage_client()
         bucket = get_or_create_bucket(client)
         blob = bucket.blob(DB_BUCKET_PATH)
         
         blob.upload_from_filename(DB_FILE)
-        logger.info(f"Database synced to Cloud Storage: {DB_BUCKET_PATH}")
+        logger.info(f"✅ Database synced to Cloud Storage: {DB_BUCKET_PATH}")
+        return True
     except Exception as e:
-        logger.warning(f"Failed to sync database to Cloud Storage: {e}")
+        logger.error(f"❌ CRITICAL: Failed to sync database to Cloud Storage: {e}")
+        logger.error(f"   Database changes may be LOST on restart!")
+        return False
 
 def get_db_connection():
     """Get database connection with auto-sync to Cloud Storage"""
@@ -2410,25 +2468,53 @@ async def init_database():
     async def _init_db_async():
         try:
             logger.info("Starting database initialization in background...")
-            # Use asyncio.to_thread to run sync operations
-            try:
-                await asyncio.to_thread(sync_db_from_storage)
-            except Exception as e:
-                logger.warning(f"Could not sync from Cloud Storage (will start fresh): {e}")
             
-            # Initialize/create tables
+            # CRITICAL: Download database FROM Cloud Storage FIRST (before any table creation)
+            # This ensures we don't overwrite existing data
+            db_downloaded = False
+            try:
+                db_downloaded = await asyncio.to_thread(sync_db_from_storage)
+                if db_downloaded:
+                    logger.info("✅ Downloaded existing database from Cloud Storage")
+                else:
+                    logger.info("ℹ️  No existing database in Cloud Storage, will create new one")
+            except Exception as e:
+                logger.error(f"❌ Failed to sync from Cloud Storage: {e}")
+                logger.error("   Will start with fresh database - existing data may be lost!")
+            
+            # Initialize/create tables (safe - uses CREATE TABLE IF NOT EXISTS)
             try:
                 await asyncio.to_thread(init_blog_db)
                 logger.info("Database tables initialized")
             except Exception as e:
                 logger.error(f"Failed to initialize database tables: {e}")
             
-            # Sync back after initialization (optional)
-            try:
-                await asyncio.to_thread(sync_db_to_storage)
-                logger.info("Database synced to Cloud Storage")
-            except Exception as e:
-                logger.warning(f"Could not sync to Cloud Storage: {e}")
+            # Only sync BACK to Cloud Storage if:
+            # 1. We didn't download an existing database (new database created)
+            # 2. OR we successfully downloaded and want to ensure it's backed up
+            # This prevents overwriting good data with empty database
+            if not db_downloaded:
+                # New database created - sync it to Cloud Storage
+                try:
+                    sync_success = await asyncio.to_thread(sync_db_to_storage)
+                    if not sync_success:
+                        logger.error("🚨 CRITICAL: Initial database sync failed! Check BLOG_BUCKET configuration!")
+                    else:
+                        logger.info("✅ New database synced to Cloud Storage")
+                except Exception as e:
+                    logger.error(f"❌ CRITICAL: Could not sync to Cloud Storage: {e}")
+                    logger.error("   Database changes will be LOST on restart in Cloud Run!")
+            else:
+                # Database was downloaded - verify it's still there and optionally re-sync
+                # (in case tables were added/updated)
+                try:
+                    sync_success = await asyncio.to_thread(sync_db_to_storage)
+                    if sync_success:
+                        logger.info("✅ Database verified and synced to Cloud Storage")
+                    else:
+                        logger.warning("⚠️  Could not verify database sync, but data should be safe")
+                except Exception as e:
+                    logger.warning(f"⚠️  Could not verify database sync: {e} (data should still be safe)")
                 
         except Exception as e:
             logger.error(f"Database initialization error (non-fatal): {e}")
@@ -3586,6 +3672,39 @@ async def test_upscayl(
     if scale not in [2, 3, 4]:
         raise HTTPException(status_code=400, detail="Scale must be 2, 3, or 4")
     
+    # Validate model name - must match available model files
+    valid_models = [
+        "realesrgan-x4plus",
+        "realesrgan-x4plus-anime",
+        "realesr-animevideov3-x2",
+        "realesr-animevideov3-x3",
+        "realesr-animevideov3-x4",
+    ]
+    
+    # Auto-correct common typos
+    model_corrections = {
+        "realesrganplus": "realesrgan-x4plus",
+        "realesrgan-x4": "realesrgan-x4plus",
+        "realesrgan": "realesrgan-x4plus",
+    }
+    if model in model_corrections:
+        logger.info(f"Auto-correcting model name: {model} -> {model_corrections[model]}")
+        model = model_corrections[model]
+    
+    if model not in valid_models:
+        logger.warning(f"Invalid model name received: {model}. Valid models: {valid_models}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid model name: '{model}'. Valid models: {', '.join(valid_models)}"
+        )
+    
+    # For realesr-animevideov3 models, ensure scale matches model name
+    if model.startswith("realesr-animevideov3-"):
+        model_scale = int(model.split("-x")[-1])
+        if scale != model_scale:
+            logger.warning(f"Scale mismatch: model {model} requires scale {model_scale}, but got {scale}")
+            scale = model_scale  # Auto-correct the scale
+    
     binary_path = _check_upscayl_ncnn_available()
     if not binary_path:
         raise HTTPException(
@@ -3659,9 +3778,19 @@ async def test_upscayl(
                 error_msg = result.stderr or result.stdout or "Unknown error"
                 logger.error(f"Upscayl NCNN failed (return code {result.returncode}): {error_msg}")
                 logger.error(f"Command was: {' '.join(cmd)}")
+                logger.error(f"Model: {model}, Scale: {scale}")
+                
+                # Provide more helpful error messages
+                if result.returncode == -11:  # SIGSEGV (segmentation fault)
+                    detail_msg = f"Model '{model}' not found or invalid. Available models: {', '.join(valid_models)}"
+                elif "model" in error_msg.lower() or "not found" in error_msg.lower():
+                    detail_msg = f"Model '{model}' not found. Check that model files exist in {models_dir}"
+                else:
+                    detail_msg = f"Upscaling failed: {error_msg[:500]}"
+                
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Upscaling failed: {error_msg[:500]}"
+                    detail=detail_msg
                 )
             
             # Check if output file exists and is valid

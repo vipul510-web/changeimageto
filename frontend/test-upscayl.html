@@ -185,22 +185,27 @@
 
           const formData = new FormData();
           formData.append('file', currentFile);
-          const scaleValue = document.getElementById('scale').value;
-          formData.append('scale', scaleValue);
           
-          // Handle model selection - some models have scale in their name
+          // Handle model selection - realesr-animevideov3 models have scale in their name
           let modelValue = document.getElementById('model').value;
-          // If model has scale suffix (x2, x3, x4), use that scale
-          if (modelValue.includes('-x2')) {
-            modelValue = modelValue.replace('-x2', '');
-            formData.append('scale', '2');
-          } else if (modelValue.includes('-x3')) {
-            modelValue = modelValue.replace('-x3', '');
-            formData.append('scale', '3');
-          } else if (modelValue.includes('-x4')) {
-            modelValue = modelValue.replace('-x4', '');
-            formData.append('scale', '4');
+          let scaleValue = document.getElementById('scale').value;
+          
+          // For realesr-animevideov3 models, the model name includes the scale (x2, x3, x4)
+          // and we must use that scale, not the dropdown value
+          if (modelValue.startsWith('realesr-animevideov3-')) {
+            // Extract scale from model name (e.g., realesr-animevideov3-x4 -> 4)
+            const scaleMatch = modelValue.match(/-x(\d+)$/);
+            if (scaleMatch) {
+              scaleValue = scaleMatch[1];
+            }
+            // Keep the full model name including scale suffix
+          } else {
+            // For other models (realesrgan-x4plus, realesrgan-x4plus-anime),
+            // use the scale from dropdown
+            scaleValue = document.getElementById('scale').value;
           }
+          
+          formData.append('scale', scaleValue);
           formData.append('model', modelValue);
 
           try {
