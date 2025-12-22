@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     curl \
+    potrace \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
