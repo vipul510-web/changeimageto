@@ -38,12 +38,8 @@ try:
 except Exception:
     pytesseract = None
 
-try:
-    import vtracer
-    VTracer_AVAILABLE = True
-except Exception:
-    VTracer_AVAILABLE = False
-    vtracer = None
+# vtracer - we'll use the binary via subprocess
+VTracer_AVAILABLE = True  # We'll check for binary availability at runtime
 
 from rembg import remove, new_session
 try:
@@ -221,6 +217,21 @@ def log_user_action(action: str, details: dict):
     }
     logger.info(f"USER_ACTION: {json.dumps(log_entry)}")
 
+def _find_vtracer_binary():
+    """Find vtracer binary in common locations"""
+    possible_paths = [
+        'vtracer',
+        '/usr/local/bin/vtracer',
+        '/usr/bin/vtracer',
+        os.path.join(os.getcwd(), 'vtracer'),
+    ]
+    
+    for path in possible_paths:
+        if shutil.which(path):
+            return path
+    
+    return None
+
 def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, max_colors: int = 32) -> str:
     """
     Convert a raster image to true vectorized SVG using vtracer (visioncortex).
@@ -234,12 +245,24 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, 
     Returns:
         SVG XML string with vector paths
     """
-    if not VTracer_AVAILABLE:
-        raise RuntimeError("vtracer library not available. Please install: pip install vtracer")
-    
     try:
         original_width, original_height = image.size
         logger.info(f"Starting vtracer vectorization: original size={original_width}x{original_height}")
+        
+        # Try to use Python library first, fallback to binary
+        use_python_lib = False
+        vtracer_bin = None
+        
+        try:
+            import vtracer
+            use_python_lib = True
+            logger.info("Using vtracer Python library")
+        except ImportError:
+            # Try to find binary
+            vtracer_bin = _find_vtracer_binary()
+            if not vtracer_bin:
+                raise RuntimeError("vtracer not found. Please install: pip install vtracer")
+            logger.info(f"Using vtracer binary: {vtracer_bin}")
         
         # Convert image to RGB if needed (vtracer works with RGB)
         if image.mode == 'RGBA':
@@ -260,36 +283,56 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, 
             output_path = tmp_output.name
         
         try:
-            # Use vtracer to vectorize
-            # vtracer Python API: convert_image(input_path, output_path, **config)
-            # Config options based on vtracer CLI:
-            # - color_precision: Number of significant bits (default 6, range 1-8)
-            # - corner_threshold: Minimum angle to be a corner (default 60)
-            # - filter_speckle: Discard patches smaller than X px (default 4)
-            # - gradient_step: Color difference between layers (default 16)
-            # - mode: 'pixel', 'polygon', or 'spline' (default 'spline')
-            # - hierarchical: 'stacked' or 'cutout' (default 'stacked')
-            
             logger.info("Calling vtracer to vectorize image...")
-            # Use vtracer's Python API: convert_image_to_svg_py()
-            # Map max_colors to color_precision (1-8, default 6)
             color_precision = min(max(max_colors // 4, 4), 8)  # Range 4-8 for good quality
             
-            vtracer.convert_image_to_svg_py(
-                input_path,
-                output_path,
-                colormode='color',  # Use color mode (not binary)
-                hierarchical='stacked',  # Stacked mode for better quality
-                mode='spline',  # Use splines for smooth curves
-                filter_speckle=4,  # Discard patches smaller than 4px
-                color_precision=color_precision,  # Color precision (4-8)
-                layer_difference=16,  # Color difference between gradient layers
-                corner_threshold=60,  # Minimum angle to be a corner
-                length_threshold=4.0,  # Minimum segment length
-                max_iterations=10,  # Max iterations for optimization
-                splice_threshold=45,  # Angle threshold for splicing splines
-                path_precision=2,  # Decimal places in path strings
-            )
+            if use_python_lib:
+                # Use Python library
+                import vtracer
+                vtracer.convert_image_to_svg_py(
+                    input_path,
+                    output_path,
+                    colormode='color',
+                    hierarchical='stacked',
+                    mode='spline',
+                    filter_speckle=4,
+                    color_precision=color_precision,
+                    layer_difference=16,
+                    corner_threshold=60,
+                    length_threshold=4.0,
+                    max_iterations=10,
+                    splice_threshold=45,
+                    path_precision=2,
+                )
+            else:
+                # Use binary via subprocess
+                cmd = [
+                    vtracer_bin,
+                    '--input', input_path,
+                    '--output', output_path,
+                    '--colormode', 'color',
+                    '--hierarchical', 'stacked',
+                    '--mode', 'spline',
+                    '--filter_speckle', '4',
+                    '--color_precision', str(color_precision),
+                    '--gradient_step', '16',
+                    '--corner_threshold', '60',
+                    '--segment_length', '4.0',
+                    '--splice_threshold', '45',
+                    '--path_precision', '2',
+                ]
+                
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=300,  # 5 minute timeout
+                )
+                
+                if result.returncode != 0:
+                    error_msg = result.stderr or result.stdout or "Unknown error"
+                    logger.error(f"vtracer failed: {error_msg}")
+                    raise RuntimeError(f"vtracer conversion failed: {error_msg}")
             
             # Read the generated SVG
             with open(output_path, 'r', encoding='utf-8') as f:
