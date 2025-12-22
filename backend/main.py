@@ -2085,31 +2085,36 @@ async def convert_format(
             # Convert raster image to SVG by embedding as base64 data URI
             # This creates an SVG wrapper with the image embedded
             import base64
+            logger.info(f"Starting SVG conversion: image mode={converted.mode}, keep_alpha={keep_alpha}, size={converted.size}")
             try:
                 buf_png = io.BytesIO()
                 # Ensure we save as PNG with proper mode
-                if keep_alpha and converted.mode != "RGBA":
-                    converted = converted.convert("RGBA")
-                elif not keep_alpha and converted.mode not in ("RGB", "RGBA"):
+                if keep_alpha:
+                    # Keep transparency - convert to RGBA if needed
+                    if converted.mode != "RGBA":
+                        converted = converted.convert("RGBA")
+                else:
+                    # No transparency - flatten to RGB
                     if converted.mode in ("RGBA", "LA"):
                         background = Image.new("RGB", converted.size, (255, 255, 255))
                         background.paste(converted, mask=converted.split()[-1] if converted.mode == "RGBA" else None)
                         converted = background
-                    else:
+                    elif converted.mode not in ("RGB", "RGBA"):
                         converted = converted.convert("RGB")
                 
                 converted.save(buf_png, format="PNG")
                 png_data = base64.b64encode(buf_png.getvalue()).decode('utf-8')
                 width, height = converted.size
+                # Use modern href instead of deprecated xlink:href
                 svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
-  <image width="{width}" height="{height}" xlink:href="data:image/png;base64,{png_data}"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
+  <image width="{width}" height="{height}" href="data:image/png;base64,{png_data}"/>
 </svg>'''
                 out = svg_content.encode('utf-8')
-                logger.info(f"SVG conversion successful: {width}x{height}, output size: {len(out)} bytes")
+                logger.info(f"SVG conversion successful: {width}x{height}, output size: {len(out)} bytes, png_data length: {len(png_data)}, svg starts with: {svg_content[:100]}")
                 return Response(content=out, media_type="image/svg+xml")
             except Exception as e:
-                logger.error(f"SVG conversion error: {str(e)}")
+                logger.error(f"SVG conversion error: {str(e)}", exc_info=True)
                 raise HTTPException(status_code=500, detail=f"SVG conversion failed: {str(e)}")
         else:
             save_format = "PNG"
