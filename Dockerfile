@@ -13,7 +13,13 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr-eng \
     wget \
     unzip \
+    curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Rust (needed for vtracer compilation if no pre-built wheels available)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Set working directory
 WORKDIR /app
@@ -21,6 +27,9 @@ WORKDIR /app
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Verify vtracer installation
+RUN python -c "import vtracer; print(f'vtracer version check: {vtracer.__version__ if hasattr(vtracer, \"__version__\") else \"installed\"}')" || (echo "ERROR: vtracer failed to import" && exit 1)
 
 # Pre-download and cache the model during build
 RUN python -c "from rembg import new_session; new_session('u2netp')"
