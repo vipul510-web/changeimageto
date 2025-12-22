@@ -214,6 +214,140 @@ def log_user_action(action: str, details: dict):
     }
     logger.info(f"USER_ACTION: {json.dumps(log_entry)}")
 
+def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 1.0, max_colors: int = 256) -> str:
+    """
+    Convert a raster image to true vectorized SVG using color quantization and contour tracing.
+    
+    Args:
+        image: PIL Image to vectorize
+        simplify_tolerance: Tolerance for path simplification (higher = fewer points, less accurate)
+        max_colors: Maximum number of colors to quantize to (fewer = simpler SVG, faster)
+    
+    Returns:
+        SVG XML string with vector paths
+    """
+    try:
+        width, height = image.size
+        
+        # Convert to numpy array
+        if image.mode == 'RGBA':
+            # For RGBA, create a white background and composite
+            bg = Image.new('RGB', image.size, (255, 255, 255))
+            bg.paste(image, mask=image.split()[-1])
+            img_array = np.array(bg)
+        else:
+            img_array = np.array(image.convert('RGB'))
+        
+        # Color quantization to reduce number of colors (makes vectorization more efficient)
+        # Reshape image to be a list of pixels
+        pixel_values = img_array.reshape((-1, 3))
+        pixel_values = np.float32(pixel_values)
+        
+        # Apply k-means clustering for color quantization
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 1.0)
+        k = min(max_colors, 128)  # Limit to reasonable number
+        _, labels, centers = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+        
+        # Convert back to uint8
+        centers = np.uint8(centers)
+        quantized = centers[labels.flatten()]
+        quantized_img = quantized.reshape(img_array.shape)
+        
+        # Convert to PIL for easier processing
+        quantized_pil = Image.fromarray(quantized_img)
+        
+        # Build SVG paths for each color
+        svg_paths = []
+        path_id = 0
+        
+        # Process each unique color
+        unique_colors = np.unique(quantized_img.reshape(-1, quantized_img.shape[-1]), axis=0)
+        logger.info(f"Processing {len(unique_colors)} unique colors...")
+        
+        for color in unique_colors:
+            # Create binary mask for this color
+            color_mask = np.all(quantized_img == color, axis=2).astype(np.uint8) * 255
+            
+            # Find contours for this color region
+            contours, hierarchy = cv2.findContours(color_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            
+            for contour in contours:
+                if len(contour) < 3:  # Skip tiny contours
+                    continue
+                
+                # Get area to filter very small regions
+                area = cv2.contourArea(contour)
+                if area < 10:  # Skip very small areas
+                    continue
+                
+                # Simplify contour to reduce points
+                epsilon = simplify_tolerance * (1.0 + area / 10000.0)  # Adaptive tolerance
+                simplified = cv2.approxPolyDP(contour, epsilon, closed=True)
+                
+                if len(simplified) < 2:
+                    continue
+                
+                # Convert to SVG path
+                path_data = []
+                for j, point in enumerate(simplified):
+                    x, y = point[0]
+                    if j == 0:
+                        path_data.append(f"M {x} {y}")
+                    else:
+                        path_data.append(f"L {x} {y}")
+                path_data.append("Z")  # Close path
+                
+                path_str = " ".join(path_data)
+                
+                # Convert color to hex
+                color_hex = f"#{int(color[0]):02x}{int(color[1]):02x}{int(color[2]):02x}"
+                
+                svg_paths.append(f'<path id="path{path_id}" d="{path_str}" fill="{color_hex}" stroke="none"/>')
+                path_id += 1
+        
+        # If no paths found, fall back to edge-based method
+        if not svg_paths:
+            logger.warning("No color regions found, using edge-based vectorization")
+            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+            edges = cv2.Canny(gray, 50, 150)
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            for contour in contours:
+                if len(contour) < 3:
+                    continue
+                epsilon = simplify_tolerance * 2
+                simplified = cv2.approxPolyDP(contour, epsilon, closed=True)
+                if len(simplified) < 2:
+                    continue
+                
+                path_data = []
+                for j, point in enumerate(simplified):
+                    x, y = point[0]
+                    if j == 0:
+                        path_data.append(f"M {x} {y}")
+                    else:
+                        path_data.append(f"L {x} {y}")
+                if cv2.isContourConvex(simplified):
+                    path_data.append("Z")
+                
+                path_str = " ".join(path_data)
+                svg_paths.append(f'<path d="{path_str}" fill="none" stroke="#000000" stroke-width="1"/>')
+        
+        # Build SVG
+        svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
+  <g>
+    {chr(10).join(svg_paths)}
+  </g>
+</svg>'''
+        
+        logger.info(f"Vectorization complete: {len(svg_paths)} paths generated from {len(unique_colors)} colors")
+        return svg_content
+        
+    except Exception as e:
+        logger.error(f"Vectorization error: {str(e)}", exc_info=True)
+        raise
+
 # Background warmup for LaMa to reduce first-hit latency on Remove People
 # 
 # IMPROVEMENTS MADE TO PERSON REMOVAL QUALITY:
@@ -2083,40 +2217,33 @@ async def convert_format(
             save_format = "PPM"
             params.update({"bits": 8})
         elif target == "svg":
-            # Convert raster image to SVG by embedding as base64 data URI
-            # This creates an SVG wrapper with the image embedded
-            import base64
-            logger.info(f"SVG conversion block entered: target={target}, image mode={converted.mode}, keep_alpha={keep_alpha}, size={converted.size}")
+            # True vectorization: Convert raster image to SVG with actual vector paths
+            logger.info(f"SVG vectorization started: target={target}, image mode={converted.mode}, keep_alpha={keep_alpha}, size={converted.size}")
             try:
-                buf_png = io.BytesIO()
-                # Ensure we save as PNG with proper mode
-                if keep_alpha:
-                    # Keep transparency - convert to RGBA if needed
-                    if converted.mode != "RGBA":
-                        converted = converted.convert("RGBA")
+                # Prepare image for vectorization
+                if keep_alpha and converted.mode == "RGBA":
+                    # Keep transparency - work with RGBA
+                    vector_image = converted
                 else:
                     # No transparency - flatten to RGB
                     if converted.mode in ("RGBA", "LA"):
                         background = Image.new("RGB", converted.size, (255, 255, 255))
                         background.paste(converted, mask=converted.split()[-1] if converted.mode == "RGBA" else None)
-                        converted = background
+                        vector_image = background
                     elif converted.mode not in ("RGB", "RGBA"):
-                        converted = converted.convert("RGB")
+                        vector_image = converted.convert("RGB")
+                    else:
+                        vector_image = converted
                 
-                converted.save(buf_png, format="PNG")
-                png_data = base64.b64encode(buf_png.getvalue()).decode('utf-8')
-                width, height = converted.size
-                # Use modern href instead of deprecated xlink:href
-                svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
-  <image width="{width}" height="{height}" href="data:image/png;base64,{png_data}"/>
-</svg>'''
+                # Perform true vectorization
+                logger.info(f"Starting vectorization process...")
+                svg_content = vectorize_image_to_svg(vector_image, simplify_tolerance=1.0)
                 out = svg_content.encode('utf-8')
-                logger.info(f"SVG conversion successful: {width}x{height}, output size: {len(out)} bytes, png_data length: {len(png_data)}, svg starts with: {svg_content[:100]}")
+                logger.info(f"SVG vectorization successful: {vector_image.size[0]}x{vector_image.size[1]}, output size: {len(out)} bytes, svg starts with: {svg_content[:200]}")
                 return Response(content=out, media_type="image/svg+xml")
             except Exception as e:
-                logger.error(f"SVG conversion error: {str(e)}", exc_info=True)
-                raise HTTPException(status_code=500, detail=f"SVG conversion failed: {str(e)}")
+                logger.error(f"SVG vectorization error: {str(e)}", exc_info=True)
+                raise HTTPException(status_code=500, detail=f"SVG vectorization failed: {str(e)}")
         else:
             save_format = "PNG"
 
