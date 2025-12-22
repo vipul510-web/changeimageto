@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# Install system dependencies including Rust build dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libsm6 \
@@ -14,32 +14,32 @@ RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     curl \
-    build-essential \
-    pkg-config \
-    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Rust (needed for vtracer compilation if no pre-built wheels available)
-# Use minimal profile for faster installation
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal --no-modify-path
-ENV PATH="/root/.cargo/bin:${PATH}"
-ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
-ENV CARGO_NET_RETRY=3
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-# Install vtracer separately with verbose output to see any issues
-COPY requirements.txt .
-RUN pip install --no-cache-dir $(grep -v "^vtracer" requirements.txt) && \
-    echo "Installing vtracer..." && \
-    pip install --no-cache-dir -v vtracer==0.6.4 || \
-    (echo "ERROR: vtracer installation failed" && exit 1)
+# Download vtracer binary from GitHub releases (faster than compiling)
+# Try to download pre-built binary for Linux x86_64
+RUN VTRACER_VERSION="0.6.4" && \
+    VTRACER_URL="https://github.com/visioncortex/vtracer/releases/download/v${VTRACER_VERSION}/vtracer-${VTRACER_VERSION}-x86_64-unknown-linux-gnu.tar.gz" && \
+    echo "Attempting to download vtracer binary from: $VTRACER_URL" && \
+    (curl -L -f "$VTRACER_URL" -o /tmp/vtracer.tar.gz && \
+     tar -xzf /tmp/vtracer.tar.gz -C /tmp && \
+     mv /tmp/vtracer /usr/local/bin/vtracer && \
+     chmod +x /usr/local/bin/vtracer && \
+     rm /tmp/vtracer.tar.gz && \
+     echo "vtracer binary installed successfully") || \
+    (echo "Binary download failed, will try Python package installation" && \
+     apt-get update && apt-get install -y build-essential pkg-config libssl-dev curl && \
+     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal && \
+     export PATH="/root/.cargo/bin:${PATH}" && \
+     pip install --no-cache-dir vtracer==${VTRACER_VERSION} && \
+     echo "vtracer Python package installed successfully")
 
-# Verify vtracer installation
-RUN python -c "import vtracer; print('vtracer successfully imported')" || \
-    (echo "ERROR: vtracer failed to import after installation" && exit 1)
+# Copy requirements and install Python dependencies (excluding vtracer if binary was used)
+COPY requirements.txt .
+RUN pip install --no-cache-dir $(grep -v "^vtracer" requirements.txt || cat requirements.txt)
 
 # Pre-download and cache the model during build
 RUN python -c "from rembg import new_session; new_session('u2netp')"

@@ -249,21 +249,21 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, 
         original_width, original_height = image.size
         logger.info(f"Starting vtracer vectorization: original size={original_width}x{original_height}")
         
-        # Try to use Python library first, fallback to binary
+        # Try to find binary first (faster, no compilation needed)
+        vtracer_bin = _find_vtracer_binary()
         use_python_lib = False
-        vtracer_bin = None
         
-        try:
-            import vtracer
-            use_python_lib = True
-            logger.info("Using vtracer Python library")
-        except (ImportError, ModuleNotFoundError) as e:
-            logger.error(f"vtracer Python library not available: {e}")
-            # Try to find binary
-            vtracer_bin = _find_vtracer_binary()
-            if not vtracer_bin:
-                raise RuntimeError("vtracer not found. Please ensure vtracer is installed: pip install vtracer")
+        if vtracer_bin:
             logger.info(f"Using vtracer binary: {vtracer_bin}")
+        else:
+            # Fallback to Python library
+            try:
+                import vtracer
+                use_python_lib = True
+                logger.info("Using vtracer Python library")
+            except (ImportError, ModuleNotFoundError) as e:
+                logger.error(f"vtracer Python library not available: {e}")
+                raise RuntimeError("vtracer not found. Binary not in PATH and Python library not available. Please ensure vtracer is installed.")
         
         # Convert image to RGB if needed (vtracer works with RGB)
         if image.mode == 'RGBA':
