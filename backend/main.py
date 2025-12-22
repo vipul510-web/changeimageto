@@ -271,15 +271,23 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, 
             # - hierarchical: 'stacked' or 'cutout' (default 'stacked')
             
             logger.info("Calling vtracer to vectorize image...")
-            vtracer.convert_image(
+            # Use vtracer's Python API: convert_image_to_svg_py()
+            # Map max_colors to color_precision (1-8, default 6)
+            color_precision = min(max(max_colors // 4, 4), 8)  # Range 4-8 for good quality
+            
+            vtracer.convert_image_to_svg_py(
                 input_path,
                 output_path,
-                color_precision=min(max_colors // 4, 6),  # Map max_colors to color_precision (1-8)
-                corner_threshold=60,
-                filter_speckle=4,
-                gradient_step=16,
-                mode='spline',  # Use splines for smooth curves
+                colormode='color',  # Use color mode (not binary)
                 hierarchical='stacked',  # Stacked mode for better quality
+                mode='spline',  # Use splines for smooth curves
+                filter_speckle=4,  # Discard patches smaller than 4px
+                color_precision=color_precision,  # Color precision (4-8)
+                layer_difference=16,  # Color difference between gradient layers
+                corner_threshold=60,  # Minimum angle to be a corner
+                length_threshold=4.0,  # Minimum segment length
+                max_iterations=10,  # Max iterations for optimization
+                splice_threshold=45,  # Angle threshold for splicing splines
                 path_precision=2,  # Decimal places in path strings
             )
             
