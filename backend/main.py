@@ -2100,17 +2100,17 @@ async def convert_format(
         })
 
         media = {
-                "png": "image/png",
-                "jpg": "image/jpeg",
-                "webp": "image/webp",
-                "bmp": "image/bmp",
-                "gif": "image/gif",
-                "tiff": "image/tiff",
-                "ico": "image/x-icon",
-                "ppm": "image/x-portable-pixmap",
-                "pgm": "image/x-portable-graymap",
-            }[target]
-            return Response(content=out, media_type=media)
+            "png": "image/png",
+            "jpg": "image/jpeg",
+            "webp": "image/webp",
+            "bmp": "image/bmp",
+            "gif": "image/gif",
+            "tiff": "image/tiff",
+            "ico": "image/x-icon",
+            "ppm": "image/x-portable-pixmap",
+            "pgm": "image/x-portable-graymap",
+        }[target]
+        return Response(content=out, media_type=media)
 
     except Exception as e:
         log_user_action("convert_error", {"message": str(e)})
