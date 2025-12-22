@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test Unscribe - Remove Text from Image</title>
+    <style>
+      :root{--bg:#0b0f13;--fg:#eaf0f6;--muted:#9aa7b2;--accent:#6aa7ff;--card:#12171d;--border:#1e2630}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+      .container{max-width:1000px;margin:0 auto;padding:24px}
+      .header h1{margin:0 0 8px}
+      .header p{margin:0;color:var(--muted)}
+      .uploader{position:relative;border:2px dashed var(--border);border-radius:12px;padding:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card)}
+      .uploader input{position:absolute;inset:0;opacity:0;cursor:pointer;display:block;width:100%;height:100%}
+      .uploader-instructions{display:flex;flex-direction:column;align-items:center;color:var(--muted)}
+      .uploader.drag{border-color:var(--accent);background:#101826}
+      button, .btn{background:var(--accent);color:#001633;border:none;padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+      button[disabled]{opacity:.5;cursor:not-allowed}
+      .preview{margin-top:24px}
+      .preview-grid{display:grid;grid-template-columns:1fr;gap:16px}
+      @media(min-width:900px){.preview-grid{grid-template-columns:1fr 1fr}}
+      .checkerboard{background:conic-gradient(#cfd8e3 25%,transparent 0 50%,#cfd8e3 0 75%,transparent 0) 0 0/24px 24px; padding:12px;border-radius:12px}
+      .preview img{width:100%;height:auto;border-radius:8px;display:block}
+      .actions{margin-top:12px;display:flex;gap:12px;flex-wrap:wrap}
+      .actions .btn{flex:1;min-width:120px}
+      .status{margin-top:16px;padding:12px;border-radius:8px;background:var(--card);color:var(--muted)}
+      .status.error{background:#3a1f1f;color:#ff6b6b}
+      .status.success{background:#1f3a1f;color:#6bff6b}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Test Unscribe - Remove Text from Image</h1>
+        <p>Local test page for unscribe library</p>
+      </div>
+
+      <div class="uploader" id="uploader">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="uploader-instructions">
+          <p>Click or drag image here to test unscribe</p>
+          <p style="font-size:0.9em;margin-top:8px">Supports JPG, PNG, WebP</p>
+        </div>
+      </div>
+
+      <div id="status"></div>
+
+      <div class="preview" id="preview" style="display:none">
+        <div class="preview-grid">
+          <div>
+            <h3>Original</h3>
+            <div class="checkerboard">
+              <img id="originalImg" alt="Original">
+            </div>
+          </div>
+          <div>
+            <h3>Result (Text Removed)</h3>
+            <div class="checkerboard">
+              <img id="resultImg" alt="Result">
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <a href="#" id="downloadBtn" class="btn" download>Download Result</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const uploader = document.getElementById('uploader');
+      const fileInput = document.getElementById('fileInput');
+      const status = document.getElementById('status');
+      const preview = document.getElementById('preview');
+      const originalImg = document.getElementById('originalImg');
+      const resultImg = document.getElementById('resultImg');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      function showStatus(message, type = '') {
+        status.textContent = message;
+        status.className = 'status ' + type;
+        status.style.display = 'block';
+      }
+
+      function hideStatus() {
+        status.style.display = 'none';
+      }
+
+      uploader.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploader.classList.add('drag');
+      });
+
+      uploader.addEventListener('dragleave', () => {
+        uploader.classList.remove('drag');
+      });
+
+      uploader.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploader.classList.remove('drag');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+          handleFile(files[0]);
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          handleFile(e.target.files[0]);
+        }
+      });
+
+      async function handleFile(file) {
+        if (!file.type.startsWith('image/')) {
+          showStatus('Please select an image file', 'error');
+          return;
+        }
+
+        hideStatus();
+        showStatus('Processing...', '');
+
+        // Show original image
+        const originalUrl = URL.createObjectURL(file);
+        originalImg.src = originalUrl;
+
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const response = await fetch('/api/test-unscribe', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error || 'Processing failed');
+          }
+
+          const blob = await response.blob();
+          const resultUrl = URL.createObjectURL(blob);
+          resultImg.src = resultUrl;
+          downloadBtn.href = resultUrl;
+          downloadBtn.download = 'unscribe-result-' + Date.now() + '.png';
+
+          preview.style.display = 'block';
+          showStatus('Text removal successful!', 'success');
+        } catch (error) {
+          console.error('Error:', error);
+          showStatus('Error: ' + error.message, 'error');
+          preview.style.display = 'none';
+        }
+      }
+    </script>
+  </body>
+</html>
+

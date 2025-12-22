@@ -3936,6 +3936,49 @@ async def remove_text(
         raise HTTPException(status_code=500, detail=f"Text removal error: {str(e)}")
 
 
+@app.post("/api/test-unscribe")
+async def test_unscribe(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Test endpoint for unscribe library to remove text from images."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    try:
+        import unscribe
+        
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        
+        logger.info(f"Testing unscribe on image: {image.size}")
+        
+        # Convert PIL Image to numpy array for unscribe
+        import numpy as np
+        image_array = np.array(image)
+        
+        # Use unscribe to remove text
+        # Based on PyPI documentation: unscribe.remove_text(image)
+        result_array = unscribe.remove_text(image_array)
+        
+        # Convert back to PIL Image
+        result_image = Image.fromarray(result_array)
+        
+        # Save to bytes
+        buf = io.BytesIO()
+        result_image.save(buf, format="PNG")
+        
+        logger.info(f"Unscribe test successful: output size={len(buf.getvalue())} bytes")
+        
+        return Response(content=buf.getvalue(), media_type="image/png")
+        
+    except ImportError:
+        raise HTTPException(status_code=500, detail="unscribe library not installed. Install with: pip install unscribe")
+    except Exception as e:
+        logger.error(f"Unscribe test error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Unscribe error: {str(e)}")
+
+
 @app.post("/api/remove-painted-areas")
 async def remove_painted_areas(
     request: Request,
