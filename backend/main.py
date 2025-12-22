@@ -243,16 +243,19 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, 
         
         width, height = image.size
         
-        # Convert to numpy array
-        if image.mode == 'RGBA':
-            # For RGBA, create a white background and composite
-            bg = Image.new('RGB', image.size, (255, 255, 255))
-            bg.paste(image, mask=image.split()[-1])
-            img_array = np.array(bg)
-        else:
-            img_array = np.array(image.convert('RGB'))
-        
         logger.info("Starting color quantization...")
+        # PIL's quantization requires RGB (not RGBA), so convert first
+        if image.mode == 'RGBA':
+            # Convert RGBA to RGB with white background
+            rgb_image = Image.new('RGB', image.size, (255, 255, 255))
+            rgb_image.paste(image, mask=image.split()[-1])
+            image = rgb_image
+        elif image.mode != 'RGB':
+            image = image.convert('RGB')
+        
+        # Convert to numpy array for processing
+        img_array = np.array(image)
+        
         # Use faster color quantization - reduce colors significantly
         # Convert to indexed color mode (PIL's built-in quantization is faster than k-means)
         quantized_pil = image.quantize(colors=min(max_colors, 32), method=Image.Quantize.MEDIANCUT)
