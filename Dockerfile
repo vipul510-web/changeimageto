@@ -22,9 +22,7 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    python -c "import pixels2svg; print('pixels2svg installed successfully')" || \
-    (echo "ERROR: pixels2svg failed to install or import" && pip list | grep -i pixel && exit 1)
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-download and cache the model during build
 RUN python -c "from rembg import new_session; new_session('u2netp')"

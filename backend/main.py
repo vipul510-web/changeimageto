@@ -217,94 +217,6 @@ def log_user_action(action: str, details: dict):
     }
     logger.info(f"USER_ACTION: {json.dumps(log_entry)}")
 
-def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, max_colors: int = 32) -> str:
-    """
-    Convert a raster image to SVG using pixels2svg.
-    Pure Python library that groups adjacent pixels of the same color into paths.
-    
-    Args:
-        image: PIL Image to vectorize
-        simplify_tolerance: Not used by pixels2svg (kept for API compatibility)
-        max_colors: Maximum number of colors (pixels2svg handles this internally)
-    
-    Returns:
-        SVG XML string with vector paths
-    """
-    # Test import first
-    try:
-        from pixels2svg import pixels2svg
-        logger.info("pixels2svg library imported successfully")
-    except ImportError as e:
-        logger.error(f"Failed to import pixels2svg: {e}")
-        raise RuntimeError(f"pixels2svg library not available. Please install: pip install pixels2svg. Error: {e}")
-    except Exception as e:
-        logger.error(f"Unexpected error importing pixels2svg: {e}")
-        raise RuntimeError(f"Error importing pixels2svg: {e}")
-    
-    try:
-        original_width, original_height = image.size
-        logger.info(f"Starting pixels2svg vectorization: original size={original_width}x{original_height}, max_colors={max_colors}")
-        
-        # CRITICAL: Downscale images aggressively for pixels2svg
-        # pixels2svg processes every pixel, so large images can take forever
-        # Limit to 800px max side for reasonable performance
-        MAX_SVG_SIZE = 800
-        if max(original_width, original_height) > MAX_SVG_SIZE:
-            scale = MAX_SVG_SIZE / float(max(original_width, original_height))
-            new_w = max(1, int(round(original_width * scale)))
-            new_h = max(1, int(round(original_height * scale)))
-            logger.info(f"Downscaling image from {original_width}x{original_height} to {new_w}x{new_h} for faster vectorization")
-            image = image.resize((new_w, new_h), Image.LANCZOS)
-        
-        # Convert to RGB if needed (pixels2svg works best with RGB)
-        if image.mode == 'RGBA':
-            # Convert RGBA to RGB with white background
-            rgb_image = Image.new('RGB', image.size, (255, 255, 255))
-            rgb_image.paste(image, mask=image.split()[-1])
-            image = rgb_image
-        elif image.mode != 'RGB':
-            image = image.convert('RGB')
-        
-        # Save image to temporary file for pixels2svg
-        # pixels2svg expects a file path
-        logger.info(f"Saving image to temp file for pixels2svg (size: {image.size[0]}x{image.size[1]})...")
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-            image.save(tmp_file.name, format='PNG')
-            tmp_path = tmp_file.name
-        
-        try:
-            # Call pixels2svg to convert
-            logger.info(f"Calling pixels2svg with file: {tmp_path} (exists: {os.path.exists(tmp_path)})")
-            
-            # Try direct call first (simpler, no threading overhead)
-            try:
-                svg_content = pixels2svg(tmp_path)
-                logger.info(f"pixels2svg returned result, length: {len(svg_content) if svg_content else 0}")
-                
-                if not svg_content:
-                    raise RuntimeError("pixels2svg returned empty result")
-                
-                if not isinstance(svg_content, str):
-                    svg_content = str(svg_content)
-                
-                logger.info(f"pixels2svg vectorization complete: output size={len(svg_content)} bytes, preview: {svg_content[:200]}")
-                return svg_content
-                
-            except Exception as conv_error:
-                logger.error(f"pixels2svg conversion failed: {conv_error}", exc_info=True)
-                raise RuntimeError(f"pixels2svg conversion failed: {str(conv_error)}")
-            
-        finally:
-            # Clean up temporary file
-            try:
-                os.unlink(tmp_path)
-            except Exception:
-                pass
-        
-    except Exception as e:
-        logger.error(f"pixels2svg vectorization error: {str(e)}", exc_info=True)
-        raise
-
 # Background warmup for LaMa to reduce first-hit latency on Remove People
 # 
 # IMPROVEMENTS MADE TO PERSON REMOVAL QUALITY:
@@ -2057,7 +1969,7 @@ async def convert_format(
     if target == "jpeg":
         target = "jpg"
     logger.info(f"Convert format request: target_format={target_format}, normalized_target={target}, filename={file.filename}")
-    supported_targets = {"png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "ppm", "pgm", "svg"}
+    supported_targets = {"png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "ppm", "pgm"}
     if target not in supported_targets:
         raise HTTPException(status_code=400, detail=f"Unsupported target_format. Use one of: {sorted(supported_targets)}")
 
@@ -2173,42 +2085,9 @@ async def convert_format(
                 converted = converted.convert("L")
             save_format = "PPM"
             params.update({"bits": 8})
-        elif target == "svg":
-            # True vectorization: Convert raster image to SVG with actual vector paths
-            logger.info(f"SVG vectorization started: target={target}, image mode={converted.mode}, keep_alpha={keep_alpha}, size={converted.size}")
-            try:
-                # Prepare image for vectorization
-                if keep_alpha and converted.mode == "RGBA":
-                    # Keep transparency - work with RGBA
-                    vector_image = converted
-                else:
-                    # No transparency - flatten to RGB
-                    if converted.mode in ("RGBA", "LA"):
-                        background = Image.new("RGB", converted.size, (255, 255, 255))
-                        background.paste(converted, mask=converted.split()[-1] if converted.mode == "RGBA" else None)
-                        vector_image = background
-                    elif converted.mode not in ("RGB", "RGBA"):
-                        vector_image = converted.convert("RGB")
-                    else:
-                        vector_image = converted
-                
-                # Perform true vectorization
-                logger.info(f"Starting vectorization process...")
-                svg_content = vectorize_image_to_svg(vector_image, simplify_tolerance=1.0)
-                out = svg_content.encode('utf-8')
-                logger.info(f"SVG vectorization successful: {vector_image.size[0]}x{vector_image.size[1]}, output size: {len(out)} bytes, svg starts with: {svg_content[:200]}")
-                return Response(content=out, media_type="image/svg+xml")
-            except Exception as e:
-                logger.error(f"SVG vectorization error: {str(e)}", exc_info=True)
-                raise HTTPException(status_code=500, detail=f"SVG vectorization failed: {str(e)}")
         else:
             save_format = "PNG"
 
-        # SVG should have returned already - if we reach here with SVG target, something went wrong
-        if target == "svg":
-            logger.error(f"ERROR: SVG conversion should have returned earlier! This should not happen.")
-            raise HTTPException(status_code=500, detail="SVG conversion failed - internal error")
-        
         async with PROCESS_SEM:
             buf = io.BytesIO()
             converted.save(buf, format=save_format, **params)
@@ -2220,12 +2099,7 @@ async def convert_format(
             "output_size_bytes": len(out),
         })
 
-        if target == "svg":
-            # Already handled above - should never reach here
-            logger.error(f"ERROR: Reached SVG handling after save - this should not happen!")
-            raise HTTPException(status_code=500, detail="SVG conversion failed - internal error")
-        else:
-            media = {
+        media = {
                 "png": "image/png",
                 "jpg": "image/jpeg",
                 "webp": "image/webp",
