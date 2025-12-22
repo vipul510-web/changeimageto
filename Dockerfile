@@ -21,9 +21,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 
-# Copy requirements and install Python dependencies (excluding vtracer if binary was used)
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir $(grep -v "^vtracer" requirements.txt || cat requirements.txt)
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-download and cache the model during build
 RUN python -c "from rembg import new_session; new_session('u2netp')"
