@@ -963,6 +963,9 @@ if (convertFormatPages.includes(window.location.pathname)) {
         downloadA.href = url;
         downloadA.download = `converted-${Date.now()}.${ext}`;
         
+        // Log for debugging
+        console.log('Conversion response:', { contentType: ct, targetFormat: target.value, blobSize: blob.size });
+        
         // Add Google Analytics tracking for convert format download button clicks
         if (downloadA && !downloadA.dataset.gaTracked) {
           downloadA.dataset.gaTracked = 'true';
@@ -987,9 +990,16 @@ if (convertFormatPages.includes(window.location.pathname)) {
         }
         resWrap.hidden = false;
         prompt.style.display = 'none';
-        if (!nonPreview.includes(ct)) {
+        // SVG can be previewed in img tags
+        if (!nonPreview.includes(ct) || ct === 'image/svg+xml') {
           resImg.style.display = 'block';
-          resImg.src = url;
+          // Force reload for SVG to avoid caching issues
+          if (target.value === 'svg') {
+            resImg.src = '';
+            setTimeout(() => { resImg.src = url; }, 10);
+          } else {
+            resImg.src = url;
+          }
         } else {
           // Hide unsupported preview types to avoid broken tiny icon
           resImg.removeAttribute('src');

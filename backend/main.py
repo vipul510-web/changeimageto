@@ -2085,20 +2085,32 @@ async def convert_format(
             # Convert raster image to SVG by embedding as base64 data URI
             # This creates an SVG wrapper with the image embedded
             import base64
-            buf_png = io.BytesIO()
-            if keep_alpha:
+            try:
+                buf_png = io.BytesIO()
+                # Ensure we save as PNG with proper mode
+                if keep_alpha and converted.mode != "RGBA":
+                    converted = converted.convert("RGBA")
+                elif not keep_alpha and converted.mode not in ("RGB", "RGBA"):
+                    if converted.mode in ("RGBA", "LA"):
+                        background = Image.new("RGB", converted.size, (255, 255, 255))
+                        background.paste(converted, mask=converted.split()[-1] if converted.mode == "RGBA" else None)
+                        converted = background
+                    else:
+                        converted = converted.convert("RGB")
+                
                 converted.save(buf_png, format="PNG")
-            else:
-                converted.save(buf_png, format="PNG")
-            png_data = base64.b64encode(buf_png.getvalue()).decode('utf-8')
-            width, height = converted.size
-            svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+                png_data = base64.b64encode(buf_png.getvalue()).decode('utf-8')
+                width, height = converted.size
+                svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
   <image width="{width}" height="{height}" xlink:href="data:image/png;base64,{png_data}"/>
 </svg>'''
-            out = svg_content.encode('utf-8')
-            media = "image/svg+xml"
-            return Response(content=out, media_type=media)
+                out = svg_content.encode('utf-8')
+                logger.info(f"SVG conversion successful: {width}x{height}, output size: {len(out)} bytes")
+                return Response(content=out, media_type="image/svg+xml")
+            except Exception as e:
+                logger.error(f"SVG conversion error: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"SVG conversion failed: {str(e)}")
         else:
             save_format = "PNG"
 
