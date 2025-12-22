@@ -219,28 +219,27 @@ def log_user_action(action: str, details: dict):
 
 def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, max_colors: int = 32) -> str:
     """
-    Convert a raster image to true vectorized SVG using Potrace.
-    Potrace is well-established and works excellently for vectorization.
+    Convert a raster image to SVG using pixels2svg.
+    Pure Python library that groups adjacent pixels of the same color into paths.
     
     Args:
         image: PIL Image to vectorize
-        simplify_tolerance: Potrace optimization parameter
-        max_colors: Maximum number of colors for color images
+        simplify_tolerance: Not used by pixels2svg (kept for API compatibility)
+        max_colors: Maximum number of colors (pixels2svg handles this internally)
     
     Returns:
         SVG XML string with vector paths
     """
     try:
-        import potrace
-        import numpy as np
+        from pixels2svg import pixels2svg
     except ImportError:
-        raise RuntimeError("potrace library not available. Please install: pip install potrace")
+        raise RuntimeError("pixels2svg library not available. Please install: pip install pixels2svg")
     
     try:
         original_width, original_height = image.size
-        logger.info(f"Starting Potrace vectorization: original size={original_width}x{original_height}, max_colors={max_colors}")
+        logger.info(f"Starting pixels2svg vectorization: original size={original_width}x{original_height}, max_colors={max_colors}")
         
-        # Convert to RGB if needed
+        # Convert to RGB if needed (pixels2svg works best with RGB)
         if image.mode == 'RGBA':
             # Convert RGBA to RGB with white background
             rgb_image = Image.new('RGB', image.size, (255, 255, 255))
@@ -249,105 +248,29 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, 
         elif image.mode != 'RGB':
             image = image.convert('RGB')
         
-        # For color images, we'll use color quantization and trace each color layer
-        # For simplicity and better quality, we can convert to grayscale first or use color quantization
-        if max_colors > 2:
-            # Color image: quantize colors and trace each layer
-            logger.info(f"Processing color image with up to {max_colors} colors")
-            
-            # Quantize the image
-            quantized = image.quantize(colors=min(max_colors, 256), method=Image.Quantize.MEDIANCUT)
-            quantized_rgb = quantized.convert('RGB')
-            
-            # Get unique colors
-            pixels = np.array(quantized_rgb)
-            unique_colors = np.unique(pixels.reshape(-1, 3), axis=0)
-            
-            logger.info(f"Found {len(unique_colors)} unique colors after quantization")
-            
-            # Build SVG with layers for each color
-            svg_parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{original_width}" height="{original_height}" viewBox="0 0 {original_width} {original_height}">']
-            
-            # Trace each color layer (from darkest to lightest for proper layering)
-            color_layers = sorted(unique_colors, key=lambda c: sum(c))
-            
-            for color_idx, color in enumerate(color_layers):
-                # Create mask for this color
-                mask = np.all(pixels == color, axis=2).astype(np.uint8) * 255
-                
-                # Skip if too few pixels
-                if np.sum(mask) < 100:  # Minimum area threshold
-                    continue
-                
-                # Convert to PIL Image for potrace
-                mask_image = Image.fromarray(mask, mode='L')
-                
-                # Trace with potrace
-                bitmap = potrace.Bitmap(np.array(mask_image))
-                path = bitmap.trace(
-                    turdsize=2,      # Remove small speckles
-                    optcurve=True,   # Optimize curves
-                    opttolerance=simplify_tolerance,  # Tolerance for optimization
-                    alphamax=1.0,    # Corner threshold
-                )
-                
-                # Convert path to SVG path string with color
-                if len(path) > 0:
-                    r, g, b = int(color[0]), int(color[1]), int(color[2])
-                    svg_parts.append(f'  <g fill="rgb({r},{g},{b})" stroke="none">')
-                    
-                    for curve in path:
-                        svg_path = f'M {curve.start_point.x},{curve.start_point.y} '
-                        for segment in curve.segments:
-                            if segment.is_corner:
-                                svg_path += f'L {segment.c.x},{segment.c.y} L {segment.end_point.x},{segment.end_point.y} '
-                            else:
-                                svg_path += f'C {segment.c1.x},{segment.c1.y} {segment.c2.x},{segment.c2.y} {segment.end_point.x},{segment.end_point.y} '
-                        svg_parts.append(f'    <path d="{svg_path}Z"/>')
-                    
-                    svg_parts.append('  </g>')
-            
-            svg_parts.append('</svg>')
-            svg_content = '\n'.join(svg_parts)
-            
-        else:
-            # Grayscale/B&W image: direct tracing (faster, better quality)
-            logger.info("Processing grayscale/black & white image")
-            
-            # Convert to grayscale
-            gray = image.convert('L')
-            bitmap = potrace.Bitmap(np.array(gray))
-            
-            # Trace
-            path = bitmap.trace(
-                turdsize=2,
-                optcurve=True,
-                opttolerance=simplify_tolerance,
-                alphamax=1.0,
-            )
-            
-            # Build SVG
-            svg_parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{original_width}" height="{original_height}" viewBox="0 0 {original_width} {original_height}">']
-            svg_parts.append('  <g fill="black" stroke="none">')
-            
-            for curve in path:
-                svg_path = f'M {curve.start_point.x},{curve.start_point.y} '
-                for segment in curve.segments:
-                    if segment.is_corner:
-                        svg_path += f'L {segment.c.x},{segment.c.y} L {segment.end_point.x},{segment.end_point.y} '
-                    else:
-                        svg_path += f'C {segment.c1.x},{segment.c1.y} {segment.c2.x},{segment.c2.y} {segment.end_point.x},{segment.end_point.y} '
-                svg_parts.append(f'    <path d="{svg_path}Z"/>')
-            
-            svg_parts.append('  </g>')
-            svg_parts.append('</svg>')
-            svg_content = '\n'.join(svg_parts)
+        # Save image to temporary file for pixels2svg
+        # pixels2svg expects a file path
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
+            image.save(tmp_file.name, format='PNG')
+            tmp_path = tmp_file.name
         
-        logger.info(f"Potrace vectorization complete: output size={len(svg_content)} bytes")
-        return svg_content
+        try:
+            # Call pixels2svg to convert
+            logger.info("Calling pixels2svg to vectorize image...")
+            svg_content = pixels2svg(tmp_path)
+            
+            logger.info(f"pixels2svg vectorization complete: output size={len(svg_content)} bytes")
+            return svg_content
+            
+        finally:
+            # Clean up temporary file
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
         
     except Exception as e:
-        logger.error(f"Potrace vectorization error: {str(e)}", exc_info=True)
+        logger.error(f"pixels2svg vectorization error: {str(e)}", exc_info=True)
         raise
 
 # Background warmup for LaMa to reduce first-hit latency on Remove People
