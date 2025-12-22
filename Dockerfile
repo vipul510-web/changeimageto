@@ -19,23 +19,19 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Download vtracer binary from GitHub releases (faster than compiling)
-# Try to download pre-built binary for Linux x86_64
-RUN VTRACER_VERSION="0.6.4" && \
-    VTRACER_URL="https://github.com/visioncortex/vtracer/releases/download/v${VTRACER_VERSION}/vtracer-${VTRACER_VERSION}-x86_64-unknown-linux-gnu.tar.gz" && \
-    echo "Attempting to download vtracer binary from: $VTRACER_URL" && \
-    (curl -L -f "$VTRACER_URL" -o /tmp/vtracer.tar.gz && \
-     tar -xzf /tmp/vtracer.tar.gz -C /tmp && \
-     mv /tmp/vtracer /usr/local/bin/vtracer && \
-     chmod +x /usr/local/bin/vtracer && \
-     rm /tmp/vtracer.tar.gz && \
-     echo "vtracer binary installed successfully") || \
-    (echo "Binary download failed, will try Python package installation" && \
-     apt-get update && apt-get install -y build-essential pkg-config libssl-dev curl && \
-     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal && \
-     export PATH="/root/.cargo/bin:${PATH}" && \
-     pip install --no-cache-dir vtracer==${VTRACER_VERSION} && \
-     echo "vtracer Python package installed successfully")
+# Install Rust and build tools (needed for vtracer Python package compilation)
+# We'll try Python package first, which may have pre-built wheels
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust (only needed if no pre-built wheels available)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+ENV PATH="/root/.cargo/bin:${PATH}"
+ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 
 # Copy requirements and install Python dependencies (excluding vtracer if binary was used)
 COPY requirements.txt .
