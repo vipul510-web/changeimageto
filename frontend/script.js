@@ -888,7 +888,16 @@ if (form) form.addEventListener('submit', async (e) => {
 // ------------------------------
 // Convert format page integration
 // ------------------------------
-if (window.location.pathname === '/convert-image-format.html') {
+// Handle all convert format pages (convert-image-format.html, convert-png-to-svg.html, etc.)
+const convertFormatPages = [
+  '/convert-image-format.html',
+  '/convert-png-to-svg.html',
+  '/convert-jpg-to-svg.html',
+  '/convert-webp-to-svg.html',
+  '/convert-image-to-svg.html'
+];
+
+if (convertFormatPages.includes(window.location.pathname)) {
   document.addEventListener('DOMContentLoaded', function(){
     const dz = document.getElementById('convert-dropzone');
     const input = document.getElementById('convert-file');
@@ -902,7 +911,7 @@ if (window.location.pathname === '/convert-image-format.html') {
     const resetC = document.getElementById('convert-reset');
     const target = document.getElementById('target-format');
     const keepT = document.getElementById('keep-transparent');
-    const quality = document.getElementById('quality');
+    const quality = document.getElementById('quality'); // May be null for SVG pages
     const openA = document.getElementById('convert-open');
 
     let file = null;
@@ -933,8 +942,11 @@ if (window.location.pathname === '/convert-image-format.html') {
       const body = new FormData();
       body.append('file', file);
       body.append('target_format', target.value);
-      body.append('transparent', keepT.checked ? 'true' : 'false');
-      body.append('quality', quality.value);
+      body.append('transparent', keepT ? (keepT.checked ? 'true' : 'false') : 'false');
+      // Quality is optional (not needed for SVG)
+      if (quality) {
+        body.append('quality', quality.value);
+      }
       const apiBase = window.API_BASE || (window.location.hostname === '127.0.0.1' && window.location.port === '8080' ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
       try {
         const res = await fetch(apiBase + '/api/convert-format', { method: 'POST', body });
@@ -944,7 +956,10 @@ if (window.location.pathname === '/convert-image-format.html') {
         const ct = res.headers.get('content-type') || '';
         const nonPreview = ['image/x-icon','image/tiff','image/x-portable-pixmap','image/x-portable-graymap'];
         const url = URL.createObjectURL(blob);
-        const ext = target.value === 'jpg' ? 'jpg' : target.value;
+        // Handle file extension properly for all formats including SVG
+        let ext = target.value;
+        if (ext === 'jpg') ext = 'jpg';
+        else if (ext === 'svg') ext = 'svg';
         downloadA.href = url;
         downloadA.download = `converted-${Date.now()}.${ext}`;
         
@@ -989,7 +1004,7 @@ if (window.location.pathname === '/convert-image-format.html') {
           }
         }
         if (openA){ openA.href = url; openA.target = '_blank'; openA.style.display = 'inline-block'; }
-        logUserAction('convert_completed', { target_format: target.value, transparent: keepT.checked, size: blob.size });
+        logUserAction('convert_completed', { target_format: target.value, transparent: keepT ? keepT.checked : false, size: blob.size });
         
         // Show feedback popup after successful conversion
         setTimeout(() => {
@@ -1001,7 +1016,13 @@ if (window.location.pathname === '/convert-image-format.html') {
         alert('Error: ' + (err.message || err));
         logUserAction('convert_error', { message: err.message || String(err) });
       } finally {
-        btn.disabled = false; btn.textContent = 'Convert Image';
+        btn.disabled = false;
+        // Restore button text based on page
+        if (window.location.pathname.includes('svg')) {
+          btn.textContent = 'Convert PNG to SVG';
+        } else {
+          btn.textContent = 'Convert Image';
+        }
       }
     });
 
