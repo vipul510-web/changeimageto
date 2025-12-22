@@ -949,8 +949,13 @@ if (convertFormatPages.includes(window.location.pathname)) {
       }
       const apiBase = window.API_BASE || (window.location.hostname === '127.0.0.1' && window.location.port === '8080' ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
       try {
+        console.log('Sending conversion request:', { targetFormat: target.value, fileName: file.name, fileSize: file.size });
         const res = await fetch(apiBase + '/api/convert-format', { method: 'POST', body });
-        if(!res.ok){ throw new Error(await res.text()); }
+        if(!res.ok){ 
+          const errorText = await res.text();
+          console.error('Conversion error:', errorText);
+          throw new Error(errorText); 
+        }
         const blob = await res.blob();
         // For formats browsers can't preview (ICO, PPM, PGM, TIFF), skip inline preview and just enable download
         const ct = res.headers.get('content-type') || '';
@@ -964,7 +969,22 @@ if (convertFormatPages.includes(window.location.pathname)) {
         downloadA.download = `converted-${Date.now()}.${ext}`;
         
         // Log for debugging
-        console.log('Conversion response:', { contentType: ct, targetFormat: target.value, blobSize: blob.size });
+        console.log('Conversion response:', { 
+          contentType: ct, 
+          targetFormat: target.value, 
+          blobSize: blob.size,
+          blobType: blob.type,
+          expectedSVG: target.value === 'svg',
+          isSVGContentType: ct === 'image/svg+xml'
+        });
+        
+        // For SVG, verify the blob content
+        if (target.value === 'svg') {
+          blob.text().then(text => {
+            console.log('SVG content preview (first 200 chars):', text.substring(0, 200));
+            console.log('Is valid SVG?', text.trim().startsWith('<?xml') || text.trim().startsWith('<svg'));
+          }).catch(err => console.error('Error reading SVG blob:', err));
+        }
         
         // Add Google Analytics tracking for convert format download button clicks
         if (downloadA && !downloadA.dataset.gaTracked) {

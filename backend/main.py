@@ -1965,6 +1965,7 @@ async def convert_format(
     target = (target_format or "png").lower()
     if target == "jpeg":
         target = "jpg"
+    logger.info(f"Convert format request: target_format={target_format}, normalized_target={target}, filename={file.filename}")
     supported_targets = {"png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "ppm", "pgm", "svg"}
     if target not in supported_targets:
         raise HTTPException(status_code=400, detail=f"Unsupported target_format. Use one of: {sorted(supported_targets)}")
@@ -2085,7 +2086,7 @@ async def convert_format(
             # Convert raster image to SVG by embedding as base64 data URI
             # This creates an SVG wrapper with the image embedded
             import base64
-            logger.info(f"Starting SVG conversion: image mode={converted.mode}, keep_alpha={keep_alpha}, size={converted.size}")
+            logger.info(f"SVG conversion block entered: target={target}, image mode={converted.mode}, keep_alpha={keep_alpha}, size={converted.size}")
             try:
                 buf_png = io.BytesIO()
                 # Ensure we save as PNG with proper mode
@@ -2119,6 +2120,11 @@ async def convert_format(
         else:
             save_format = "PNG"
 
+        # SVG should have returned already - if we reach here with SVG target, something went wrong
+        if target == "svg":
+            logger.error(f"ERROR: SVG conversion should have returned earlier! This should not happen.")
+            raise HTTPException(status_code=500, detail="SVG conversion failed - internal error")
+        
         async with PROCESS_SEM:
             buf = io.BytesIO()
             converted.save(buf, format=save_format, **params)
@@ -2131,8 +2137,9 @@ async def convert_format(
         })
 
         if target == "svg":
-            # Already handled above
-            pass
+            # Already handled above - should never reach here
+            logger.error(f"ERROR: Reached SVG handling after save - this should not happen!")
+            raise HTTPException(status_code=500, detail="SVG conversion failed - internal error")
         else:
             media = {
                 "png": "image/png",
