@@ -38,6 +38,13 @@ try:
 except Exception:
     pytesseract = None
 
+try:
+    import vtracer
+    VTracer_AVAILABLE = True
+except Exception:
+    VTracer_AVAILABLE = False
+    vtracer = None
+
 from rembg import remove, new_session
 try:
     import onnxruntime as ort
@@ -216,35 +223,25 @@ def log_user_action(action: str, details: dict):
 
 def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, max_colors: int = 32) -> str:
     """
-    Convert a raster image to true vectorized SVG using color quantization and contour tracing.
-    Optimized for performance by downscaling and limiting colors.
+    Convert a raster image to true vectorized SVG using vtracer (visioncortex).
+    Uses professional-grade vectorization algorithm for high-quality results.
     
     Args:
         image: PIL Image to vectorize
-        simplify_tolerance: Tolerance for path simplification (higher = fewer points, less accurate)
-        max_colors: Maximum number of colors to quantize to (fewer = simpler SVG, faster)
+        simplify_tolerance: Not used with vtracer (vtracer has its own optimization)
+        max_colors: Color precision (vtracer uses color_precision parameter)
     
     Returns:
         SVG XML string with vector paths
     """
+    if not VTracer_AVAILABLE:
+        raise RuntimeError("vtracer library not available. Please install: pip install vtracer")
+    
     try:
         original_width, original_height = image.size
-        logger.info(f"Starting vectorization: original size={original_width}x{original_height}")
+        logger.info(f"Starting vtracer vectorization: original size={original_width}x{original_height}")
         
-        # Downscale large images for faster processing (we'll scale paths back up)
-        max_processing_size = 800  # Process at max 800px, then scale up
-        scale_factor = 1.0
-        if max(original_width, original_height) > max_processing_size:
-            scale_factor = max_processing_size / max(original_width, original_height)
-            new_width = int(original_width * scale_factor)
-            new_height = int(original_height * scale_factor)
-            image = image.resize((new_width, new_height), Image.LANCZOS)
-            logger.info(f"Downscaled to {new_width}x{new_height} for processing (scale={scale_factor:.2f})")
-        
-        width, height = image.size
-        
-        logger.info("Starting color quantization...")
-        # PIL's quantization requires RGB (not RGBA), so convert first
+        # Convert image to RGB if needed (vtracer works with RGB)
         if image.mode == 'RGBA':
             # Convert RGBA to RGB with white background
             rgb_image = Image.new('RGB', image.size, (255, 255, 255))
@@ -253,128 +250,59 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, 
         elif image.mode != 'RGB':
             image = image.convert('RGB')
         
-        # Convert to numpy array for processing
-        img_array = np.array(image)
+        # Save image to temporary file for vtracer
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_input:
+            image.save(tmp_input.name, format='PNG')
+            input_path = tmp_input.name
         
-        # Use faster color quantization - reduce colors significantly
-        # Convert to indexed color mode (PIL's built-in quantization is faster than k-means)
-        quantized_pil = image.quantize(colors=min(max_colors, 32), method=Image.Quantize.MEDIANCUT)
-        quantized_pil = quantized_pil.convert('RGB')
-        quantized_img = np.array(quantized_pil)
+        # Create temporary output file
+        with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as tmp_output:
+            output_path = tmp_output.name
         
-        logger.info("Finding unique colors...")
-        # Get unique colors (much faster than k-means)
-        unique_colors = np.unique(quantized_img.reshape(-1, quantized_img.shape[-1]), axis=0)
-        logger.info(f"Found {len(unique_colors)} unique colors, processing contours...")
-        
-        # Build SVG paths for each color
-        svg_paths = []
-        path_id = 0
-        max_paths = 5000  # Limit total paths to prevent huge files
-        
-        for idx, color in enumerate(unique_colors):
-            if path_id >= max_paths:
-                logger.warning(f"Reached max paths limit ({max_paths}), stopping")
-                break
+        try:
+            # Use vtracer to vectorize
+            # vtracer Python API: convert_image(input_path, output_path, **config)
+            # Config options based on vtracer CLI:
+            # - color_precision: Number of significant bits (default 6, range 1-8)
+            # - corner_threshold: Minimum angle to be a corner (default 60)
+            # - filter_speckle: Discard patches smaller than X px (default 4)
+            # - gradient_step: Color difference between layers (default 16)
+            # - mode: 'pixel', 'polygon', or 'spline' (default 'spline')
+            # - hierarchical: 'stacked' or 'cutout' (default 'stacked')
             
-            if idx % 10 == 0:
-                logger.info(f"Processing color {idx+1}/{len(unique_colors)}, paths so far: {path_id}")
+            logger.info("Calling vtracer to vectorize image...")
+            vtracer.convert_image(
+                input_path,
+                output_path,
+                color_precision=min(max_colors // 4, 6),  # Map max_colors to color_precision (1-8)
+                corner_threshold=60,
+                filter_speckle=4,
+                gradient_step=16,
+                mode='spline',  # Use splines for smooth curves
+                hierarchical='stacked',  # Stacked mode for better quality
+                path_precision=2,  # Decimal places in path strings
+            )
             
-            # Create binary mask for this color (with tolerance for slight variations)
-            color_mask = np.all(np.abs(quantized_img.astype(int) - color.astype(int)) < 3, axis=2).astype(np.uint8) * 255
+            # Read the generated SVG
+            with open(output_path, 'r', encoding='utf-8') as f:
+                svg_content = f.read()
             
-            # Find contours for this color region
-            contours, hierarchy = cv2.findContours(color_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            logger.info(f"vtracer vectorization complete: output size={len(svg_content)} bytes")
+            return svg_content
             
-            for contour in contours:
-                if path_id >= max_paths:
-                    break
-                    
-                if len(contour) < 3:  # Skip tiny contours
-                    continue
-                
-                # Get area to filter very small regions
-                area = cv2.contourArea(contour)
-                if area < 20:  # Skip very small areas
-                    continue
-                
-                # Simplify contour to reduce points (more aggressive for performance)
-                epsilon = max(simplify_tolerance, area * 0.01)  # Adaptive tolerance
-                simplified = cv2.approxPolyDP(contour, epsilon, closed=True)
-                
-                if len(simplified) < 2:
-                    continue
-                
-                # Scale coordinates back to original size if we downscaled
-                if scale_factor < 1.0:
-                    scale_coords = lambda p: (int(p[0] / scale_factor), int(p[1] / scale_factor))
-                else:
-                    scale_coords = lambda p: (p[0], p[1])
-                
-                # Convert to SVG path
-                path_data = []
-                for j, point in enumerate(simplified):
-                    x, y = scale_coords(point[0])
-                    if j == 0:
-                        path_data.append(f"M {x} {y}")
-                    else:
-                        path_data.append(f"L {x} {y}")
-                path_data.append("Z")  # Close path
-                
-                path_str = " ".join(path_data)
-                
-                # Convert color to hex
-                color_hex = f"#{int(color[0]):02x}{int(color[1]):02x}{int(color[2]):02x}"
-                
-                svg_paths.append(f'<path id="path{path_id}" d="{path_str}" fill="{color_hex}" stroke="none"/>')
-                path_id += 1
-        
-        # If no paths found, fall back to simpler method
-        if not svg_paths:
-            logger.warning("No color regions found, using edge-based vectorization")
-            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-            edges = cv2.Canny(gray, 50, 150)
-            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            for contour in contours[:100]:  # Limit to 100 edge paths
-                if len(contour) < 3:
-                    continue
-                epsilon = simplify_tolerance * 3
-                simplified = cv2.approxPolyDP(contour, epsilon, closed=True)
-                if len(simplified) < 2:
-                    continue
-                
-                if scale_factor < 1.0:
-                    scale_coords = lambda p: (int(p[0] / scale_factor), int(p[1] / scale_factor))
-                else:
-                    scale_coords = lambda p: (p[0], p[1])
-                
-                path_data = []
-                for j, point in enumerate(simplified):
-                    x, y = scale_coords(point[0])
-                    if j == 0:
-                        path_data.append(f"M {x} {y}")
-                    else:
-                        path_data.append(f"L {x} {y}")
-                if cv2.isContourConvex(simplified):
-                    path_data.append("Z")
-                
-                path_str = " ".join(path_data)
-                svg_paths.append(f'<path d="{path_str}" fill="none" stroke="#000000" stroke-width="1"/>')
-        
-        # Build SVG with original dimensions
-        svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="{original_width}" height="{original_height}" viewBox="0 0 {original_width} {original_height}">
-  <g>
-    {chr(10).join(svg_paths)}
-  </g>
-</svg>'''
-        
-        logger.info(f"Vectorization complete: {len(svg_paths)} paths generated from {len(unique_colors)} colors")
-        return svg_content
+        finally:
+            # Clean up temporary files
+            try:
+                os.unlink(input_path)
+            except Exception:
+                pass
+            try:
+                os.unlink(output_path)
+            except Exception:
+                pass
         
     except Exception as e:
-        logger.error(f"Vectorization error: {str(e)}", exc_info=True)
+        logger.error(f"vtracer vectorization error: {str(e)}", exc_info=True)
         raise
 
 # Background warmup for LaMa to reduce first-hit latency on Remove People
