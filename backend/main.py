@@ -214,9 +214,10 @@ def log_user_action(action: str, details: dict):
     }
     logger.info(f"USER_ACTION: {json.dumps(log_entry)}")
 
-def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 1.0, max_colors: int = 256) -> str:
+def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 2.0, max_colors: int = 32) -> str:
     """
     Convert a raster image to true vectorized SVG using color quantization and contour tracing.
+    Optimized for performance by downscaling and limiting colors.
     
     Args:
         image: PIL Image to vectorize
@@ -227,6 +228,19 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 1.0, 
         SVG XML string with vector paths
     """
     try:
+        original_width, original_height = image.size
+        logger.info(f"Starting vectorization: original size={original_width}x{original_height}")
+        
+        # Downscale large images for faster processing (we'll scale paths back up)
+        max_processing_size = 800  # Process at max 800px, then scale up
+        scale_factor = 1.0
+        if max(original_width, original_height) > max_processing_size:
+            scale_factor = max_processing_size / max(original_width, original_height)
+            new_width = int(original_width * scale_factor)
+            new_height = int(original_height * scale_factor)
+            image = image.resize((new_width, new_height), Image.LANCZOS)
+            logger.info(f"Downscaled to {new_width}x{new_height} for processing (scale={scale_factor:.2f})")
+        
         width, height = image.size
         
         # Convert to numpy array
@@ -238,59 +252,66 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 1.0, 
         else:
             img_array = np.array(image.convert('RGB'))
         
-        # Color quantization to reduce number of colors (makes vectorization more efficient)
-        # Reshape image to be a list of pixels
-        pixel_values = img_array.reshape((-1, 3))
-        pixel_values = np.float32(pixel_values)
+        logger.info("Starting color quantization...")
+        # Use faster color quantization - reduce colors significantly
+        # Convert to indexed color mode (PIL's built-in quantization is faster than k-means)
+        quantized_pil = image.quantize(colors=min(max_colors, 32), method=Image.Quantize.MEDIANCUT)
+        quantized_pil = quantized_pil.convert('RGB')
+        quantized_img = np.array(quantized_pil)
         
-        # Apply k-means clustering for color quantization
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 1.0)
-        k = min(max_colors, 128)  # Limit to reasonable number
-        _, labels, centers = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-        
-        # Convert back to uint8
-        centers = np.uint8(centers)
-        quantized = centers[labels.flatten()]
-        quantized_img = quantized.reshape(img_array.shape)
-        
-        # Convert to PIL for easier processing
-        quantized_pil = Image.fromarray(quantized_img)
+        logger.info("Finding unique colors...")
+        # Get unique colors (much faster than k-means)
+        unique_colors = np.unique(quantized_img.reshape(-1, quantized_img.shape[-1]), axis=0)
+        logger.info(f"Found {len(unique_colors)} unique colors, processing contours...")
         
         # Build SVG paths for each color
         svg_paths = []
         path_id = 0
+        max_paths = 5000  # Limit total paths to prevent huge files
         
-        # Process each unique color
-        unique_colors = np.unique(quantized_img.reshape(-1, quantized_img.shape[-1]), axis=0)
-        logger.info(f"Processing {len(unique_colors)} unique colors...")
-        
-        for color in unique_colors:
-            # Create binary mask for this color
-            color_mask = np.all(quantized_img == color, axis=2).astype(np.uint8) * 255
+        for idx, color in enumerate(unique_colors):
+            if path_id >= max_paths:
+                logger.warning(f"Reached max paths limit ({max_paths}), stopping")
+                break
+            
+            if idx % 10 == 0:
+                logger.info(f"Processing color {idx+1}/{len(unique_colors)}, paths so far: {path_id}")
+            
+            # Create binary mask for this color (with tolerance for slight variations)
+            color_mask = np.all(np.abs(quantized_img.astype(int) - color.astype(int)) < 3, axis=2).astype(np.uint8) * 255
             
             # Find contours for this color region
             contours, hierarchy = cv2.findContours(color_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             
             for contour in contours:
+                if path_id >= max_paths:
+                    break
+                    
                 if len(contour) < 3:  # Skip tiny contours
                     continue
                 
                 # Get area to filter very small regions
                 area = cv2.contourArea(contour)
-                if area < 10:  # Skip very small areas
+                if area < 20:  # Skip very small areas
                     continue
                 
-                # Simplify contour to reduce points
-                epsilon = simplify_tolerance * (1.0 + area / 10000.0)  # Adaptive tolerance
+                # Simplify contour to reduce points (more aggressive for performance)
+                epsilon = max(simplify_tolerance, area * 0.01)  # Adaptive tolerance
                 simplified = cv2.approxPolyDP(contour, epsilon, closed=True)
                 
                 if len(simplified) < 2:
                     continue
                 
+                # Scale coordinates back to original size if we downscaled
+                if scale_factor < 1.0:
+                    scale_coords = lambda p: (int(p[0] / scale_factor), int(p[1] / scale_factor))
+                else:
+                    scale_coords = lambda p: (p[0], p[1])
+                
                 # Convert to SVG path
                 path_data = []
                 for j, point in enumerate(simplified):
-                    x, y = point[0]
+                    x, y = scale_coords(point[0])
                     if j == 0:
                         path_data.append(f"M {x} {y}")
                     else:
@@ -305,24 +326,29 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 1.0, 
                 svg_paths.append(f'<path id="path{path_id}" d="{path_str}" fill="{color_hex}" stroke="none"/>')
                 path_id += 1
         
-        # If no paths found, fall back to edge-based method
+        # If no paths found, fall back to simpler method
         if not svg_paths:
             logger.warning("No color regions found, using edge-based vectorization")
             gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
             edges = cv2.Canny(gray, 50, 150)
             contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             
-            for contour in contours:
+            for contour in contours[:100]:  # Limit to 100 edge paths
                 if len(contour) < 3:
                     continue
-                epsilon = simplify_tolerance * 2
+                epsilon = simplify_tolerance * 3
                 simplified = cv2.approxPolyDP(contour, epsilon, closed=True)
                 if len(simplified) < 2:
                     continue
                 
+                if scale_factor < 1.0:
+                    scale_coords = lambda p: (int(p[0] / scale_factor), int(p[1] / scale_factor))
+                else:
+                    scale_coords = lambda p: (p[0], p[1])
+                
                 path_data = []
                 for j, point in enumerate(simplified):
-                    x, y = point[0]
+                    x, y = scale_coords(point[0])
                     if j == 0:
                         path_data.append(f"M {x} {y}")
                     else:
@@ -333,9 +359,9 @@ def vectorize_image_to_svg(image: Image.Image, simplify_tolerance: float = 1.0, 
                 path_str = " ".join(path_data)
                 svg_paths.append(f'<path d="{path_str}" fill="none" stroke="#000000" stroke-width="1"/>')
         
-        # Build SVG
+        # Build SVG with original dimensions
         svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
+<svg xmlns="http://www.w3.org/2000/svg" width="{original_width}" height="{original_height}" viewBox="0 0 {original_width} {original_height}">
   <g>
     {chr(10).join(svg_paths)}
   </g>
