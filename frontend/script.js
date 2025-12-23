@@ -641,12 +641,29 @@ if (window.location.pathname === '/remove-text-from-image.html') {
       btn.disabled = true;
       try {
         const maskData = brushTool.getMaskData();
+        console.log('Mask data URL length:', maskData.length);
+        
+        // Quick check: if mask canvas is empty, warn user
+        const maskCtx = brushTool.maskCanvas.getContext('2d');
+        const maskImageData = maskCtx.getImageData(0, 0, brushTool.maskCanvas.width, brushTool.maskCanvas.height);
+        const hasPaintedPixels = maskImageData.data.some((val, idx) => idx % 4 === 3 && val > 10); // Check alpha > 10 for painted areas
+        console.log('Mask canvas has painted pixels:', hasPaintedPixels);
+        
+        if (!hasPaintedPixels) {
+          alert('Please paint over areas to remove first, then click "Remove selected areas".');
+          btn.textContent = origText;
+          btn.disabled = false;
+          return;
+        }
+        
         const formData = new FormData();
         formData.append('file', brushTool.currentFile);
         formData.append('mask_data', maskData);
         const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
         const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
-        console.log('Calling remove-painted-areas API...');
+        console.log('Calling remove-painted-areas API to:', apiBase + '/api/remove-painted-areas');
+        console.log('File:', brushTool.currentFile.name, brushTool.currentFile.size, 'bytes');
+        
         const res = await fetch(apiBase + '/api/remove-painted-areas', { method: 'POST', body: formData });
         if (!res.ok) {
           const errorText = await res.text();
@@ -654,7 +671,10 @@ if (window.location.pathname === '/remove-text-from-image.html') {
           throw new Error(`HTTP ${res.status}: ${errorText}`);
         }
         const blob = await res.blob();
-        console.log('Received blob, size:', blob.size);
+        console.log('Received blob, size:', blob.size, 'bytes');
+        if (blob.size === 0) {
+          throw new Error('Received empty response from server');
+        }
         const url = URL.createObjectURL(blob);
         
         // Ensure result wrapper is visible
@@ -663,14 +683,18 @@ if (window.location.pathname === '/remove-text-from-image.html') {
         const processPrompt = document.getElementById('process-prompt');
         if (processPrompt) processPrompt.hidden = true;
         
-        // Update the result image
-        resultImgEl.src = url;
-        resultImgEl.onload = () => {
-          console.log('Result image loaded successfully');
-        };
-        resultImgEl.onerror = (e) => {
-          console.error('Error loading result image:', e);
-        };
+        // Update the result image - wait for it to load
+        await new Promise((resolve, reject) => {
+          resultImgEl.onload = () => {
+            console.log('Result image loaded successfully');
+            resolve();
+          };
+          resultImgEl.onerror = (e) => {
+            console.error('Error loading result image:', e);
+            reject(e);
+          };
+          resultImgEl.src = url;
+        });
         
         // Update download link
         const downloadLinkEl = document.getElementById('download-link');
@@ -679,13 +703,21 @@ if (window.location.pathname === '/remove-text-from-image.html') {
           downloadLinkEl.download = `text-removed-${Date.now()}.png`;
         }
         
-        // Reload brush tool with updated image
+        // Ensure preview section and result wrapper are visible
+        const previewSection = document.getElementById('preview-section');
+        if (previewSection) {
+          previewSection.hidden = false;
+        }
+        if (resultWrapper) {
+          resultWrapper.hidden = false;
+        }
+        
+        // Reload brush tool with updated image for further editing
         await brushTool.loadFromResultImage(resultImgEl);
         
         // Scroll to result section to show the updated image
-        const previewSection = document.getElementById('preview-section');
         if (previewSection) {
-          previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       } catch (e) {
         console.error('Magic eraser error:', e);
