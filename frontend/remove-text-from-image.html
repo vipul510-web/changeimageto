@@ -151,6 +151,18 @@ document.addEventListener("DOMContentLoaded", () => {
             <button type="button" id="magic-apply-btn" class="btn" style="width:100%;">Remove selected areas</button>
           </div>
         </div>
+        
+        <!-- Result display below magic eraser -->
+        <div id="magic-eraser-result" style="display:none; margin-top:24px;">
+          <h3>Updated Result</h3>
+          <div class="checkerboard">
+            <img id="magic-eraser-result-img" alt="Updated result" style="width:100%; height:auto; border-radius:8px; display:block;" />
+          </div>
+          <div class="actions" style="margin-top:12px;">
+            <a id="magic-eraser-download-link" download="text-removed.png" class="btn">Download PNG</a>
+            <button id="magic-eraser-edit-again-btn" class="btn secondary" type="button">Edit Again</button>
+          </div>
+        </div>
       </section>
 
       <section class="seo">

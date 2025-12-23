@@ -489,6 +489,10 @@ if (window.location.pathname === '/remove-text-from-image.html') {
     const imageCanvas = document.getElementById('magic-image-canvas');
     const maskCanvas = document.getElementById('magic-mask-canvas');
     const resultImgEl = document.getElementById('result-img');
+    const magicEraserResult = document.getElementById('magic-eraser-result');
+    const magicEraserResultImg = document.getElementById('magic-eraser-result-img');
+    const magicEraserDownloadLink = document.getElementById('magic-eraser-download-link');
+    const magicEraserEditAgainBtn = document.getElementById('magic-eraser-edit-again-btn');
 
     if (!magicBtn || !magicSection || !imageCanvas || !maskCanvas || !resultImgEl) return;
 
@@ -699,61 +703,64 @@ if (window.location.pathname === '/remove-text-from-image.html') {
         const processPrompt = document.getElementById('process-prompt');
         if (processPrompt) processPrompt.hidden = true;
         
-        // Update the result image - clear src first to force reload
+        // Show the result below magic eraser section
+        if (magicEraserResult && magicEraserResultImg) {
+          // Clear previous src to force reload
+          magicEraserResultImg.src = '';
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
+          await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              console.error('Magic eraser result image load timeout');
+              reject(new Error('Image load timeout'));
+            }, 15000);
+            
+            const onLoad = () => {
+              console.log('Magic eraser result image loaded successfully');
+              clearTimeout(timeout);
+              magicEraserResultImg.removeEventListener('load', onLoad);
+              magicEraserResultImg.removeEventListener('error', onError);
+              resolve();
+            };
+            
+            const onError = (e) => {
+              console.error('Error loading magic eraser result image:', e);
+              clearTimeout(timeout);
+              magicEraserResultImg.removeEventListener('load', onLoad);
+              magicEraserResultImg.removeEventListener('error', onError);
+              reject(e);
+            };
+            
+            magicEraserResultImg.addEventListener('load', onLoad);
+            magicEraserResultImg.addEventListener('error', onError);
+            magicEraserResultImg.src = url;
+          });
+          
+          // Update download link for magic eraser result
+          if (magicEraserDownloadLink) {
+            magicEraserDownloadLink.href = url;
+            magicEraserDownloadLink.download = `text-removed-${Date.now()}.png`;
+          }
+          
+          // Show result section and scroll to it
+          magicEraserResult.style.display = 'block';
+          magicEraserResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // Also update the main result image (but don't scroll to it)
         resultImgEl.src = '';
-        // Small delay to ensure src is cleared
         await new Promise(resolve => setTimeout(resolve, 50));
+        resultImgEl.src = url;
         
-        await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            console.error('Image load timeout');
-            reject(new Error('Image load timeout'));
-          }, 15000);
-          
-          const onLoad = () => {
-            console.log('Result image loaded successfully');
-            clearTimeout(timeout);
-            resultImgEl.removeEventListener('load', onLoad);
-            resultImgEl.removeEventListener('error', onError);
-            resolve();
-          };
-          
-          const onError = (e) => {
-            console.error('Error loading result image:', e);
-            clearTimeout(timeout);
-            resultImgEl.removeEventListener('load', onLoad);
-            resultImgEl.removeEventListener('error', onError);
-            reject(e);
-          };
-          
-          resultImgEl.addEventListener('load', onLoad);
-          resultImgEl.addEventListener('error', onError);
-          resultImgEl.src = url;
-        });
-        
-        // Update download link
+        // Update main download link
         const downloadLinkEl = document.getElementById('download-link');
         if (downloadLinkEl) {
           downloadLinkEl.href = url;
           downloadLinkEl.download = `text-removed-${Date.now()}.png`;
         }
         
-        // Ensure preview section and result wrapper are visible
-        const previewSection = document.getElementById('preview-section');
-        if (previewSection) {
-          previewSection.hidden = false;
-        }
-        if (resultWrapper) {
-          resultWrapper.hidden = false;
-        }
-        
         // Reload brush tool with updated image for further editing
         await brushTool.loadFromResultImage(resultImgEl);
-        
-        // Scroll to result section to show the updated image
-        if (previewSection) {
-          previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
       } catch (e) {
         console.error('Magic eraser error:', e);
         alert('Error removing selected areas: ' + (e.message || e));
@@ -778,6 +785,21 @@ if (window.location.pathname === '/remove-text-from-image.html') {
     if (brushSmall) brushSmall.addEventListener('click', () => brushTool.setBrushSize(10));
     if (brushMedium) brushMedium.addEventListener('click', () => brushTool.setBrushSize(20));
     if (brushLarge) brushLarge.addEventListener('click', () => brushTool.setBrushSize(30));
+    
+    // Edit again button - reload the result image into the canvas for further editing
+    if (magicEraserEditAgainBtn && magicEraserResultImg) {
+      magicEraserEditAgainBtn.addEventListener('click', async () => {
+        if (magicEraserResultImg.src) {
+          await brushTool.loadFromResultImage(magicEraserResultImg);
+          // Clear the mask for fresh editing
+          brushTool.clearMask();
+          // Scroll back to magic eraser section
+          if (magicSection) {
+            magicSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      });
+    }
   })();
 }
 
