@@ -646,15 +646,49 @@ if (window.location.pathname === '/remove-text-from-image.html') {
         formData.append('mask_data', maskData);
         const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
         const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
+        console.log('Calling remove-painted-areas API...');
         const res = await fetch(apiBase + '/api/remove-painted-areas', { method: 'POST', body: formData });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('API error:', res.status, errorText);
+          throw new Error(`HTTP ${res.status}: ${errorText}`);
+        }
         const blob = await res.blob();
+        console.log('Received blob, size:', blob.size);
         const url = URL.createObjectURL(blob);
+        
+        // Ensure result wrapper is visible
+        const resultWrapper = document.getElementById('result-wrapper');
+        if (resultWrapper) resultWrapper.hidden = false;
+        const processPrompt = document.getElementById('process-prompt');
+        if (processPrompt) processPrompt.hidden = true;
+        
+        // Update the result image
         resultImgEl.src = url;
-        downloadLink.href = url;
-        downloadLink.download = `text-removed-${Date.now()}.png`;
+        resultImgEl.onload = () => {
+          console.log('Result image loaded successfully');
+        };
+        resultImgEl.onerror = (e) => {
+          console.error('Error loading result image:', e);
+        };
+        
+        // Update download link
+        const downloadLinkEl = document.getElementById('download-link');
+        if (downloadLinkEl) {
+          downloadLinkEl.href = url;
+          downloadLinkEl.download = `text-removed-${Date.now()}.png`;
+        }
+        
+        // Reload brush tool with updated image
         await brushTool.loadFromResultImage(resultImgEl);
+        
+        // Scroll to result section to show the updated image
+        const previewSection = document.getElementById('preview-section');
+        if (previewSection) {
+          previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       } catch (e) {
+        console.error('Magic eraser error:', e);
         alert('Error removing selected areas: ' + (e.message || e));
       } finally {
         btn.textContent = origText;
