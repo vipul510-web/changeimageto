@@ -83,6 +83,15 @@
       .color-card span{color:#ffffff;font-weight:600;font-size:14px}
       .color-card p{color:#ffffff;margin:0;font-size:12px;opacity:0.9}
       @media(max-width:768px){.feature-grid{grid-template-columns:1fr;gap:20px}.feature-card{padding:24px}.color-grid{grid-template-columns:repeat(2,1fr);gap:16px}.container{padding:16px}}
+      .capabilities{display:grid;gap:24px;margin:32px 0}
+      .capability{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px}
+      .capability h4{font-size:18px;margin:0 0 12px;color:var(--fg)}
+      .capability p{margin:0;color:var(--muted)}
+      .capability.with-image{display:flex;align-items:center;gap:24px;padding:24px}
+      .capability.with-image .capability-image{flex-shrink:0;width:200px;max-width:40%}
+      .capability.with-image .capability-image img{width:100%;height:auto;border-radius:8px;display:block}
+      .capability.with-image .capability-content{flex:1}
+      @media(max-width:768px){.capability.with-image{flex-direction:column}.capability.with-image .capability-image{width:100%;max-width:100%}}
       /* Comprehensive Footer Styles */
       .comprehensive-footer{background:var(--card);border-top:1px solid var(--border);margin-top:60px;padding:48px 0 24px}
       .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
@@ -401,9 +410,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <h3>What You Can Do</h3>
         <div class="capabilities">
-          <div class="capability">
-            <h4>🎯 Remove Image Backgrounds</h4>
-            <p>Our AI-powered background remover uses specialized models for products and portraits, ensuring clean, professional results every time.</p>
+          <div class="capability with-image">
+            <div class="capability-image">
+              <img src="/remove-bg-before-after.png" alt="Before and after background removal example" loading="lazy" />
+            </div>
+            <div class="capability-content">
+              <h4>🎯 Remove Image Backgrounds</h4>
+              <p>Our AI-powered background remover uses specialized models for products and portraits, ensuring clean, professional results every time.</p>
+            </div>
           </div>
           <div class="capability">
             <h4>🎨 Change Background Colors</h4>
