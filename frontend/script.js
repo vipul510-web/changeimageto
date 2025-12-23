@@ -644,7 +644,9 @@ if (window.location.pathname === '/remove-text-from-image.html') {
         const formData = new FormData();
         formData.append('file', brushTool.currentFile);
         formData.append('mask_data', maskData);
-        const res = await fetch('/api/remove-painted-areas', { method: 'POST', body: formData });
+        const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+        const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
+        const res = await fetch(apiBase + '/api/remove-painted-areas', { method: 'POST', body: formData });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
