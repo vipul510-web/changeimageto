@@ -474,6 +474,205 @@ document.addEventListener('change', (e) => {
   }
 });
 
+// Inline magic eraser on remove-text page
+if (window.location.pathname === '/remove-text-from-image.html') {
+  (function initMagicEraser() {
+    const magicSection = document.getElementById('magic-eraser-section');
+    const magicBtn = document.getElementById('magic-eraser-btn');
+    const magicApplyBtn = document.getElementById('magic-apply-btn');
+    const magicBrushInfo = document.getElementById('magic-brush-info');
+    const magicEraserToggle = document.getElementById('magic-eraser-toggle');
+    const magicClearMask = document.getElementById('magic-clear-mask');
+    const brushSmall = document.getElementById('magic-brush-small');
+    const brushMedium = document.getElementById('magic-brush-medium');
+    const brushLarge = document.getElementById('magic-brush-large');
+    const imageCanvas = document.getElementById('magic-image-canvas');
+    const maskCanvas = document.getElementById('magic-mask-canvas');
+    const resultImgEl = document.getElementById('result-img');
+
+    if (!magicBtn || !magicSection || !imageCanvas || !maskCanvas || !resultImgEl) return;
+
+    class MagicBrushTool {
+      constructor(imageCanvas, maskCanvas, brushInfoEl, eraserToggleEl) {
+        this.imageCanvas = imageCanvas;
+        this.maskCanvas = maskCanvas;
+        this.ctx = maskCanvas.getContext('2d');
+        this.brushSize = 20;
+        this.isErasing = false;
+        this.isDrawing = false;
+        this.brushInfoEl = brushInfoEl;
+        this.eraserToggleEl = eraserToggleEl;
+        this.currentFile = null;
+        this._setupEvents();
+        this._updateBrushInfo();
+      }
+
+      _setupEvents() {
+        const start = (x, y) => {
+          this.isDrawing = true;
+          this._draw(x, y, true);
+        };
+        const move = (x, y) => {
+          if (!this.isDrawing) return;
+          this._draw(x, y, false);
+        };
+        const stop = () => { this.isDrawing = false; this.ctx.beginPath(); };
+
+        const getPos = (e) => {
+          const rect = this.maskCanvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          return {
+            x: (clientX - rect.left) * (this.maskCanvas.width / rect.width),
+            y: (clientY - rect.top) * (this.maskCanvas.height / rect.height),
+          };
+        };
+
+        const handleDown = (e) => { e.preventDefault(); const {x,y}=getPos(e); start(x,y); };
+        const handleMove = (e) => { e.preventDefault(); const {x,y}=getPos(e); move(x,y); };
+
+        this.maskCanvas.addEventListener('mousedown', handleDown);
+        this.maskCanvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', stop);
+
+        this.maskCanvas.addEventListener('touchstart', handleDown, { passive: false });
+        this.maskCanvas.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchend', stop);
+        window.addEventListener('touchcancel', stop);
+      }
+
+      _draw(x, y, isStart) {
+        if (this.isErasing) {
+          this.ctx.globalCompositeOperation = 'destination-out';
+        } else {
+          this.ctx.globalCompositeOperation = 'source-over';
+          this.ctx.fillStyle = 'rgba(255,0,0,0.9)';
+        }
+        if (isStart) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x, y);
+        }
+        this.ctx.lineTo(x, y);
+        this.ctx.lineWidth = this.brushSize;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.ctx.stroke();
+      }
+
+      _updateBrushInfo() {
+        if (!this.brushInfoEl) return;
+        const sizeLabel = this.brushSize <= 15 ? 'Small' : this.brushSize <= 25 ? 'Medium' : 'Large';
+        const modeLabel = this.isErasing ? 'Eraser' : 'Brush';
+        this.brushInfoEl.textContent = `${sizeLabel} ${modeLabel} (${this.brushSize}px) - Paint over areas to remove`;
+      }
+
+      setBrushSize(size) {
+        this.brushSize = size;
+        this._updateBrushInfo();
+      }
+
+      toggleEraser() {
+        this.isErasing = !this.isErasing;
+        if (this.eraserToggleEl) {
+          if (this.isErasing) this.eraserToggleEl.classList.add('active');
+          else this.eraserToggleEl.classList.remove('active');
+        }
+        this._updateBrushInfo();
+      }
+
+      clearMask() {
+        this.ctx.clearRect(0, 0, this.maskCanvas.width, this.maskCanvas.height);
+      }
+
+      getMaskData() {
+        return this.maskCanvas.toDataURL('image/png');
+      }
+
+      async loadFromResultImage(imgEl) {
+        if (!imgEl || !imgEl.src) return;
+        const response = await fetch(imgEl.src);
+        const blob = await response.blob();
+        this.currentFile = new File([blob], `text-removed-${Date.now()}.png`, { type: blob.type || 'image/png' });
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxWidth = 800;
+            const maxHeight = 600;
+            let { width, height } = img;
+            if (width > maxWidth || height > maxHeight) {
+              const ratio = Math.min(maxWidth / width, maxHeight / maxHeight);
+              width *= ratio;
+              height *= ratio;
+            }
+            this.imageCanvas.width = width;
+            this.imageCanvas.height = height;
+            this.maskCanvas.width = width;
+            this.maskCanvas.height = height;
+            this.imageCanvas.style.width = width + 'px';
+            this.imageCanvas.style.height = height + 'px';
+            this.maskCanvas.style.width = width + 'px';
+            this.maskCanvas.style.height = height + 'px';
+            const imgCtx = this.imageCanvas.getContext('2d');
+            imgCtx.drawImage(img, 0, 0, width, height);
+            this.clearMask();
+            magicSection.style.display = 'block';
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(this.currentFile);
+      }
+    }
+
+    const brushTool = new MagicBrushTool(imageCanvas, maskCanvas, magicBrushInfo, magicEraserToggle);
+
+    async function applyMagicEraser() {
+      if (!brushTool.currentFile) return;
+      const btn = magicApplyBtn;
+      if (!btn) return;
+      const origText = btn.textContent;
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+      try {
+        const maskData = brushTool.getMaskData();
+        const formData = new FormData();
+        formData.append('file', brushTool.currentFile);
+        formData.append('mask_data', maskData);
+        const res = await fetch('/api/remove-painted-areas', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        resultImgEl.src = url;
+        downloadLink.href = url;
+        downloadLink.download = `text-removed-${Date.now()}.png`;
+        await brushTool.loadFromResultImage(resultImgEl);
+      } catch (e) {
+        alert('Error removing selected areas: ' + (e.message || e));
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }
+
+    magicBtn.addEventListener('click', async () => {
+      if (!resultImgEl.src) {
+        alert('First run \"Remove Text\", then edit the result.');
+        return;
+      }
+      await brushTool.loadFromResultImage(resultImgEl);
+      magicSection.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    if (magicApplyBtn) magicApplyBtn.addEventListener('click', applyMagicEraser);
+    if (magicEraserToggle) magicEraserToggle.addEventListener('click', () => brushTool.toggleEraser());
+    if (magicClearMask) magicClearMask.addEventListener('click', () => brushTool.clearMask());
+    if (brushSmall) brushSmall.addEventListener('click', () => brushTool.setBrushSize(10));
+    if (brushMedium) brushMedium.addEventListener('click', () => brushTool.setBrushSize(20));
+    if (brushLarge) brushLarge.addEventListener('click', () => brushTool.setBrushSize(30));
+  })();
+}
+
 const form = document.getElementById('upload-form');
 // If on a color page, rename CTA
 (function(){ const color = document.body.getAttribute('data-target-color'); if(color){ updateCtaText(); processBtn.setAttribute('aria-label','Change image background'); } })();
@@ -803,43 +1002,47 @@ if (form) form.addEventListener('submit', async (e) => {
     if(resultWrap) resultWrap.hidden = false;
 
     // Inject or show an "Edit Result (Remove more)" button to allow iterative processing
+    // Skip on remove-text page (it has its own inline magic eraser UI).
     try {
-      var actions = document.querySelector('.actions');
-      if (actions) {
-        var editBtn = document.getElementById('edit-result-btn');
-        if (!editBtn) {
-          editBtn = document.createElement('button');
-          editBtn.id = 'edit-result-btn';
-          editBtn.type = 'button';
-          editBtn.className = 'btn secondary';
-          editBtn.textContent = 'Edit result (remove more)';
-          actions.insertBefore(editBtn, document.getElementById('reset-btn'));
-        }
-        editBtn.style.display = 'inline-block';
-
-        // Handler: use the processed image as new input and reset UI for another pass
-        editBtn.onclick = async function(){
-          try {
-            var href = downloadLink.href;
-            if (!href) return;
-            const res = await fetch(href);
-            const b = await res.blob();
-            const name = (downloadLink.download || 'image.png');
-            const f = new File([b], name, { type: b.type || 'image/png' });
-            currentFile = f;
-            setOriginalPreview(currentFile);
-
-            // Hide result and prompt to process again
-            if (resultWrap) resultWrap.hidden = true;
-            var promptEl = document.getElementById('process-prompt');
-            if (promptEl) { promptEl.hidden = false; promptEl.style.display = 'block'; }
-            enableProcess(true);
-            updateCtaText();
-            updatePromptText();
-          } catch (e) {
-            console.warn('Failed to reload result as input', e);
+      const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
+      if (!isRemoveTextPage) {
+        var actions = document.querySelector('.actions');
+        if (actions) {
+          var editBtn = document.getElementById('edit-result-btn');
+          if (!editBtn) {
+            editBtn = document.createElement('button');
+            editBtn.id = 'edit-result-btn';
+            editBtn.type = 'button';
+            editBtn.className = 'btn secondary';
+            editBtn.textContent = 'Edit result (remove more)';
+            actions.insertBefore(editBtn, document.getElementById('reset-btn'));
           }
-        };
+          editBtn.style.display = 'inline-block';
+
+          // Handler: use the processed image as new input and reset UI for another pass
+          editBtn.onclick = async function(){
+            try {
+              var href = downloadLink.href;
+              if (!href) return;
+              const res = await fetch(href);
+              const b = await res.blob();
+              const name = (downloadLink.download || 'image.png');
+              const f = new File([b], name, { type: b.type || 'image/png' });
+              currentFile = f;
+              setOriginalPreview(currentFile);
+
+              // Hide result and prompt to process again
+              if (resultWrap) resultWrap.hidden = true;
+              var promptEl = document.getElementById('process-prompt');
+              if (promptEl) { promptEl.hidden = false; promptEl.style.display = 'block'; }
+              enableProcess(true);
+              updateCtaText();
+              updatePromptText();
+            } catch (e) {
+              console.warn('Failed to reload result as input', e);
+            }
+          };
+        }
       }
     } catch(_){}
   }catch(err){

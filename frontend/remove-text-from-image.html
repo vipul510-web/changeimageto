@@ -94,10 +94,39 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
               <div class="actions">
                 <a id="download-link" download="text-removed.png" class="btn">Download PNG</a>
-                <a href="/remove-people-from-photo.html" class="btn secondary">Edit result (magic eraser)</a>
+                <button id="magic-eraser-btn" class="btn secondary" type="button">Edit result (magic eraser)</button>
                 <button id="reset-btn" class="btn secondary" type="button">Try Another Image</button>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Magic eraser inline editor -->
+      <section class="container" id="magic-eraser-section" style="display:none; margin-top:24px;">
+        <h3>Fine-tune removal (magic eraser)</h3>
+        <p id="magic-eraser-instructions" style="color:#9aa7b2; margin-bottom:8px;">
+          Paint over any leftover text or elements you want to remove, then click "Remove selected areas".
+        </p>
+        <div id="magic-eraser-interface" style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;">
+          <div class="checkerboard" style="flex:1; min-width:280px; position:relative;">
+            <canvas id="magic-image-canvas"></canvas>
+            <canvas id="magic-mask-canvas" style="position:absolute; inset:0; pointer-events:auto;"></canvas>
+          </div>
+          <div style="min-width:220px; max-width:260px;">
+            <p id="magic-brush-info" style="margin-top:0; margin-bottom:8px;">
+              Medium Brush (20px) - Paint over areas to remove
+            </p>
+            <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+              <button type="button" class="btn secondary" id="magic-brush-small">Small</button>
+              <button type="button" class="btn secondary" id="magic-brush-medium">Medium</button>
+              <button type="button" class="btn secondary" id="magic-brush-large">Large</button>
+            </div>
+            <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+              <button type="button" id="magic-eraser-toggle" class="btn secondary">Eraser</button>
+              <button type="button" id="magic-clear-mask" class="btn secondary">Clear mask</button>
+            </div>
+            <button type="button" id="magic-apply-btn" class="btn" style="width:100%;">Remove selected areas</button>
           </div>
         </div>
       </section>
