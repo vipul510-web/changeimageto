@@ -19,6 +19,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
     <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+    <style>
+      /* Magic eraser canvas constraints */
+      #magic-eraser-interface .checkerboard {
+        overflow: hidden;
+        max-width: 100%;
+        display: inline-block;
+      }
+      #magic-image-canvas,
+      #magic-mask-canvas {
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+    </style>
 
 <!-- Google AI Overview tracking -->
 <script>
@@ -109,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
           Paint over any leftover text or elements you want to remove, then click "Remove selected areas".
         </p>
         <div id="magic-eraser-interface" style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;">
-          <div class="checkerboard" style="flex:1; min-width:280px; position:relative;">
+          <div class="checkerboard" style="flex:1; min-width:280px; max-width:100%; position:relative; overflow:hidden;">
             <canvas id="magic-image-canvas"></canvas>
             <canvas id="magic-mask-canvas" style="position:absolute; inset:0; pointer-events:auto;"></canvas>
           </div>

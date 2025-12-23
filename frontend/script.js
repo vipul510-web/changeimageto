@@ -602,18 +602,23 @@ if (window.location.pathname === '/remove-text-from-image.html') {
             const maxHeight = 600;
             let { width, height } = img;
             if (width > maxWidth || height > maxHeight) {
-              const ratio = Math.min(maxWidth / width, maxHeight / maxHeight);
+              const ratio = Math.min(maxWidth / width, maxHeight / height);
               width *= ratio;
               height *= ratio;
             }
+            // Set canvas internal dimensions for drawing
             this.imageCanvas.width = width;
             this.imageCanvas.height = height;
             this.maskCanvas.width = width;
             this.maskCanvas.height = height;
+            // Set CSS dimensions for display (will be constrained by max-width: 100%)
             this.imageCanvas.style.width = width + 'px';
             this.imageCanvas.style.height = height + 'px';
             this.maskCanvas.style.width = width + 'px';
             this.maskCanvas.style.height = height + 'px';
+            // Ensure canvas doesn't overflow container
+            this.imageCanvas.style.maxWidth = '100%';
+            this.maskCanvas.style.maxWidth = '100%';
             const imgCtx = this.imageCanvas.getContext('2d');
             imgCtx.drawImage(img, 0, 0, width, height);
             this.clearMask();
