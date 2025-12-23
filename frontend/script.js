@@ -493,7 +493,7 @@ if (window.location.pathname === '/remove-text-from-image.html') {
     if (!magicBtn || !magicSection || !imageCanvas || !maskCanvas || !resultImgEl) return;
 
     class MagicBrushTool {
-      constructor(imageCanvas, maskCanvas, brushInfoEl, eraserToggleEl) {
+      constructor(imageCanvas, maskCanvas, brushInfoEl, eraserToggleEl, brushSmallEl, brushMediumEl, brushLargeEl) {
         this.imageCanvas = imageCanvas;
         this.maskCanvas = maskCanvas;
         this.ctx = maskCanvas.getContext('2d');
@@ -502,9 +502,14 @@ if (window.location.pathname === '/remove-text-from-image.html') {
         this.isDrawing = false;
         this.brushInfoEl = brushInfoEl;
         this.eraserToggleEl = eraserToggleEl;
+        this.brushSmallEl = brushSmallEl;
+        this.brushMediumEl = brushMediumEl;
+        this.brushLargeEl = brushLargeEl;
         this.currentFile = null;
         this._setupEvents();
         this._updateBrushInfo();
+        // Set initial active state for medium brush (default size 20)
+        if (this.brushMediumEl) this.brushMediumEl.classList.add('active');
       }
 
       _setupEvents() {
@@ -569,6 +574,17 @@ if (window.location.pathname === '/remove-text-from-image.html') {
       setBrushSize(size) {
         this.brushSize = size;
         this._updateBrushInfo();
+        // Update button active states
+        if (this.brushSmallEl) this.brushSmallEl.classList.remove('active');
+        if (this.brushMediumEl) this.brushMediumEl.classList.remove('active');
+        if (this.brushLargeEl) this.brushLargeEl.classList.remove('active');
+        if (size <= 15 && this.brushSmallEl) {
+          this.brushSmallEl.classList.add('active');
+        } else if (size <= 25 && this.brushMediumEl) {
+          this.brushMediumEl.classList.add('active');
+        } else if (this.brushLargeEl) {
+          this.brushLargeEl.classList.add('active');
+        }
       }
 
       toggleEraser() {
@@ -630,7 +646,7 @@ if (window.location.pathname === '/remove-text-from-image.html') {
       }
     }
 
-    const brushTool = new MagicBrushTool(imageCanvas, maskCanvas, magicBrushInfo, magicEraserToggle);
+    const brushTool = new MagicBrushTool(imageCanvas, maskCanvas, magicBrushInfo, magicEraserToggle, brushSmall, brushMedium, brushLarge);
 
     async function applyMagicEraser() {
       if (!brushTool.currentFile) return;
@@ -683,16 +699,35 @@ if (window.location.pathname === '/remove-text-from-image.html') {
         const processPrompt = document.getElementById('process-prompt');
         if (processPrompt) processPrompt.hidden = true;
         
-        // Update the result image - wait for it to load
+        // Update the result image - clear src first to force reload
+        resultImgEl.src = '';
+        // Small delay to ensure src is cleared
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
         await new Promise((resolve, reject) => {
-          resultImgEl.onload = () => {
+          const timeout = setTimeout(() => {
+            console.error('Image load timeout');
+            reject(new Error('Image load timeout'));
+          }, 15000);
+          
+          const onLoad = () => {
             console.log('Result image loaded successfully');
+            clearTimeout(timeout);
+            resultImgEl.removeEventListener('load', onLoad);
+            resultImgEl.removeEventListener('error', onError);
             resolve();
           };
-          resultImgEl.onerror = (e) => {
+          
+          const onError = (e) => {
             console.error('Error loading result image:', e);
+            clearTimeout(timeout);
+            resultImgEl.removeEventListener('load', onLoad);
+            resultImgEl.removeEventListener('error', onError);
             reject(e);
           };
+          
+          resultImgEl.addEventListener('load', onLoad);
+          resultImgEl.addEventListener('error', onError);
           resultImgEl.src = url;
         });
         
