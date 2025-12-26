@@ -76,11 +76,17 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
 
-        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-          <button id="process-btn" type="submit" disabled>Remove Text</button>
-          <button id="premium-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">
-            Premium Option ($0.5 only per image)
-          </button>
+        <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <button id="process-btn" type="submit" disabled>Remove text for Free</button>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quality is not guaranteed</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <button id="premium-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">
+              Premium Option ($0.5 only per image)
+            </button>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Best quality expected</div>
+          </div>
         </div>
       </form>
       
@@ -112,9 +118,10 @@ document.addEventListener("DOMContentLoaded", () => {
         <h2>How to remove text from image</h2>
         <ol>
           <li>Upload your photo above.</li>
-          <li>Choose a <strong>Text Detection Method</strong>: EasyOCR (recommended) or Tesseract OCR.</li>
-          <li>Click <strong>Remove Text</strong>. Our AI detects and removes all text automatically.</li>
-          <li>Download your clean image as PNG.</li>
+          <li>Choose between our <strong>Free</strong> or <strong>Premium</strong> text removal option.</li>
+          <li>Click <strong>Remove text for Free</strong> for basic quality, or <strong>Premium Option</strong> for best quality results.</li>
+          <li>Our AI automatically detects and removes all text from your image.</li>
+          <li>Download your clean image instantly.</li>
         </ol>
 
         <h3>When to use text removal</h3>
@@ -125,8 +132,16 @@ document.addEventListener("DOMContentLoaded", () => {
           <li><strong>Social media:</strong> Clean images for reposting without text.</li>
           <li><strong>Ecommerce:</strong> Remove text from product images for cleaner listings. <a href="/remove-text-from-image-for-shopify.html">Learn more about removing text for Shopify</a>.</li>
         </ul>
-       
-        <p>Tip: <strong>EasyOCR</strong> works better for most text types. Use <strong>Tesseract</strong> for very clear, printed text.</p>
+        
+        <h3>Ethical Use and Responsibility</h3>
+        <p>While our text removal tool is a powerful utility for legitimate image editing needs, we strongly encourage ethical and responsible use. Please consider the following:</p>
+        <ul>
+          <li><strong>Respect Copyright and Ownership:</strong> Only remove text from images you own or have permission to edit. Do not use this tool to remove copyright notices, watermarks, or attribution from copyrighted content.</li>
+          <li><strong>Avoid Misrepresentation:</strong> Do not use text removal to alter documents, contracts, or images in ways that could mislead others or cause harm.</li>
+          <li><strong>Personal Use:</strong> This tool is ideal for removing unwanted text overlays from personal photos, cleaning up social media images, or preparing images for your own projects.</li>
+          <li><strong>Commercial Use:</strong> Ensure you have proper rights to modify and use images for commercial purposes. Removing watermarks or copyright notices may violate terms of service or copyright laws.</li>
+        </ul>
+        <p>We reserve the right to refuse service to anyone using this tool for unethical purposes. Use responsibly and respect intellectual property rights.</p>
         
         <h3>Supported text types</h3>
         <ul>
