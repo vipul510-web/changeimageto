@@ -3870,10 +3870,15 @@ async def create_payment_checkout(request: Request):
         # Make sure there are no extra spaces or newlines in the key
         clean_api_key = dodo_api_key.strip()
         
-        logger.info(f"Creating Dodo Payments client with test_mode, API key length: {len(clean_api_key)}")
+        # Use test_mode for local development, live_mode for production
+        # Check if we're running in Cloud Run (production) vs local
+        is_production = os.getenv("K_SERVICE") is not None  # K_SERVICE is set by Cloud Run
+        dodo_env = "live_mode" if is_production else "test_mode"
+        
+        logger.info(f"Creating Dodo Payments client with {dodo_env}, API key length: {len(clean_api_key)}")
         client = dodopayments.DodoPayments(
             bearer_token=clean_api_key,
-            environment="test_mode"
+            environment=dodo_env
         )
         
         logger.info(f"Creating checkout session for product: {dodo_product_id}")
@@ -3929,9 +3934,13 @@ async def verify_payment(
         import dodopayments
         
         # Initialize Dodo Payments client
+        # Use test_mode for local development, live_mode for production
+        is_production = os.getenv("K_SERVICE") is not None
+        dodo_env = "live_mode" if is_production else "test_mode"
+        
         client = dodopayments.DodoPayments(
             bearer_token=dodo_api_key,
-            environment="test_mode"  # Change to "live_mode" for production
+            environment=dodo_env
         )
         
         # Get checkout session status using retrieve method
@@ -4085,9 +4094,13 @@ async def test_google_text_removal(
         import dodopayments
         dodo_api_key = os.getenv("DODO_PAYMENTS_API_KEY")
         if dodo_api_key:
+            # Use same environment as checkout creation (test_mode for local, live_mode for production)
+            is_production = os.getenv("K_SERVICE") is not None
+            dodo_env = "live_mode" if is_production else "test_mode"
+            
             client = dodopayments.DodoPayments(
                 bearer_token=dodo_api_key.strip(),
-                environment="test_mode"
+                environment=dodo_env
             )
             checkout_session = client.checkout_sessions.retrieve(payment_session_id)
             payment_status = getattr(checkout_session, 'payment_status', None)
@@ -4106,6 +4119,7 @@ async def test_google_text_removal(
     tmp_file_path = None
     try:
         from google import genai
+        from google.genai import types
         from PIL import Image
         
         # Read image file
@@ -4124,16 +4138,14 @@ async def test_google_text_removal(
         image = Image.open(tmp_file_path)
         
         # Create prompt for text removal
-        prompt = (
-            "Edit this image to remove all text, words, watermarks, captions, and labels. "
-            "Keep all visual elements, colors, objects, layout, and composition exactly the same. "
-            "Only remove text elements."
-        )
+        prompt = "Provide a clean version of this image with only the background pattern visible, maintaining the exact style but without any text or overlays."
         
-        logger.info(f"Running Google Gemini image editing model for text removal")
+        logger.info(f"Running Google Gemini image editing model (gemini-3-pro-image-preview) for text removal")
         
         # Call Google Gemini API for image editing with retry logic for quota limits
-        # According to docs: pass both prompt and image to generate_content
+        # According to docs: https://ai.google.dev/gemini-api/docs/image-generation
+        # For image editing (text-and-image-to-image), pass both prompt and image to generate_content
+        # Using gemini-3-pro-image-preview for better quality and professional asset production
         import time
         max_retries = 3
         retry_delay = 5  # Start with 5 seconds
@@ -4141,10 +4153,43 @@ async def test_google_text_removal(
         response = None
         for attempt in range(max_retries):
             try:
+                # For gemini-3-pro-image-preview, we must explicitly specify response_modalities
+                # to allow IMAGE output. Without this, the model may only return text.
+                # Configure with response_modalities and safety settings to prevent blocking
+                # Safety settings set to BLOCK_NONE to allow image editing requests
+                # Use dictionary format to avoid AttributeError with SDK types
+                config = {
+                    "response_modalities": ["TEXT", "IMAGE"],
+                    "safety_settings": [
+                        {
+                            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HARASSMENT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HATE_SPEECH",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                    ]
+                }
+                
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash-image",
+                    model="gemini-3-pro-image-preview",
                     contents=[prompt, image],
+                    config=config
                 )
+                
+                logger.info(f"Response received. Type: {type(response)}")
+                if hasattr(response, 'candidates') and response.candidates:
+                    logger.info(f"Response has {len(response.candidates)} candidates")
+                
                 break  # Success, exit retry loop
             except Exception as e:
                 error_str = str(e)
@@ -4166,27 +4211,77 @@ async def test_google_text_removal(
                     # Not a quota error, raise immediately
                     raise
         
-        # Extract image from response
+        # Extract image from response with safe checking to prevent NoneType errors
         # Based on Google GenAI library, response should have candidates[0].content.parts
         result_bytes = None
         
         try:
-            # Try the standard structure: response.candidates[0].content.parts
-            if hasattr(response, 'candidates') and response.candidates:
-                parts = response.candidates[0].content.parts
-            # Fallback to direct parts access (as shown in some examples)
-            elif hasattr(response, 'parts'):
-                parts = response.parts
-            else:
-                # Log the actual structure for debugging
-                logger.error(f"Response type: {type(response)}, attributes: {[attr for attr in dir(response) if not attr.startswith('_')]}")
-                raise HTTPException(status_code=500, detail="Unexpected response structure from Google Gemini API")
+            # Safe checking: verify response structure before accessing parts
+            if not response:
+                raise HTTPException(status_code=500, detail="No response received from Google Gemini API")
             
+            # Check if candidates exist and have content
+            if not hasattr(response, 'candidates') or not response.candidates:
+                logger.error(f"Response has no candidates. Response type: {type(response)}")
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Google Gemini API returned no candidates. This might indicate the request was blocked by safety filters or the API call failed."
+                )
+            
+            candidate = response.candidates[0]
+            logger.info(f"Candidate type: {type(candidate)}")
+            logger.info(f"Candidate attributes: {[attr for attr in dir(candidate) if not attr.startswith('_')]}")
+            logger.info(f"Candidate has content: {hasattr(candidate, 'content')}")
+            if hasattr(candidate, 'finish_reason'):
+                logger.info(f"Finish reason: {candidate.finish_reason}")
+            if hasattr(candidate, 'safety_ratings'):
+                logger.info(f"Safety ratings: {candidate.safety_ratings}")
+            
+            if not hasattr(candidate, 'content') or not candidate.content:
+                finish_reason = getattr(candidate, 'finish_reason', None)
+                logger.error(f"Candidate has no content. Finish reason: {finish_reason}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Google Gemini API candidate has no content. Finish reason: {finish_reason}"
+                )
+            
+            # Safely get parts - check if parts exists and is not None or empty
+            parts = getattr(candidate.content, 'parts', None)
+            logger.info(f"Parts from candidate.content: {parts}, type: {type(parts)}, length: {len(parts) if parts else 'N/A'}")
+            
+            if not parts:
+                # Fallback to direct parts access (as shown in some examples)
+                parts = getattr(response, 'parts', None)
+                logger.info(f"Parts from response: {parts}, type: {type(parts)}, length: {len(parts) if parts else 'N/A'}")
+            
+            if not parts or (isinstance(parts, list) and len(parts) == 0):
+                # Log the actual structure for debugging
+                finish_reason = getattr(candidate, 'finish_reason', None)
+                safety_ratings = getattr(candidate, 'safety_ratings', None)
+                logger.error(f"Response type: {type(response)}, attributes: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+                logger.error(f"Candidate type: {type(candidate)}, content type: {type(candidate.content) if candidate.content else None}")
+                logger.error(f"Finish reason: {finish_reason}")
+                logger.error(f"Safety ratings: {safety_ratings}")
+                logger.error(f"Candidate attributes: {[attr for attr in dir(candidate) if not attr.startswith('_')]}")
+                if candidate.content:
+                    logger.error(f"Content attributes: {[attr for attr in dir(candidate.content) if not attr.startswith('_')]}")
+                
+                error_detail = "Response contained no parts. This might indicate the request was blocked or failed."
+                if finish_reason:
+                    error_detail += f" Finish reason: {finish_reason}"
+                if safety_ratings:
+                    error_detail += f" Safety ratings: {safety_ratings}"
+                
+                raise HTTPException(status_code=500, detail=error_detail)
+            
+            all_text_parts = []
+            # Now safely iterate over parts (guaranteed to be not None)
             for part in parts:
                 logger.info(f"Part type: {type(part)}, attributes: {[attr for attr in dir(part) if not attr.startswith('_')]}")
                 
                 if hasattr(part, 'text') and part.text:
                     logger.info(f"Text response from model: {part.text}")
+                    all_text_parts.append(part.text)
                 elif hasattr(part, 'inline_data') and part.inline_data:
                     # Extract image data from inline_data
                     inline_data = part.inline_data
@@ -4222,32 +4317,69 @@ async def test_google_text_removal(
                         raise HTTPException(status_code=500, detail="Could not extract image data from inline_data")
                 else:
                     logger.warning(f"Part has no text or inline_data: {part}")
+            
+            # If no image was found but we have text, log it as an error
+            if not result_bytes and all_text_parts:
+                combined_text = "\n".join(all_text_parts)
+                logger.error(f"Model returned text instead of image. Response text: {combined_text}")
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Google Gemini model returned text instead of an image. This might indicate the model doesn't support image editing or the prompt needs adjustment. Response: {combined_text[:200]}"
+                )
         except AttributeError as e:
             logger.error(f"Error accessing response structure: {e}")
             logger.error(f"Response type: {type(response)}, attributes: {[attr for attr in dir(response) if not attr.startswith('_')]}")
             raise HTTPException(status_code=500, detail=f"Error parsing Google Gemini response: {str(e)}")
         
         if not result_bytes or len(result_bytes) == 0:
-            raise HTTPException(status_code=500, detail="No image content found in response from Google Gemini")
+            # Log the full response structure for debugging
+            logger.error(f"No image content found. Response structure: {type(response)}")
+            logger.error(f"Response has 'text' attribute: {hasattr(response, 'text')}")
+            if hasattr(response, 'text'):
+                logger.error(f"Response text: {response.text}")
+            if hasattr(response, 'candidates') and response.candidates:
+                logger.error(f"Number of candidates: {len(response.candidates)}")
+                for idx, candidate in enumerate(response.candidates):
+                    logger.error(f"Candidate {idx} type: {type(candidate)}")
+                    if hasattr(candidate, 'content'):
+                        logger.error(f"Candidate {idx} content type: {type(candidate.content)}")
+                        if hasattr(candidate.content, 'parts'):
+                            logger.error(f"Candidate {idx} parts count: {len(candidate.content.parts)}")
+                            for part_idx, part in enumerate(candidate.content.parts):
+                                logger.error(f"  Part {part_idx}: {type(part)}, has text: {hasattr(part, 'text')}, has inline_data: {hasattr(part, 'inline_data')}")
+                                if hasattr(part, 'text') and part.text:
+                                    logger.error(f"    Text content: {part.text[:200]}")
+            error_detail = "No image content found in response from Google Gemini"
+            if hasattr(response, 'text') and response.text:
+                error_detail += f". Model returned text: {response.text[:200]}"
+            raise HTTPException(status_code=500, detail=error_detail)
         
         # Log the first few bytes to verify it's actually image data
         if len(result_bytes) < 1000:
             logger.warning(f"Received very small response ({len(result_bytes)} bytes). First 100 bytes (hex): {result_bytes[:100].hex()}")
             logger.warning(f"First 100 bytes (ascii): {result_bytes[:100]}")
         
-        # Verify it's a valid image by checking magic bytes (PNG starts with 89 50 4E 47)
-        if result_bytes[:4] != b'\x89PNG' and result_bytes[:4] != b'\xff\xd8\xff':  # PNG or JPEG
+        # Verify it's a valid image by checking magic bytes
+        # PNG starts with \x89PNG, JPEG starts with \xff\xd8
+        is_png = result_bytes[:4] == b'\x89PNG'
+        is_jpeg = result_bytes[:2] == b'\xff\xd8'
+        
+        if not is_png and not is_jpeg:
             logger.error(f"Response does not appear to be a valid image. First bytes: {result_bytes[:20]}")
             raise HTTPException(
                 status_code=500, 
                 detail=f"Response from Google Gemini does not appear to be image data. Received {len(result_bytes)} bytes."
             )
         
+        # Determine media type based on image format
+        media_type = "image/png" if is_png else "image/jpeg"
+        logger.info(f"Successfully validated {media_type} image ({len(result_bytes)} bytes)")
+        
         # Mark this payment session as used to prevent reuse (only after successful processing)
         _USED_PAYMENT_SESSIONS.add(payment_session_id)
         logger.info(f"Payment session {payment_session_id} marked as used")
         
-        return Response(content=result_bytes, media_type="image/png")
+        return Response(content=result_bytes, media_type=media_type)
     
     except Exception as e:
         error_msg = str(e)
