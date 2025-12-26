@@ -510,6 +510,15 @@ document.addEventListener("DOMContentLoaded", () => {
             if (resultWrapper) resultWrapper.hidden = false;
             if (previewSection) previewSection.hidden = false;
             
+            // Remove padding and background from checkerboard for premium result (same as test page)
+            const checkerboard = resultWrapper.querySelector('.checkerboard');
+            if (checkerboard) {
+              checkerboard.style.padding = '0';
+              checkerboard.style.background = 'none';
+              checkerboard.style.minHeight = 'auto';
+              checkerboard.style.display = 'block';
+            }
+            
             downloadLink.href = url;
             downloadLink.download = `premium-text-removed-${Date.now()}.png`;
             
