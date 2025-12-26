@@ -4121,6 +4121,12 @@ async def test_google_text_removal(
         from google import genai
         from google.genai import types
         from PIL import Image
+        import importlib.metadata
+        try:
+            genai_version = importlib.metadata.version("google-genai")
+            logger.info(f"google-genai SDK version: {genai_version}")
+        except Exception:
+            logger.warning("Could not determine google-genai version")
         
         # Read image file
         contents = await file.read()
