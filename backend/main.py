@@ -15,6 +15,7 @@ import hashlib
 import requests
 import zipfile
 import tempfile
+import base64
 import cv2
 from skimage import measure, filters, exposure
 from skimage.metrics import structural_similarity as ssim
@@ -64,6 +65,9 @@ except Exception:
     HDStrategy = None
 
 _LAMA_MANAGER = None
+
+# Track used payment sessions to prevent reuse
+_USED_PAYMENT_SESSIONS = set()
 
 # Upscayl/Real-ESRGAN NCNN-Vulkan binary path (for local testing)
 # Upscayl uses Real-ESRGAN NCNN under the hood
@@ -167,7 +171,7 @@ FRONTEND_DIR = os.getenv(
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 )
 
-# Minimal static file endpoints used by blog HTML
+# Minimal static file endpoints used by blog HTML and local tests
 @app.get("/styles.css")
 async def serve_styles():
     path = os.path.join(FRONTEND_DIR, "styles.css")
@@ -191,6 +195,15 @@ async def serve_favicon():
     # Reuse logo for now if favicon not present
     path = os.path.join(FRONTEND_DIR, "logo.png")
     return FileResponse(path, media_type="image/png")
+
+
+@app.get("/test-unscribe.html")
+async def serve_test_unscribe():
+    """Serve local test page for unscribe text removal."""
+    path = os.path.join(FRONTEND_DIR, "test-unscribe.html")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="test-unscribe.html not found")
+    return FileResponse(path, media_type="text/html")
 
 _sessions_cache = {}
 def downscale_image_if_needed(image: Image.Image, max_side: int = int(os.getenv("MAX_IMAGE_SIDE", "1600"))) -> Image.Image:
@@ -3827,6 +3840,427 @@ async def test_upscayl(
         logger.error(f"Test upscayl error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Upscayl error: {str(e)}")
 
+
+@app.post("/api/create-payment-checkout")
+async def create_payment_checkout(request: Request):
+    """Create a Dodo Payments checkout session for text removal."""
+    dodo_api_key = os.getenv("DODO_PAYMENTS_API_KEY")
+    dodo_product_id = os.getenv("DODO_PAYMENTS_PRODUCT_ID")
+    
+    # Log for debugging (first 20 chars only for security)
+    logger.info(f"Dodo API Key from env: {'SET' if dodo_api_key else 'NOT SET'}, length: {len(dodo_api_key) if dodo_api_key else 0}, starts with: {dodo_api_key[:20] if dodo_api_key else 'N/A'}...")
+    logger.info(f"Dodo Product ID from env: {dodo_product_id}")
+    
+    if not dodo_api_key:
+        raise HTTPException(status_code=500, detail="DODO_PAYMENTS_API_KEY environment variable not set")
+    if not dodo_product_id:
+        raise HTTPException(status_code=500, detail="DODO_PAYMENTS_PRODUCT_ID environment variable not set")
+    
+    try:
+        import dodopayments
+        
+        # Get the return URL from request or use default
+        try:
+            request_data = await request.json()
+            return_url = request_data.get("return_url", "http://localhost:8080/test-replicate-text-removal.html")
+        except:
+            return_url = "http://localhost:8080/test-replicate-text-removal.html"
+        
+        # Initialize Dodo Payments client
+        # Make sure there are no extra spaces or newlines in the key
+        clean_api_key = dodo_api_key.strip()
+        
+        logger.info(f"Creating Dodo Payments client with test_mode, API key length: {len(clean_api_key)}")
+        client = dodopayments.DodoPayments(
+            bearer_token=clean_api_key,
+            environment="test_mode"
+        )
+        
+        logger.info(f"Creating checkout session for product: {dodo_product_id}")
+        
+        # Create checkout session with return URL
+        # Dodo Payments will replace {CHECKOUT_SESSION_ID} with the actual session ID
+        checkout_session = client.checkout_sessions.create(
+            product_cart=[
+                {
+                    "product_id": dodo_product_id,
+                    "quantity": 1,
+                }
+            ],
+            return_url=f"{return_url}?session_id={{CHECKOUT_SESSION_ID}}"
+        )
+        
+        # Extract session ID from checkout URL
+        # The session ID is the last part of the URL path: .../session/cks_xxxxx
+        session_id = None
+        if hasattr(checkout_session, 'id'):
+            session_id = checkout_session.id
+        elif hasattr(checkout_session, 'checkout_url'):
+            # Extract session ID from URL path (last segment after /session/)
+            url_parts = checkout_session.checkout_url.rstrip('/').split('/')
+            if 'session' in url_parts:
+                session_idx = url_parts.index('session')
+                if session_idx + 1 < len(url_parts):
+                    session_id = url_parts[session_idx + 1]
+        
+        return {
+            "checkout_url": checkout_session.checkout_url,
+            "session_id": session_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating Dodo Payments checkout: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error creating checkout session: {str(e)}")
+
+@app.post("/api/verify-payment")
+async def verify_payment(
+    request: Request,
+    session_id: str = Form(...),
+):
+    """Verify if payment was successful before processing."""
+    dodo_api_key = os.getenv("DODO_PAYMENTS_API_KEY")
+    
+    if not dodo_api_key:
+        raise HTTPException(status_code=500, detail="DODO_PAYMENTS_API_KEY environment variable not set")
+    
+    logger.info(f"Verifying payment for session_id: {session_id}")
+    
+    try:
+        import dodopayments
+        
+        # Initialize Dodo Payments client
+        client = dodopayments.DodoPayments(
+            bearer_token=dodo_api_key,
+            environment="test_mode"  # Change to "live_mode" for production
+        )
+        
+        # Get checkout session status using retrieve method
+        # Session ID should be in format: cks_xxxxx (extracted from URL)
+        checkout_session = client.checkout_sessions.retrieve(session_id)
+        
+        # Check payment status - the checkout session has payment_status attribute
+        payment_status = getattr(checkout_session, 'payment_status', None)
+        logger.info(f"Checkout session payment_status: {payment_status}")
+        
+        # Payment is verified if payment_status indicates success
+        if payment_status and payment_status.lower() in ['succeeded', 'completed', 'paid']:
+            return {"verified": True, "message": "Payment verified"}
+        
+        return {"verified": False, "message": f"Payment not completed. Status: {payment_status}", "payment_status": payment_status}
+        
+    except Exception as e:
+        logger.error(f"Error verifying payment: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error verifying payment: {str(e)}")
+
+@app.post("/api/test-replicate-text-removal")
+async def test_replicate_text_removal(
+    request: Request,
+    file: UploadFile = File(...),
+    payment_session_id: Optional[str] = Form(None),
+):
+    """Test text removal using Replicate's FLUX Kontext API. Requires payment verification."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    replicate_api_token = os.getenv("REPLICATE_API_TOKEN")
+    if not replicate_api_token:
+        raise HTTPException(status_code=500, detail="REPLICATE_API_TOKEN environment variable not set")
+    
+    tmp_file_path = None
+    try:
+        import replicate
+        
+        # Read image file
+        contents = await file.read()
+        
+        # Create a temporary file for Replicate API
+        # Replicate accepts file paths, file-like objects, or URLs
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+            tmp_file.write(contents)
+            tmp_file_path = tmp_file.name
+        
+        # Initialize Replicate client
+        client = replicate.Client(api_token=replicate_api_token)
+        
+        # Run the Nano Banana Pro model for text removal
+        # Try passing the file path directly, or as a file object
+        logger.info(f"Running Nano Banana Pro model with image: {tmp_file_path}")
+        
+        # Try using file path directly - Replicate should handle file paths
+        # If that doesn't work, we can try uploading to get a URL first
+        with open(tmp_file_path, 'rb') as img_file:
+            output = client.run(
+                "google/nano-banana-pro",
+                input={
+                    "prompt": "A clean version of this image with all text, words, watermarks, captions, and labels removed. All visual elements, colors, objects, layout, and composition remain exactly the same. Only text is removed.",
+                    "image_input": [img_file],
+                    "aspect_ratio": "match_input_image",
+                    "output_format": "png",
+                    "resolution": "2K",
+                    "safety_filter_level": "block_only_high"
+                }
+            )
+        
+        logger.info(f"Nano Banana Pro output type: {type(output)}")
+        
+        # Handle output - could be FileOutput, URL string, or list
+        result_bytes = None
+        
+        if isinstance(output, str):
+            # If output is a URL string, download it
+            logger.info(f"Output is URL: {output}")
+            response = requests.get(output, timeout=120)
+            response.raise_for_status()
+            result_bytes = response.content
+        elif isinstance(output, (list, tuple)) and len(output) > 0:
+            # Handle list of outputs
+            file_output = output[0]
+            if isinstance(file_output, str):
+                # URL in list
+                response = requests.get(file_output, timeout=120)
+                response.raise_for_status()
+                result_bytes = response.content
+            elif hasattr(file_output, 'read'):
+                result_bytes = file_output.read()
+            else:
+                raise HTTPException(status_code=500, detail=f"Unexpected output format in list: {type(file_output)}")
+        elif hasattr(output, 'read'):
+            # Handle FileOutput object
+            logger.info("Output is FileOutput, reading bytes...")
+            result_bytes = output.read()
+        else:
+            logger.error(f"Unexpected output format: {type(output)}, value: {output}")
+            raise HTTPException(status_code=500, detail=f"Unexpected output format from Replicate: {type(output)}")
+        
+        if not result_bytes or len(result_bytes) == 0:
+            raise HTTPException(status_code=500, detail="No image content found in response")
+        
+        logger.info(f"Successfully got {len(result_bytes)} bytes from Nano Banana Pro")
+        return Response(content=result_bytes, media_type="image/png")
+    
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Error in Replicate Nano Banana Pro: {error_msg}", exc_info=True)
+        
+        # Provide more helpful error messages
+        if "No image content" in error_msg or "ModelError" in str(type(e)):
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Model did not return an image. This might mean: 1) The model doesn't support this use case, 2) The prompt needs adjustment, or 3) The image format isn't supported. Error: {error_msg}"
+            )
+        else:
+            raise HTTPException(status_code=500, detail=f"Error processing image with Replicate: {error_msg}")
+    
+    finally:
+        # Clean up temporary file
+        if tmp_file_path:
+            try:
+                os.unlink(tmp_file_path)
+            except Exception:
+                pass
+
+@app.post("/api/test-google-text-removal")
+async def test_google_text_removal(
+    request: Request,
+    file: UploadFile = File(...),
+    payment_session_id: Optional[str] = Form(None),
+):
+    """Test text removal using Google's Gemini image editing API. Requires payment verification."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # Verify payment session and prevent reuse
+    if not payment_session_id:
+        raise HTTPException(status_code=400, detail="Payment session ID is required")
+    
+    # Check if this payment session has already been used
+    if payment_session_id in _USED_PAYMENT_SESSIONS:
+        raise HTTPException(
+            status_code=403, 
+            detail="This payment session has already been used. Please make a new payment to process another image."
+        )
+    
+    # Verify payment is actually successful
+    try:
+        import dodopayments
+        dodo_api_key = os.getenv("DODO_PAYMENTS_API_KEY")
+        if dodo_api_key:
+            client = dodopayments.DodoPayments(
+                bearer_token=dodo_api_key.strip(),
+                environment="test_mode"
+            )
+            checkout_session = client.checkout_sessions.retrieve(payment_session_id)
+            payment_status = getattr(checkout_session, 'payment_status', None)
+            if not payment_status or payment_status.lower() not in ['succeeded', 'completed', 'paid']:
+                raise HTTPException(status_code=403, detail="Payment not verified or incomplete")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Could not verify payment status (proceeding anyway): {str(e)}")
+    
+    # Try both environment variable names for compatibility
+    google_api_key = os.getenv("GOOGLE_GENAI_API_KEY") or os.getenv("GEMINI_API_KEY")
+    if not google_api_key:
+        raise HTTPException(status_code=500, detail="GOOGLE_GENAI_API_KEY or GEMINI_API_KEY environment variable not set")
+    
+    tmp_file_path = None
+    try:
+        from google import genai
+        from PIL import Image
+        
+        # Read image file
+        contents = await file.read()
+        
+        # Create a temporary file for PIL to open
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+            tmp_file.write(contents)
+            tmp_file_path = tmp_file.name
+        
+        # Initialize Google GenAI client
+        # Pass API key explicitly as per documentation: https://ai.google.dev/gemini-api/docs/api-key
+        client = genai.Client(api_key=google_api_key)
+        
+        # Open image with PIL
+        image = Image.open(tmp_file_path)
+        
+        # Create prompt for text removal
+        prompt = (
+            "Edit this image to remove all text, words, watermarks, captions, and labels. "
+            "Keep all visual elements, colors, objects, layout, and composition exactly the same. "
+            "Only remove text elements."
+        )
+        
+        logger.info(f"Running Google Gemini image editing model for text removal")
+        
+        # Call Google Gemini API for image editing with retry logic for quota limits
+        # According to docs: pass both prompt and image to generate_content
+        import time
+        max_retries = 3
+        retry_delay = 5  # Start with 5 seconds
+        
+        response = None
+        for attempt in range(max_retries):
+            try:
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash-image",
+                    contents=[prompt, image],
+                )
+                break  # Success, exit retry loop
+            except Exception as e:
+                error_str = str(e)
+                # Check if it's a quota/rate limit error (429)
+                if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
+                    if attempt < max_retries - 1:
+                        # Extract retry delay from error if available, otherwise use exponential backoff
+                        wait_time = retry_delay * (2 ** attempt)
+                        logger.warning(f"Quota exceeded, retrying in {wait_time} seconds (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        # Last attempt failed, raise the error
+                        raise HTTPException(
+                            status_code=429,
+                            detail=f"Quota exceeded. Please wait and try again later, or upgrade your Google AI plan. Error: {error_str}"
+                        )
+                else:
+                    # Not a quota error, raise immediately
+                    raise
+        
+        # Extract image from response
+        # Based on Google GenAI library, response should have candidates[0].content.parts
+        result_bytes = None
+        
+        try:
+            # Try the standard structure: response.candidates[0].content.parts
+            if hasattr(response, 'candidates') and response.candidates:
+                parts = response.candidates[0].content.parts
+            # Fallback to direct parts access (as shown in some examples)
+            elif hasattr(response, 'parts'):
+                parts = response.parts
+            else:
+                # Log the actual structure for debugging
+                logger.error(f"Response type: {type(response)}, attributes: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+                raise HTTPException(status_code=500, detail="Unexpected response structure from Google Gemini API")
+            
+            for part in parts:
+                logger.info(f"Part type: {type(part)}, attributes: {[attr for attr in dir(part) if not attr.startswith('_')]}")
+                
+                if hasattr(part, 'text') and part.text:
+                    logger.info(f"Text response from model: {part.text}")
+                elif hasattr(part, 'inline_data') and part.inline_data:
+                    # Extract image data from inline_data
+                    inline_data = part.inline_data
+                    logger.info(f"inline_data type: {type(inline_data)}, attributes: {[attr for attr in dir(inline_data) if not attr.startswith('_')]}")
+                    
+                    # The inline_data should have mime_type and data attributes
+                    # Data is base64 encoded string
+                    if hasattr(inline_data, 'data'):
+                        data_value = inline_data.data
+                        logger.info(f"Data type: {type(data_value)}, length: {len(data_value) if isinstance(data_value, (str, bytes)) else 'N/A'}")
+                        
+                        # Check if it's already bytes or needs decoding
+                        if isinstance(data_value, bytes):
+                            result_bytes = data_value
+                        elif isinstance(data_value, str):
+                            # Decode base64 string
+                            image_bytes = base64.b64decode(data_value)
+                            result_bytes = image_bytes
+                        else:
+                            logger.error(f"Unexpected data type: {type(data_value)}")
+                            raise HTTPException(status_code=500, detail=f"Unexpected inline_data.data type: {type(data_value)}")
+                        
+                        logger.info(f"Successfully got {len(result_bytes)} bytes from Google Gemini")
+                        break  # Found image, exit loop
+                    elif hasattr(inline_data, 'bytes'):
+                        # Alternative: if data is already bytes
+                        result_bytes = inline_data.bytes
+                        logger.info(f"Successfully got {len(result_bytes)} bytes from Google Gemini")
+                        break  # Found image, exit loop
+                    else:
+                        logger.error(f"inline_data has no 'data' or 'bytes' attribute")
+                        logger.error(f"inline_data structure: {type(inline_data)}, attributes: {[attr for attr in dir(inline_data) if not attr.startswith('_')]}")
+                        raise HTTPException(status_code=500, detail="Could not extract image data from inline_data")
+                else:
+                    logger.warning(f"Part has no text or inline_data: {part}")
+        except AttributeError as e:
+            logger.error(f"Error accessing response structure: {e}")
+            logger.error(f"Response type: {type(response)}, attributes: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+            raise HTTPException(status_code=500, detail=f"Error parsing Google Gemini response: {str(e)}")
+        
+        if not result_bytes or len(result_bytes) == 0:
+            raise HTTPException(status_code=500, detail="No image content found in response from Google Gemini")
+        
+        # Log the first few bytes to verify it's actually image data
+        if len(result_bytes) < 1000:
+            logger.warning(f"Received very small response ({len(result_bytes)} bytes). First 100 bytes (hex): {result_bytes[:100].hex()}")
+            logger.warning(f"First 100 bytes (ascii): {result_bytes[:100]}")
+        
+        # Verify it's a valid image by checking magic bytes (PNG starts with 89 50 4E 47)
+        if result_bytes[:4] != b'\x89PNG' and result_bytes[:4] != b'\xff\xd8\xff':  # PNG or JPEG
+            logger.error(f"Response does not appear to be a valid image. First bytes: {result_bytes[:20]}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Response from Google Gemini does not appear to be image data. Received {len(result_bytes)} bytes."
+            )
+        
+        # Mark this payment session as used to prevent reuse (only after successful processing)
+        _USED_PAYMENT_SESSIONS.add(payment_session_id)
+        logger.info(f"Payment session {payment_session_id} marked as used")
+        
+        return Response(content=result_bytes, media_type="image/png")
+    
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Error in Google Gemini image editing: {error_msg}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error processing image with Google Gemini: {error_msg}")
+    
+    finally:
+        # Clean up temporary file
+        if tmp_file_path:
+            try:
+                os.unlink(tmp_file_path)
+            except Exception:
+                pass
 
 @app.post("/api/remove-text")
 async def remove_text(
