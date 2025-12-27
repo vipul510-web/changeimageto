@@ -118,7 +118,13 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
 
-        <button id="process-btn" type="submit" disabled>Enhance Image</button>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <button id="process-btn" type="submit" disabled>Enhance Image</button>
+          <button id="premium-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">
+            Premium Option ($0.5 only per image)
+          </button>
+        </div>
+        <div id="premium-status" class="status" style="display:none; margin-top: 16px;"></div>
       </form>
 
       <section class="preview" id="preview-section" hidden>
@@ -278,7 +284,311 @@ document.addEventListener("DOMContentLoaded", () => {
     </footer>
 
     <script src="./script.js?v=20251220-1" defer></script>
+    
+    <style>
+      #premium-status {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-top: 16px;
+        display: none;
+      }
+      #premium-status.status {
+        background: #f0f0f0;
+        color: #333;
+      }
+      #premium-status.status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      #premium-status.status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      #premium-status.status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      #premium-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    </style>
+    
     <script>
+      // Premium option functionality
+      (function() {
+        const premiumBtn = document.getElementById('premium-btn');
+        const fileInput = document.getElementById('file-input');
+        const dropzone = document.getElementById('dropzone');
+        const premiumStatusDiv = document.getElementById('premium-status');
+        const originalImg = document.getElementById('original-img');
+        const resultImg = document.getElementById('result-img');
+        const resultWrapper = document.getElementById('result-wrapper');
+        const processPrompt = document.getElementById('process-prompt');
+        const downloadLink = document.getElementById('download-link');
+        const previewSection = document.getElementById('preview-section');
+        
+        let currentFile = null;
+        let paymentSessionId = null;
+        let hasProcessed = false;
+        
+        // Determine API base URL (production vs local)
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+        
+        function showPremiumStatus(message, type = 'info') {
+          premiumStatusDiv.textContent = message;
+          premiumStatusDiv.className = `status ${type}`;
+          premiumStatusDiv.style.display = 'block';
+        }
+        
+        function hidePremiumStatus() {
+          premiumStatusDiv.style.display = 'none';
+        }
+        
+        // Enable premium button when file is selected (hook into existing file input handler)
+        // Use a MutationObserver or event delegation to detect when file is selected
+        // Since script.js already handles file input changes, we'll also listen for it
+        const checkFileAndEnablePremium = () => {
+          // Check if file input has a file
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            currentFile = fileInput.files[0];
+            if (premiumBtn) premiumBtn.disabled = false;
+            // Reset premium state when new file is uploaded
+            paymentSessionId = null;
+            hasProcessed = false;
+          }
+        };
+        
+        // Listen for file input changes
+        if (fileInput) {
+          fileInput.addEventListener('change', (e) => {
+            checkFileAndEnablePremium();
+          });
+        }
+        
+        // Also listen for delegated change events (script.js uses this)
+        document.addEventListener('change', (e) => {
+          if (e.target && e.target.id === 'file-input' && e.target.files && e.target.files[0]) {
+            checkFileAndEnablePremium();
+          }
+        });
+        
+        // Hook into dropzone drop event
+        if (dropzone) {
+          dropzone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+              currentFile = file;
+              if (premiumBtn) premiumBtn.disabled = false;
+              // Reset premium state when new file is uploaded
+              paymentSessionId = null;
+              hasProcessed = false;
+            }
+          });
+        }
+        
+        // Store file data before payment redirect
+        function storePendingFile(file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            sessionStorage.setItem('premiumEnhancePendingImageData', e.target.result);
+            sessionStorage.setItem('premiumEnhancePendingImageName', file.name);
+            sessionStorage.setItem('premiumEnhancePendingImageType', file.type);
+          };
+          reader.readAsDataURL(file);
+        }
+        
+        // Restore file after payment redirect
+        function restorePremiumPendingFile() {
+          const imageData = sessionStorage.getItem('premiumEnhancePendingImageData');
+          const imageName = sessionStorage.getItem('premiumEnhancePendingImageName');
+          const imageType = sessionStorage.getItem('premiumEnhancePendingImageType');
+          
+          if (imageData && imageName && imageType) {
+            fetch(imageData)
+              .then(res => res.blob())
+              .then(blob => {
+                const file = new File([blob], imageName, { type: imageType });
+                currentFile = file;
+                if (originalImg) originalImg.src = imageData;
+                if (previewSection) previewSection.hidden = false;
+                
+                // Auto-process after file restoration
+                if (paymentSessionId) {
+                  setTimeout(() => {
+                    processPremiumImage();
+                  }, 500);
+                }
+              })
+              .catch(err => {
+                console.error('Error restoring file:', err);
+                showPremiumStatus('Error restoring image. Please upload again.', 'error');
+              });
+          }
+        }
+        
+        // Handle premium button click - create payment
+        if (premiumBtn) {
+          premiumBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+            
+            // Track Premium button click in Google Analytics
+            window.dataLayer = window.dataLayer || [];
+            if (typeof gtag === 'function') {
+              gtag('event', 'premium_button_click', {
+                event_category: 'engagement',
+                event_label: 'premium_image_enhancement',
+                page_path: window.location.pathname,
+                page_title: document.title,
+                value: 1
+              });
+            } else {
+              // Fallback to dataLayer if gtag not available yet
+              window.dataLayer.push({
+                'event': 'premium_button_click',
+                'event_category': 'engagement',
+                'event_label': 'premium_image_enhancement',
+                'page_path': window.location.pathname,
+                'page_title': document.title,
+                'value': 1
+              });
+            }
+            
+            premiumBtn.disabled = true;
+            premiumBtn.textContent = 'Creating checkout...';
+            showPremiumStatus('Creating payment checkout...', 'info');
+            
+            // Store file before redirect
+            storePendingFile(currentFile);
+            
+            try {
+              const returnUrl = window.location.href.split('?')[0];
+              const checkoutResponse = await fetch(`${API_BASE}/api/create-payment-checkout`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  return_url: returnUrl
+                })
+              });
+              
+              if (!checkoutResponse.ok) {
+                const errorText = await checkoutResponse.text();
+                throw new Error(`HTTP ${checkoutResponse.status}: ${errorText}`);
+              }
+              
+              const checkoutData = await checkoutResponse.json();
+              paymentSessionId = checkoutData.session_id;
+              
+              // Redirect to checkout
+              window.location.href = checkoutData.checkout_url;
+              
+            } catch (error) {
+              console.error('Error:', error);
+              showPremiumStatus('Error: ' + error.message, 'error');
+              premiumBtn.disabled = false;
+              premiumBtn.textContent = 'Premium Option ($0.5 only per image)';
+            }
+          });
+        }
+        
+        // Process image with Google Gemini after payment
+        async function processPremiumImage() {
+          if (!currentFile || !paymentSessionId) {
+            showPremiumStatus('Please complete payment first', 'error');
+            return;
+          }
+          
+          if (hasProcessed) {
+            showPremiumStatus('This payment has already been used. Please pay again to process another image.', 'error');
+            return;
+          }
+          
+          if (premiumBtn) {
+            premiumBtn.disabled = true;
+            premiumBtn.textContent = 'Processing...';
+          }
+          showPremiumStatus('Processing with Premium AI...', 'info');
+          
+          try {
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            formData.append('payment_session_id', paymentSessionId);
+            
+            const response = await fetch(`${API_BASE}/api/test-google-enhance-payment`, {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            
+            // Show result
+            if (resultImg) resultImg.src = url;
+            if (processPrompt) processPrompt.style.display = 'none';
+            if (resultWrapper) resultWrapper.hidden = false;
+            if (previewSection) previewSection.hidden = false;
+            
+            // Remove checkerboard padding/background for premium result
+            const checkerboard = resultWrapper ? resultWrapper.querySelector('.checkerboard') : null;
+            if (checkerboard) {
+              checkerboard.style.padding = '0';
+              checkerboard.style.background = 'none';
+              checkerboard.style.minHeight = 'auto';
+              checkerboard.style.display = 'block';
+            }
+            
+            if (downloadLink) {
+              downloadLink.href = url;
+              downloadLink.download = `premium-enhanced-${Date.now()}.png`;
+            }
+            
+            showPremiumStatus('Premium image enhancement successful!', 'success');
+            hasProcessed = true;
+            if (premiumBtn) {
+              premiumBtn.disabled = true;
+              premiumBtn.textContent = 'Processing Complete';
+            }
+            
+          } catch (error) {
+            console.error('Error:', error);
+            showPremiumStatus('Error: ' + error.message, 'error');
+            
+            // Reset state if payment session error
+            if (error.message.includes('already been used') || error.message.includes('403')) {
+              paymentSessionId = null;
+              hasProcessed = false;
+              if (premiumBtn) {
+                premiumBtn.disabled = false;
+                premiumBtn.textContent = 'Premium Option ($0.5 only per image)';
+              }
+            }
+          }
+        }
+        
+        // Check for payment success on page load (returning from checkout)
+        window.addEventListener('load', () => {
+          const urlParams = new URLSearchParams(window.location.search);
+          const paymentStatus = urlParams.get('status');
+          const sessionId = urlParams.get('session_id');
+          
+          if (paymentStatus === 'succeeded' && sessionId) {
+            paymentSessionId = sessionId;
+            restorePremiumPendingFile();
+          }
+        });
+      })();
+      
       // Sync sliders with number inputs for advanced controls
       document.addEventListener('DOMContentLoaded', function() {
         function syncControls() {
