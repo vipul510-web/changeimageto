@@ -4504,6 +4504,381 @@ async def test_google_text_removal(
             except Exception:
                 pass
 
+@app.post("/api/remove-gemini-watermark")
+async def remove_gemini_watermark(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Remove Gemini watermark from images using LaMa inpainting. Targets bottom-right corner area."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    log_user_action("gemini_watermark_removal_request", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "filename": file.filename,
+    })
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        img_array = np.array(image)
+        
+        # Convert RGB to BGR for OpenCV
+        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        h, w = img_bgr.shape[:2]
+        
+        # Create mask for bottom-right corner where Gemini watermark typically appears
+        # Gemini watermarks are usually small, so we'll mask a region in the bottom-right
+        # Typically around 5-10% of image width/height
+        mask_width = max(60, int(w * 0.15))  # At least 60px or 15% of width
+        mask_height = max(40, int(h * 0.12))  # At least 40px or 12% of height
+        
+        # Create binary mask (white = area to inpaint, black = keep)
+        watermark_mask = np.zeros((h, w), dtype=np.uint8)
+        
+        # Fill bottom-right corner region
+        watermark_mask[h - mask_height:, w - mask_width:] = 255
+        
+        # Optionally expand the mask slightly to ensure we get the entire watermark
+        # Apply small dilation to capture watermark edges
+        kernel = np.ones((3, 3), np.uint8)
+        watermark_mask = cv2.dilate(watermark_mask, kernel, iterations=1)
+        
+        logger.info(f"Created watermark mask: {mask_width}x{mask_height} region at bottom-right corner")
+        
+        # Try LaMa first (best quality) if available
+        if _get_lama_manager() is not None:
+            inpainted = lama_inpaint_torch(img_bgr, watermark_mask)
+            logger.info("Used LaMa (PyTorch) for watermark removal")
+        elif _get_lama_session() is not None:
+            inpainted = lama_inpaint_onnx(img_bgr, watermark_mask)
+            logger.info("Used LaMa ONNX for watermark removal")
+        else:
+            # Fallback to OpenCV inpainting
+            max_side = max(h, w)
+            dynamic_radius = int(max(5, min(15, max_side / 200)))
+            
+            # Use Telea algorithm first
+            inpainted_telea = cv2.inpaint(img_bgr, watermark_mask, dynamic_radius, cv2.INPAINT_TELEA)
+            # Then NS for better structure
+            inpainted_ns = cv2.inpaint(img_bgr, watermark_mask, dynamic_radius, cv2.INPAINT_NS)
+            # Blend the two results
+            inpainted = cv2.addWeighted(inpainted_telea, 0.4, inpainted_ns, 0.6, 0)
+            
+            # Apply soft blending to reduce artifacts
+            soft_mask = watermark_mask.astype(np.float32) / 255.0
+            soft_mask = cv2.GaussianBlur(soft_mask, (0, 0), sigmaX=3, sigmaY=3)
+            soft_mask_3 = np.repeat(soft_mask[:, :, None], 3, axis=2)
+            inpainted = (soft_mask_3 * inpainted.astype(np.float32) + 
+                        (1.0 - soft_mask_3) * img_bgr.astype(np.float32)).astype(np.uint8)
+            
+            logger.info(f"Used OpenCV inpainting for watermark removal (radius={dynamic_radius})")
+        
+        # Convert back to RGB PIL Image
+        result_rgb = cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB)
+        result_image = Image.fromarray(result_rgb)
+        
+        # Save to bytes
+        buf = io.BytesIO()
+        result_image.save(buf, format="PNG")
+        
+        log_user_action("gemini_watermark_removal_success", {
+            "original_size": f"{w}x{h}",
+            "mask_size": f"{mask_width}x{mask_height}"
+        })
+        
+        return Response(content=buf.getvalue(), media_type="image/png")
+    
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Error removing Gemini watermark: {error_msg}", exc_info=True)
+        log_user_action("gemini_watermark_removal_error", {"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"Error removing watermark: {error_msg}")
+
+@app.post("/api/test-remove-gemini-watermark")
+async def test_remove_gemini_watermark(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Test endpoint: Remove Gemini watermark from images using LaMa inpainting. Targets bottom-right corner area."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        img_array = np.array(image)
+        
+        # Convert RGB to BGR for OpenCV
+        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        h, w = img_bgr.shape[:2]
+        
+        # Create mask for bottom-right corner where Gemini watermark typically appears
+        # Gemini watermarks are usually small, so we'll mask a region in the bottom-right
+        # Typically around 5-10% of image width/height
+        mask_width = max(60, int(w * 0.15))  # At least 60px or 15% of width
+        mask_height = max(40, int(h * 0.12))  # At least 40px or 12% of height
+        
+        # Create binary mask (white = area to inpaint, black = keep)
+        watermark_mask = np.zeros((h, w), dtype=np.uint8)
+        
+        # Fill bottom-right corner region
+        watermark_mask[h - mask_height:, w - mask_width:] = 255
+        
+        # Optionally expand the mask slightly to ensure we get the entire watermark
+        # Apply small dilation to capture watermark edges
+        kernel = np.ones((3, 3), np.uint8)
+        watermark_mask = cv2.dilate(watermark_mask, kernel, iterations=1)
+        
+        logger.info(f"Created watermark mask: {mask_width}x{mask_height} region at bottom-right corner")
+        
+        # Try LaMa first (best quality) if available
+        if _get_lama_manager() is not None:
+            inpainted = lama_inpaint_torch(img_bgr, watermark_mask)
+            logger.info("Used LaMa (PyTorch) for watermark removal")
+        elif _get_lama_session() is not None:
+            inpainted = lama_inpaint_onnx(img_bgr, watermark_mask)
+            logger.info("Used LaMa ONNX for watermark removal")
+        else:
+            # Fallback to OpenCV inpainting
+            max_side = max(h, w)
+            dynamic_radius = int(max(5, min(15, max_side / 200)))
+            
+            # Use Telea algorithm first
+            inpainted_telea = cv2.inpaint(img_bgr, watermark_mask, dynamic_radius, cv2.INPAINT_TELEA)
+            # Then NS for better structure
+            inpainted_ns = cv2.inpaint(img_bgr, watermark_mask, dynamic_radius, cv2.INPAINT_NS)
+            # Blend the two results
+            inpainted = cv2.addWeighted(inpainted_telea, 0.4, inpainted_ns, 0.6, 0)
+            
+            # Apply soft blending to reduce artifacts
+            soft_mask = watermark_mask.astype(np.float32) / 255.0
+            soft_mask = cv2.GaussianBlur(soft_mask, (0, 0), sigmaX=3, sigmaY=3)
+            soft_mask_3 = np.repeat(soft_mask[:, :, None], 3, axis=2)
+            inpainted = (soft_mask_3 * inpainted.astype(np.float32) + 
+                        (1.0 - soft_mask_3) * img_bgr.astype(np.float32)).astype(np.uint8)
+            
+            logger.info(f"Used OpenCV inpainting for watermark removal (radius={dynamic_radius})")
+        
+        # Convert back to RGB PIL Image
+        result_rgb = cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB)
+        result_image = Image.fromarray(result_rgb)
+        
+        # Save to bytes
+        buf = io.BytesIO()
+        result_image.save(buf, format="PNG")
+        return Response(content=buf.getvalue(), media_type="image/png")
+    
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Error removing Gemini watermark: {error_msg}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error removing watermark: {error_msg}")
+
+@app.post("/api/test-google-professional-headshot")
+async def test_google_professional_headshot(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Test professional headshot creation using Google's Gemini gemini-3-pro-image-preview model."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # Try both environment variable names for compatibility
+    google_api_key = os.getenv("GOOGLE_GENAI_API_KEY") or os.getenv("GEMINI_API_KEY")
+    if not google_api_key:
+        raise HTTPException(status_code=500, detail="GOOGLE_GENAI_API_KEY or GEMINI_API_KEY environment variable not set")
+    
+    # Read image file contents
+    image_contents = await file.read()
+    
+    tmp_file_path = None
+    try:
+        from google import genai
+        from PIL import Image
+        import importlib.metadata
+        import base64
+        try:
+            genai_version = importlib.metadata.version("google-genai")
+            logger.info(f"google-genai SDK version: {genai_version}")
+        except Exception:
+            logger.warning("Could not determine google-genai version")
+        
+        # Create a temporary file for PIL to open
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+            tmp_file.write(image_contents)
+            tmp_file_path = tmp_file.name
+        
+        # Initialize Google GenAI client
+        client = genai.Client(api_key=google_api_key)
+        
+        # Open image with PIL
+        image = Image.open(tmp_file_path)
+        
+        # Create prompt for professional headshot - maintain the person's identity
+        prompt = (
+            "Edit this image to create a professional corporate headshot.\n\n"
+            "IDENTITY LOCK: Directly copy and maintain the 100% exact facial structure, identity, and key features (eyes, nose, mouth, and skin texture) of the person in the reference image. DO NOT interpret, reimagine, or beautify the face.\n\n"
+            "STYLING:\n"
+            "- CLOTHING: Replace the person's current outfit with a premium, tailored navy blue business suit, a crisp white dress shirt, and a subtle silk tie. Ensure the suit texture is sharp and detailed.\n"
+            "- BACKGROUND: Replace the background with a neutral, out-of-focus (#141414) professional studio backdrop. Remove all background distractions.\n"
+            "- LIGHTING: Apply soft, diffused 'Rembrandt' studio lighting with a subtle catchlight in the eyes.\n\n"
+            "COMPOSITION: Chest-up framing with centered alignment and shallow depth of field (85mm lens effect).\n"
+            "OUTPUT: Hyper-realistic 4K resolution, preserving natural skin pores and hair strands without AI-smoothing."
+        )
+        
+        logger.info(f"Running Google Gemini image editing model (gemini-3-pro-image-preview) for professional headshot")
+        
+        # Call Google Gemini API for image editing with retry logic for quota limits
+        import time
+        max_retries = 3
+        retry_delay = 5  # Start with 5 seconds
+        
+        response = None
+        for attempt in range(max_retries):
+            try:
+                # Configure with response_modalities and safety settings
+                config = {
+                    "response_modalities": ["TEXT", "IMAGE"],
+                    "safety_settings": [
+                        {
+                            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HARASSMENT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HATE_SPEECH",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                    ]
+                }
+                
+                response = client.models.generate_content(
+                    model="gemini-3-pro-image-preview",
+                    contents=[prompt, image],
+                    config=config
+                )
+                
+                logger.info(f"Response received. Type: {type(response)}")
+                if hasattr(response, 'candidates') and response.candidates:
+                    logger.info(f"Response has {len(response.candidates)} candidates")
+                
+                break  # Success, exit retry loop
+            except Exception as e:
+                error_str = str(e)
+                # Check if it's a quota/rate limit error (429)
+                if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * (2 ** attempt)
+                        logger.warning(f"Quota exceeded, retrying in {wait_time} seconds (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise HTTPException(
+                            status_code=429,
+                            detail=f"Quota exceeded. Please wait and try again later, or upgrade your Google AI plan. Error: {error_str}"
+                        )
+                else:
+                    raise
+        
+        # Extract image from response
+        result_bytes = None
+        
+        try:
+            if not response:
+                raise HTTPException(status_code=500, detail="No response received from Google Gemini API")
+            
+            if not hasattr(response, 'candidates') or not response.candidates:
+                logger.error(f"Response has no candidates. Response type: {type(response)}")
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Google Gemini API returned no candidates."
+                )
+            
+            candidate = response.candidates[0]
+            
+            if not hasattr(candidate, 'content') or not candidate.content:
+                finish_reason = getattr(candidate, 'finish_reason', None)
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Google Gemini API candidate has no content. Finish reason: {finish_reason}"
+                )
+            
+            parts = getattr(candidate.content, 'parts', None)
+            if not parts:
+                parts = getattr(response, 'parts', None)
+            
+            if not parts or (isinstance(parts, list) and len(parts) == 0):
+                finish_reason = getattr(candidate, 'finish_reason', None)
+                raise HTTPException(status_code=500, detail=f"Response contained no parts. Finish reason: {finish_reason}")
+            
+            # Iterate over parts to find image data
+            for part in parts:
+                if hasattr(part, 'inline_data') and part.inline_data:
+                    inline_data = part.inline_data
+                    
+                    if hasattr(inline_data, 'data'):
+                        data_value = inline_data.data
+                        if isinstance(data_value, bytes):
+                            result_bytes = data_value
+                        elif isinstance(data_value, str):
+                            result_bytes = base64.b64decode(data_value)
+                        else:
+                            raise HTTPException(status_code=500, detail=f"Unexpected inline_data.data type: {type(data_value)}")
+                        break
+                    elif hasattr(inline_data, 'bytes'):
+                        result_bytes = inline_data.bytes
+                        break
+            
+            if not result_bytes:
+                raise HTTPException(status_code=500, detail="No image content found in response from Google Gemini")
+        
+        except AttributeError as e:
+            logger.error(f"Error accessing response structure: {e}")
+            raise HTTPException(status_code=500, detail=f"Error parsing Google Gemini response: {str(e)}")
+        
+        # Verify it's a valid image by checking magic bytes
+        is_png = result_bytes[:4] == b'\x89PNG'
+        is_jpeg = result_bytes[:2] == b'\xff\xd8'
+        
+        if not is_png and not is_jpeg:
+            logger.error(f"Response does not appear to be a valid image. First bytes: {result_bytes[:20]}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Response from Google Gemini does not appear to be image data. Received {len(result_bytes)} bytes."
+            )
+        
+        # Determine media type based on image format
+        media_type = "image/png" if is_png else "image/jpeg"
+        logger.info(f"Successfully validated {media_type} image ({len(result_bytes)} bytes)")
+        
+        return Response(content=result_bytes, media_type=media_type)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Error in Google Gemini professional headshot: {error_msg}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error processing image with Google Gemini: {error_msg}")
+    
+    finally:
+        # Clean up temporary file
+        if tmp_file_path:
+            try:
+                os.unlink(tmp_file_path)
+            except Exception:
+                pass
+
 @app.post("/api/test-google-enhance")
 async def test_google_enhance(
     request: Request,

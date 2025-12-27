@@ -84,6 +84,7 @@ function setupDownloadTracking() {
                         pageType === 'blur_background' ? 'blur_background' :
                         pageType === 'enhance_image' ? 'enhance' :
                         pageType === 'remove_text' ? 'remove_text' :
+                        pageType === 'remove_gemini_watermark' ? 'remove_gemini_watermark' :
                         'remove_background';
       
       // Track in Google Analytics
@@ -187,10 +188,11 @@ function getPageType() {
     if (path === '/upscale-image.html') return 'upscale_image';
     if (path === '/blur-background.html') return 'blur_background';
     if (path === '/enhance-image.html') return 'enhance_image';
-    if (path === '/remove-text-from-image.html') return 'remove_text';
-    if (path === '/remove-people-from-photo.html') return 'remove_people';
-    
-    return 'unknown';
+  if (path === '/remove-text-from-image.html') return 'remove_text';
+  if (path === '/remove-people-from-photo.html') return 'remove_people';
+  if (path === '/remove-gemini-watermark.html') return 'remove_gemini_watermark';
+  
+  return 'unknown';
 }
 
 function updateCtaText(){
@@ -508,6 +510,9 @@ if (form) form.addEventListener('submit', async (e) => {
   } else if (pageType === 'remove_people') {
     actionType = 'remove_people';
     actionLabel = 'remove_people';
+  } else if (pageType === 'remove_gemini_watermark') {
+    actionType = 'remove_gemini_watermark';
+    actionLabel = 'remove_gemini_watermark';
   } else if (targetColor) {
     actionType = 'change_background';
     actionLabel = 'change_background';
@@ -637,6 +642,8 @@ if (form) form.addEventListener('submit', async (e) => {
       body.append('denoise_strength', document.getElementById('denoise-strength')?.value || '1.0');
     } else if (window.location.pathname === '/remove-text-from-image.html') {
       endpoint = '/api/remove-text';
+    } else if (window.location.pathname === '/remove-gemini-watermark.html') {
+      endpoint = '/api/remove-gemini-watermark';
     
     } else {
       // Background removal or background change
@@ -1275,10 +1282,11 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
     if (path === '/upscale-image.html') return 'upscale';
     if (path === '/blur-background.html') return 'blur_background';
     if (path === '/enhance-image.html') return 'enhance';
-    if (path === '/remove-text-from-image.html') return 'remove_text';
-    if (path === '/remove-people-from-photo.html') return 'remove_people';
-    if (path === '/convert-image-format.html') return 'convert_format';
-    return 'unknown';
+  if (path === '/remove-text-from-image.html') return 'remove_text';
+  if (path === '/remove-people-from-photo.html') return 'remove_people';
+  if (path === '/remove-gemini-watermark.html') return 'remove_gemini_watermark';
+  if (path === '/convert-image-format.html') return 'convert_format';
+  return 'unknown';
   }
   
   function submitFeedback() {
