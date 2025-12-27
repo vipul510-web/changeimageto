@@ -118,11 +118,17 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
 
-        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-          <button id="process-btn" type="submit" disabled>Enhance Image</button>
-          <button id="premium-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">
-            Premium Option ($0.5 only per image)
-          </button>
+        <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <button id="process-btn" type="submit" disabled>Enhance Image for Free</button>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quality is not guaranteed</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <button id="premium-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">
+              Premium Option ($0.5 only per image)
+            </button>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Best quality expected</div>
+          </div>
         </div>
         <div id="premium-status" class="status" style="display:none; margin-top: 16px;"></div>
       </form>
@@ -153,19 +159,28 @@ document.addEventListener("DOMContentLoaded", () => {
         <h2>How to enhance image quality</h2>
         <ol>
           <li>Upload your photo above.</li>
-          <li>Choose an <strong>Enhancement Preset</strong>: Soft, Balanced, or Strong.</li>
-          <li>Click <strong>Enhance Image</strong>. We sharpen details and adjust contrast/brightness.</li>
+          <li>Choose an <strong>Enhancement Preset</strong> (Soft, Balanced, or Strong) for the free option, or use <strong>Premium</strong> for AI-powered enhancement.</li>
+          <li>Click <strong>Enhance Image for Free</strong> for basic quality improvements, or <strong>Premium Option</strong> for best quality results using Google Gemini AI.</li>
+          <li>We automatically sharpen details, reduce noise, fix blur, enhance colors and contrast.</li>
           <li>Download your improved image as PNG.</li>
         </ol>
 
+        <h3>Free vs Premium Enhancement</h3>
+        <ul>
+          <li><strong>Free Enhancement:</strong> Uses traditional image processing techniques (sharpening, contrast, brightness adjustments). Good for quick improvements. Quality may vary.</li>
+          <li><strong>Premium Enhancement ($0.5 per image):</strong> Powered by Google Gemini AI, intelligently improves clarity, reduces noise, fixes artifacts, and enhances overall image quality while maintaining natural appearance. Best quality guaranteed.</li>
+        </ul>
+
         <h3>When to enhance an image</h3>
         <ul>
-          <li><strong>Low-light photos:</strong> Recover clarity with subtle sharpening and contrast.</li>
-          <li><strong>Social posts:</strong> Make images pop with clean detail.</li>
-          <li><strong>Product photos:</strong> Improve perceived quality without reshooting. <a href="/enhance-image-for-ecommerce.html">Learn more about enhancing images for ecommerce</a>.</li>
+          <li><strong>Low-light photos:</strong> Recover clarity and reduce noise with AI-powered enhancement. Premium option recommended for best results.</li>
+          <li><strong>Social posts:</strong> Make images pop with clean detail. Both free and premium options work well.</li>
+          <li><strong>Product photos:</strong> Improve perceived quality without reshooting. <a href="/enhance-image-for-ecommerce.html">Learn more about enhancing images for ecommerce</a>. Premium option recommended for professional results.</li>
+          <li><strong>Old or damaged photos:</strong> Restore faded colors and fix artifacts. Premium AI enhancement excels at restoring historical or damaged images.</li>
+          <li><strong>Blurry images:</strong> Sharpen details and fix blur. Premium option uses advanced AI algorithms for superior de-blurring.</li>
         </ul>
        
-        <p>Tip: Use <strong>Balanced</strong> for most images. Pick <strong>Soft</strong> for faces; <strong>Strong</strong> for text or graphics.</p>
+        <p>Tip: Use <strong>Balanced</strong> preset for most free enhancements. Pick <strong>Soft</strong> for faces; <strong>Strong</strong> for text or graphics. For best quality results on important images, choose the <strong>Premium Option</strong> powered by Google Gemini AI.</p>
       </section>
     </main>
 
