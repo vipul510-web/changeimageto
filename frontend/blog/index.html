@@ -8,15 +8,23 @@
 <link rel='stylesheet' href='/styles.css?v=20250916-3'/>
 <link rel='stylesheet' href='https://www.changeimageto.com/styles.css?v=20250916-3'/>
 <style>
-  .blog-wrap{max-width:1000px;margin:0 auto;padding:24px}
+  .blog-wrap{max-width:1200px;margin:0 auto;padding:24px}
   .blog-title{margin:0 0 12px}
-  .blog-sub{color:var(--muted);margin:0 0 16px}
-  .blog-list{list-style:none;padding:0;margin:0}
-  .blog-list li{padding:10px 0;border-bottom:1px solid var(--border)}
-  .blog-list li:last-child{border-bottom:none}
-  .blog-list a{color:#fff;text-decoration:none;font-weight:700}
-  .blog-list a:hover{text-decoration:underline}
-  .blog-list .date{color:var(--muted);font-weight:400}
+  .blog-sub{color:var(--muted);margin:0 0 32px;font-size:18px}
+  .blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;margin-top:32px}
+  .blog-card{background:var(--card,#12171d);border:1px solid var(--border,#1e2630);border-radius:12px;padding:24px;transition:transform 0.2s,box-shadow 0.2s}
+  .blog-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+  .blog-card-content{display:flex;flex-direction:column;gap:12px}
+  .blog-card-title{margin:0;font-size:20px;line-height:1.4}
+  .blog-card-title a{color:#fff;text-decoration:none;font-weight:600}
+  .blog-card-title a:hover{color:var(--accent,#6aa7ff);text-decoration:underline}
+  .blog-card-snippet{color:var(--muted,#9aa7b2);margin:0;line-height:1.6;font-size:15px;flex:1}
+  .blog-card-meta{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid var(--border,#1e2630)}
+  .blog-card-meta time{color:var(--muted,#9aa7b2);font-size:14px}
+  @media(max-width:768px){
+    .blog-grid{grid-template-columns:1fr;gap:16px}
+    .blog-card{padding:20px}
+  }
 </style>
 
 <!-- Google AI Overview tracking -->
@@ -64,9 +72,289 @@ document.addEventListener("DOMContentLoaded", () => {
   </header>
   <main class='blog-wrap'>
     <p class='blog-sub'>Guides for removing backgrounds, changing colors, upscaling, blurring, and enhancing images.</p>
-    <ul class='blog-list'><li><a href='/blog/how-to-blur-image-in-capcut.html'>How to Blur Image in CapCut</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-blur-image-in-photoshop.html'>How to Blur Image in Photoshop</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-blur-image-in-canva.html'>How to Blur Image in Canva</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-blur-image-in-powerpoint.html'>How to Blur Image in PowerPoint</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-blur-image-in-ppt.html'>How to Blur Image in PPT</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-blur-image-in-paint.html'>How to Blur Image in Paint</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-blur-image-in-figma.html'>How to Blur Image in Figma</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-blur-images-on-iphone.html'>How to Blur Images on iPhone</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-blur-images-in-google-slides.html'>How to Blur Images in Google Slides</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-an-image-in-canva.html'>How to Resize an Image in Canva</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-an-image-in-gimp.html'>How to Resize an Image in GIMP</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-an-image-in-html.html'>How to Resize an Image in HTML</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-an-image-in-photoshop.html'>How to Resize an Image in Photoshop</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-an-image-in-paint.html'>How to Resize an Image in Paint</a> <span class='date'>— 2025-12-19</span></li><li><a href='/blog/how-to-resize-images-without-losing-quality.html'>How to Resize Images Without Losing Quality</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/free-tools-make-photo-background-transparent.html'>Free Tools to Make Photo Background Transparent</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/best-online-background-removers-free-no-signup.html'>Best Online Background Removers (Free & No Signup)</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/free-tool-resize-multiple-images-shopify-stores.html'>Free Tool to Resize Multiple Images for Shopify Stores</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/change-photo-background-white-amazon-listings.html'>How to Change Photo Background to White for Amazon Listings</a> <span class='date'>— 2025-01-17</span></li><li><a href='/blog/upscale-image.html'>Upscale Image</a> <span class='date'>— 2025-09-23</span></li><li><a href='/blog/remove-background-from-image.html'>Remove Background From Image</a> <span class='date'>— 2025-09-23</span></li><li><a href='/blog/remove-background-from-image-google-slides.html'>Remove Background From Image Google Slides</a> <span class='date'>— 2025-09-23</span></li><li><a href='/blog/remove-background-from-image-canva.html'>Remove Background From Image Canva</a> <span class='date'>— 2025-09-23</span></li><li><a href='/blog/remove-background-from-image-iphone.html'>Remove Background From Image Iphone</a> <span class='date'>— 2025-09-22</span></li><li><a href='/blog/remove-background-from-image-photoshop.html'>Remove Background From Image Photoshop</a> <span class='date'>— 2025-09-22</span></li><li><a href='/blog/change-image-background-color-to-white.html'>Change Image Background Color To White</a> <span class='date'>— 2025-09-22</span></li><li><a href='/blog/change-image-background-color-photoshop.html'>Change Image Background Color Photoshop</a> <span class='date'>— 2025-09-22</span></li><li><a href='/blog/change-image-background-color-online.html'>Change Image Background Color Online</a> <span class='date'>— 2025-09-21</span></li><li><a href='/blog/change-image-background-color-powerpoint.html'>Change Image Background Color Powerpoint</a> <span class='date'>— 2025-09-21</span></li><li><a href='/blog/change-image-background-color.html'>Change Image Background Color</a> <span class='date'>— 2025-09-21</span></li><li><a href='/blog/remove-background-from-image-android.html'>How to Remove Background From Image on Android</a> <span class='date'>— 2025-09-20</span></li></ul>
+    <div class='blog-grid'>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-blur-image-in-capcut.html">How to Blur Image in CapCut</a></h2>
+          <p class="blog-card-snippet">Learn how to blur image in capcut. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-blur-image-in-photoshop.html">How to Blur Image in Photoshop</a></h2>
+          <p class="blog-card-snippet">Learn how to blur image in photoshop. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-blur-image-in-canva.html">How to Blur Image in Canva</a></h2>
+          <p class="blog-card-snippet">Learn how to blur image in canva. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-blur-image-in-powerpoint.html">How to Blur Image in PowerPoint</a></h2>
+          <p class="blog-card-snippet">Learn how to blur image in powerpoint. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-blur-image-in-ppt.html">How to Blur Image in PPT</a></h2>
+          <p class="blog-card-snippet">Learn how to blur image in ppt. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-blur-image-in-paint.html">How to Blur Image in Paint</a></h2>
+          <p class="blog-card-snippet">Learn how to blur image in paint. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-blur-image-in-figma.html">How to Blur Image in Figma</a></h2>
+          <p class="blog-card-snippet">Learn how to blur image in figma. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-blur-images-on-iphone.html">How to Blur Images on iPhone</a></h2>
+          <p class="blog-card-snippet">Learn how to blur images on iphone. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-blur-images-in-google-slides.html">How to Blur Images in Google Slides</a></h2>
+          <p class="blog-card-snippet">Learn how to blur images in google slides. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-resize-an-image-in-canva.html">How to Resize an Image in Canva</a></h2>
+          <p class="blog-card-snippet">Learn how to resize an image in canva. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-resize-an-image-in-gimp.html">How to Resize an Image in GIMP</a></h2>
+          <p class="blog-card-snippet">Learn how to resize an image in gimp. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-resize-an-image-in-html.html">How to Resize an Image in HTML</a></h2>
+          <p class="blog-card-snippet">Learn how to resize an image in html. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-resize-an-image-in-photoshop.html">How to Resize an Image in Photoshop</a></h2>
+          <p class="blog-card-snippet">Learn how to resize an image in photoshop. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-resize-an-image-in-paint.html">How to Resize an Image in Paint</a></h2>
+          <p class="blog-card-snippet">Learn how to resize an image in paint. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-12-19">2025-12-19</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/how-to-resize-images-without-losing-quality.html">How to Resize Images Without Losing Quality</a></h2>
+          <p class="blog-card-snippet">Learn how to resize images without losing quality. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-01-17">2025-01-17</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/free-tools-make-photo-background-transparent.html">Free Tools to Make Photo Background Transparent</a></h2>
+          <p class="blog-card-snippet">Learn how to free tools to make photo background transparent. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-01-17">2025-01-17</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/best-online-background-removers-free-no-signup.html">Best Online Background Removers (Free & No Signup)</a></h2>
+          <p class="blog-card-snippet">Learn how to best online background removers (free & no signup). Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-01-17">2025-01-17</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/free-tool-resize-multiple-images-shopify-stores.html">Free Tool to Resize Multiple Images for Shopify Stores</a></h2>
+          <p class="blog-card-snippet">Learn how to free tool to resize multiple images for shopify stores. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-01-17">2025-01-17</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/change-photo-background-white-amazon-listings.html">How to Change Photo Background to White for Amazon Listings</a></h2>
+          <p class="blog-card-snippet">Learn how to change photo background to white for amazon listings. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-01-17">2025-01-17</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/upscale-image.html">Upscale Image</a></h2>
+          <p class="blog-card-snippet">Learn how to upscale image. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-23">2025-09-23</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/remove-background-from-image.html">Remove Background From Image</a></h2>
+          <p class="blog-card-snippet">Learn how to remove background from image. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-23">2025-09-23</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/remove-background-from-image-google-slides.html">Remove Background From Image Google Slides</a></h2>
+          <p class="blog-card-snippet">Learn how to remove background from image google slides. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-23">2025-09-23</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/remove-background-from-image-canva.html">Remove Background From Image Canva</a></h2>
+          <p class="blog-card-snippet">Learn how to remove background from image canva. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-23">2025-09-23</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/remove-background-from-image-iphone.html">Remove Background From Image Iphone</a></h2>
+          <p class="blog-card-snippet">Learn how to remove background from image iphone. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-22">2025-09-22</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/remove-background-from-image-photoshop.html">Remove Background From Image Photoshop</a></h2>
+          <p class="blog-card-snippet">Learn how to remove background from image photoshop. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-22">2025-09-22</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/change-image-background-color-to-white.html">Change Image Background Color To White</a></h2>
+          <p class="blog-card-snippet">Learn how to change image background color to white. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-22">2025-09-22</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/change-image-background-color-photoshop.html">Change Image Background Color Photoshop</a></h2>
+          <p class="blog-card-snippet">Learn how to change image background color photoshop. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-22">2025-09-22</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/change-image-background-color-online.html">Change Image Background Color Online</a></h2>
+          <p class="blog-card-snippet">Learn how to change image background color online. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-21">2025-09-21</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/change-image-background-color-powerpoint.html">Change Image Background Color Powerpoint</a></h2>
+          <p class="blog-card-snippet">Learn how to change image background color powerpoint. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-21">2025-09-21</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/change-image-background-color.html">Change Image Background Color</a></h2>
+          <p class="blog-card-snippet">Learn how to change image background color. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-21">2025-09-21</time>
+          </div>
+        </div>
+      </article>
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/remove-background-from-image-android.html">How to Remove Background From Image on Android</a></h2>
+          <p class="blog-card-snippet">Learn how to remove background from image on android. Step-by-step guide with practical tips and examples.</p>
+          <div class="blog-card-meta">
+            <time datetime="2025-09-20">2025-09-20</time>
+          </div>
+        </div>
+      </article>
+    </div>
   </main>
-  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/blur-background.html'>Blur Background</a><a href='/enhance-image.html'>Enhance Image</a></nav>
+  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/blur-background.html'>Blur Background</a><a href='/grayscale-background.html'>Black & White Image Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/enhance-image.html'>Enhance Image</a></nav>
       <footer class="comprehensive-footer">
       <div class="container">
         <div class="footer-grid">
