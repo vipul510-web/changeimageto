@@ -5146,6 +5146,250 @@ async def test_google_edit_text(
             except Exception:
                 pass
 
+@app.post("/api/edit-text-in-image")
+async def edit_text_in_image(
+    request: Request,
+    file: UploadFile = File(...),
+    text_to_find: str = Form(...),
+    text_to_replace: str = Form(...),
+    payment_session_id: Optional[str] = Form(None),
+):
+    """Edit text in images using Google's Gemini gemini-3-pro-image-preview model. Requires payment verification."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    if not text_to_find or not text_to_replace:
+        raise HTTPException(status_code=400, detail="Both text_to_find and text_to_replace are required")
+    
+    # Verify payment session and prevent reuse
+    if not payment_session_id:
+        raise HTTPException(status_code=400, detail="Payment session ID is required")
+    
+    # Check if this payment session has already been used
+    if payment_session_id in _USED_PAYMENT_SESSIONS:
+        raise HTTPException(
+            status_code=403, 
+            detail="This payment session has already been used. Please make a new payment to process another image."
+        )
+    
+    # Verify payment is actually successful
+    try:
+        import dodopayments
+        dodo_api_key = os.getenv("DODO_PAYMENTS_API_KEY")
+        if dodo_api_key:
+            # Use same environment as checkout creation (test_mode for local, live_mode for production)
+            is_production = os.getenv("K_SERVICE") is not None
+            dodo_env = "live_mode" if is_production else "test_mode"
+            
+            client = dodopayments.DodoPayments(
+                bearer_token=dodo_api_key.strip(),
+                environment=dodo_env
+            )
+            checkout_session = client.checkout_sessions.retrieve(payment_session_id)
+            payment_status = getattr(checkout_session, 'payment_status', None)
+            if not payment_status or payment_status.lower() not in ['succeeded', 'completed', 'paid']:
+                raise HTTPException(status_code=403, detail="Payment not verified or incomplete")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Could not verify payment status (proceeding anyway): {str(e)}")
+    
+    # Mark payment session as used
+    _USED_PAYMENT_SESSIONS.add(payment_session_id)
+    
+    # Try both environment variable names for compatibility
+    google_api_key = os.getenv("GOOGLE_GENAI_API_KEY") or os.getenv("GEMINI_API_KEY")
+    if not google_api_key:
+        raise HTTPException(status_code=500, detail="GOOGLE_GENAI_API_KEY or GEMINI_API_KEY environment variable not set")
+    
+    # Read image file contents
+    image_contents = await file.read()
+    
+    tmp_file_path = None
+    try:
+        from google import genai
+        from PIL import Image
+        import importlib.metadata
+        import base64
+        try:
+            genai_version = importlib.metadata.version("google-genai")
+            logger.info(f"google-genai SDK version: {genai_version}")
+        except Exception:
+            logger.warning("Could not determine google-genai version")
+        
+        # Create a temporary file for PIL to open
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+            tmp_file.write(image_contents)
+            tmp_file_path = tmp_file.name
+        
+        # Initialize Google GenAI client
+        client = genai.Client(api_key=google_api_key)
+        
+        # Open image with PIL
+        image = Image.open(tmp_file_path)
+        
+        # Create prompt for text editing
+        prompt = (
+            f"Edit this image to change text in the image.\n\n"
+            f"TEXT EDITING INSTRUCTIONS:\n"
+            f"- Find and locate the text: '{text_to_find}'\n"
+            f"- Replace it with: '{text_to_replace}'\n"
+            f"- Maintain the exact same font style, size, color, and position as the original text\n"
+            f"- Keep all other elements of the image exactly the same\n"
+            f"- Ensure the new text blends seamlessly with the image background\n"
+            f"- Preserve the original text's visual appearance (font, color, effects) as closely as possible\n\n"
+            f"OUTPUT: Return the edited image with only the specified text changed."
+        )
+        
+        logger.info(f"Running Google Gemini image editing model (gemini-3-pro-image-preview) for text editing: '{text_to_find}' -> '{text_to_replace}'")
+        
+        # Call Google Gemini API for image editing with retry logic for quota limits
+        import time
+        max_retries = 3
+        retry_delay = 5  # Start with 5 seconds
+        
+        response = None
+        for attempt in range(max_retries):
+            try:
+                # Configure with response_modalities and safety settings
+                config = {
+                    "response_modalities": ["TEXT", "IMAGE"],
+                    "safety_settings": [
+                        {
+                            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HARASSMENT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HATE_SPEECH",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                    ]
+                }
+                
+                response = client.models.generate_content(
+                    model="gemini-3-pro-image-preview",
+                    contents=[prompt, image],
+                    config=config
+                )
+                
+                logger.info(f"Response received. Type: {type(response)}")
+                if hasattr(response, 'candidates') and response.candidates:
+                    logger.info(f"Response has {len(response.candidates)} candidates")
+                
+                break  # Success, exit retry loop
+            except Exception as e:
+                error_str = str(e)
+                # Check if it's a quota/rate limit error (429)
+                if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * (2 ** attempt)
+                        logger.warning(f"Quota exceeded, retrying in {wait_time} seconds (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise HTTPException(
+                            status_code=429,
+                            detail=f"Quota exceeded. Please wait and try again later, or upgrade your Google AI plan. Error: {error_str}"
+                        )
+                else:
+                    raise
+        
+        # Extract image from response
+        result_bytes = None
+        
+        try:
+            if not response:
+                raise HTTPException(status_code=500, detail="No response received from Google Gemini API")
+            
+            if not hasattr(response, 'candidates') or not response.candidates:
+                logger.error(f"Response has no candidates. Response type: {type(response)}")
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Google Gemini API returned no candidates."
+                )
+            
+            candidate = response.candidates[0]
+            
+            if not hasattr(candidate, 'content') or not candidate.content:
+                finish_reason = getattr(candidate, 'finish_reason', None)
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Google Gemini API candidate has no content. Finish reason: {finish_reason}"
+                )
+            
+            parts = getattr(candidate.content, 'parts', None)
+            if not parts:
+                parts = getattr(response, 'parts', None)
+            
+            if not parts or (isinstance(parts, list) and len(parts) == 0):
+                finish_reason = getattr(candidate, 'finish_reason', None)
+                raise HTTPException(status_code=500, detail=f"Response contained no parts. Finish reason: {finish_reason}")
+            
+            # Iterate over parts to find image data
+            for part in parts:
+                if hasattr(part, 'inline_data') and part.inline_data:
+                    inline_data = part.inline_data
+                    
+                    if hasattr(inline_data, 'data'):
+                        data_value = inline_data.data
+                        if isinstance(data_value, bytes):
+                            result_bytes = data_value
+                        elif isinstance(data_value, str):
+                            result_bytes = base64.b64decode(data_value)
+                        else:
+                            raise HTTPException(status_code=500, detail=f"Unexpected inline_data.data type: {type(data_value)}")
+                        break
+                    elif hasattr(inline_data, 'bytes'):
+                        result_bytes = inline_data.bytes
+                        break
+            
+            if not result_bytes:
+                raise HTTPException(status_code=500, detail="No image content found in response from Google Gemini")
+        
+        except AttributeError as e:
+            logger.error(f"Error accessing response structure: {e}")
+            raise HTTPException(status_code=500, detail=f"Error parsing Google Gemini response: {str(e)}")
+        
+        # Verify it's a valid image by checking magic bytes
+        is_png = result_bytes[:4] == b'\x89PNG'
+        is_jpeg = result_bytes[:2] == b'\xff\xd8'
+        
+        if not is_png and not is_jpeg:
+            logger.error(f"Response does not appear to be a valid image. First bytes: {result_bytes[:20]}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Response from Google Gemini does not appear to be image data. Received {len(result_bytes)} bytes."
+            )
+        
+        # Determine media type based on image format
+        media_type = "image/png" if is_png else "image/jpeg"
+        logger.info(f"Successfully validated {media_type} image ({len(result_bytes)} bytes)")
+        
+        return Response(content=result_bytes, media_type=media_type)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Error in Google Gemini text editing: {error_msg}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error processing image with Google Gemini: {error_msg}")
+    
+    finally:
+        # Clean up temporary file
+        if tmp_file_path:
+            try:
+                os.unlink(tmp_file_path)
+            except Exception:
+                pass
+
 @app.post("/api/test-replicate-professional-headshot")
 async def test_replicate_professional_headshot(
     request: Request,

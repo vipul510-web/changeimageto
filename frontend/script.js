@@ -85,6 +85,7 @@ function setupDownloadTracking() {
                         pageType === 'grayscale_background' ? 'grayscale_background' :
                         pageType === 'enhance_image' ? 'enhance' :
                         pageType === 'remove_text' ? 'remove_text' :
+                        pageType === 'edit_text' ? 'edit_text' :
                         pageType === 'remove_gemini_watermark' ? 'remove_gemini_watermark' :
                         'remove_background';
       
@@ -193,6 +194,7 @@ function getPageType() {
     if (path === '/grayscale-background.html') return 'grayscale_background';
     if (path === '/enhance-image.html') return 'enhance_image';
   if (path === '/remove-text-from-image.html') return 'remove_text';
+  if (path === '/edit-text-in-image.html') return 'edit_text';
   if (path === '/remove-people-from-photo.html') return 'remove_people';
   if (path === '/remove-gemini-watermark.html') return 'remove_gemini_watermark';
   
@@ -709,7 +711,8 @@ if (form) form.addEventListener('submit', async (e) => {
           downloadLink.download = `enhanced-${Date.now()}.png`;
         } else if (pageType === 'remove_text') {
           downloadLink.download = `text-removed-${Date.now()}.png`;
-        
+        } else if (pageType === 'edit_text') {
+          downloadLink.download = `text-edited-${Date.now()}.png`;
         } else {
           downloadLink.download = `bg-removed-${Date.now()}.png`;
         }
