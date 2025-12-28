@@ -102,7 +102,7 @@ function setupDownloadTracking() {
       logUserAction('download_clicked', {
         page_type: pageType,
         action_type: actionType,
-        filename: downloadLink.download || 'unknown'
+        filename: downloadLink ? (downloadLink.download || 'unknown') : 'unknown'
       });
     });
   }
@@ -722,24 +722,26 @@ if (form) form.addEventListener('submit', async (e) => {
         console.log('Response blob size:', blob.size, 'bytes');
         const objectUrl = URL.createObjectURL(blob);
         if (resultImg) resultImg.src = objectUrl;
-        if (downloadLink) downloadLink.href = objectUrl;
-        // Set a sensible filename based on page type
-        if (pageType === 'upscale_image') {
-          downloadLink.download = `upscaled-${Date.now()}.png`;
-        } else if (pageType === 'color_change') {
-          downloadLink.download = `color-changed-${Date.now()}.png`;
-        } else if (pageType === 'blur_background') {
-          downloadLink.download = `blur-background-${Date.now()}.png`;
-        } else if (pageType === 'grayscale_background') {
-          downloadLink.download = `grayscale-background-${Date.now()}.png`;
-        } else if (pageType === 'enhance_image') {
-          downloadLink.download = `enhanced-${Date.now()}.png`;
-        } else if (pageType === 'remove_text') {
-          downloadLink.download = `text-removed-${Date.now()}.png`;
-        } else if (pageType === 'edit_text') {
-          downloadLink.download = `text-edited-${Date.now()}.png`;
-        } else {
-          downloadLink.download = `bg-removed-${Date.now()}.png`;
+        if (downloadLink) {
+          downloadLink.href = objectUrl;
+          // Set a sensible filename based on page type
+          if (pageType === 'upscale_image') {
+            downloadLink.download = `upscaled-${Date.now()}.png`;
+          } else if (pageType === 'color_change') {
+            downloadLink.download = `color-changed-${Date.now()}.png`;
+          } else if (pageType === 'blur_background') {
+            downloadLink.download = `blur-background-${Date.now()}.png`;
+          } else if (pageType === 'grayscale_background') {
+            downloadLink.download = `grayscale-background-${Date.now()}.png`;
+          } else if (pageType === 'enhance_image') {
+            downloadLink.download = `enhanced-${Date.now()}.png`;
+          } else if (pageType === 'remove_text') {
+            downloadLink.download = `text-removed-${Date.now()}.png`;
+          } else if (pageType === 'edit_text') {
+            downloadLink.download = `text-edited-${Date.now()}.png`;
+          } else {
+            downloadLink.download = `bg-removed-${Date.now()}.png`;
+          }
         }
         
         // Ensure download tracking is set up (in case element was reset)
@@ -750,7 +752,7 @@ if (form) form.addEventListener('submit', async (e) => {
           fr.onload = () => {
             try {
               sessionStorage.setItem('preloadImageDataURL', fr.result);
-              sessionStorage.setItem('preloadImageName', downloadLink.download || `image-${Date.now()}.png`);
+              sessionStorage.setItem('preloadImageName', downloadLink ? (downloadLink.download || `image-${Date.now()}.png`) : `image-${Date.now()}.png`);
               sessionStorage.removeItem('preloadImageURL');
             } catch(_) {}
           };
@@ -765,7 +767,7 @@ if (form) form.addEventListener('submit', async (e) => {
       category: categoryInput?.value || 'unknown',
       target_color: targetColor,
       action_type: targetColor ? 'change_background' : 'remove_background',
-      filename: downloadLink.download
+      filename: downloadLink ? downloadLink.download : 'unknown'
     });
     
     const prompt = document.getElementById('process-prompt');
@@ -870,6 +872,7 @@ if (form) form.addEventListener('submit', async (e) => {
           // Handler: use the processed image as new input and reset UI for another pass
           editBtn.onclick = async function(){
             try {
+              if (!downloadLink) return;
               var href = downloadLink.href;
               if (!href) return;
               const res = await fetch(href);
@@ -1571,16 +1574,18 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
   }
   form.addEventListener('submit', function(){
     setTimeout(async function(){
-      if(!downloadLink.href) return;
+      if(!downloadLink || !downloadLink.href) return;
       var backendColored = !!document.body.getAttribute('data-target-color');
       if(backendColored){ return; }
       try{
         var blob = await toColorBackground(downloadLink.href);
         var coloredUrl = URL.createObjectURL(blob);
         if (resultImg) resultImg.src = coloredUrl;
-        if (downloadLink) downloadLink.href = coloredUrl;
-        var hex = color.replace('#','');
-        downloadLink.download = 'bg-' + hex + '-' + Date.now() + '.png';
+        if (downloadLink) {
+          downloadLink.href = coloredUrl;
+          var hex = color.replace('#','');
+          downloadLink.download = 'bg-' + hex + '-' + Date.now() + '.png';
+        }
       }catch(err){ console.warn('Color composite failed', err); }
     }, 0);
   });
