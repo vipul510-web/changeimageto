@@ -2247,7 +2247,7 @@ async def blog_index():
     <p class='blog-sub'>Guides for removing backgrounds, changing colors, upscaling, blurring, and enhancing images.</p>
     <ul class='blog-list'>{lis}</ul>
   </main>
-  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/blur-background.html'>Blur Background</a><a href='/grayscale-background.html'>Grayscale Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/enhance-image.html'>Enhance Image</a></nav>
+  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/blur-background.html'>Blur Background</a><a href='/grayscale-background.html'>Black & White Image Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/enhance-image.html'>Enhance Image</a></nav>
   <footer class='container footer'><p>Built for speed and quality. <a href='#' rel='nofollow'>Contact</a></p></footer>
   <script src='/script.js?v=20250916-3' defer></script>
 </body></html>"""
@@ -2948,7 +2948,7 @@ async def update_blog_index():
         
         index_html += """</ul>                                                                                                
   </main>
-  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/blur-background.html'>Blur Background</a><a href='/grayscale-background.html'>Grayscale Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/enhance-image.html'>Enhance Image</a></nav>                                   
+  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/blur-background.html'>Blur Background</a><a href='/grayscale-background.html'>Black & White Image Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/enhance-image.html'>Enhance Image</a></nav>                                   
   <footer class='container footer'><p>Built for speed and quality. <a href='#' rel='nofollow'>Contact</a></p></footer>                                                                                
   <script src='/script.js?v=20250916-3' defer></script>
 </body></html>"""
@@ -4929,6 +4929,213 @@ async def test_google_professional_headshot(
     except Exception as e:
         error_msg = str(e)
         logger.error(f"Error in Google Gemini professional headshot: {error_msg}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error processing image with Google Gemini: {error_msg}")
+    
+    finally:
+        # Clean up temporary file
+        if tmp_file_path:
+            try:
+                os.unlink(tmp_file_path)
+            except Exception:
+                pass
+
+@app.post("/api/test-google-edit-text")
+async def test_google_edit_text(
+    request: Request,
+    file: UploadFile = File(...),
+    text_to_find: str = Form(...),
+    text_to_replace: str = Form(...),
+):
+    """Test text editing in images using Google's Gemini gemini-3-pro-image-preview model."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    if not text_to_find or not text_to_replace:
+        raise HTTPException(status_code=400, detail="Both text_to_find and text_to_replace are required")
+    
+    # Try both environment variable names for compatibility
+    google_api_key = os.getenv("GOOGLE_GENAI_API_KEY") or os.getenv("GEMINI_API_KEY")
+    if not google_api_key:
+        raise HTTPException(status_code=500, detail="GOOGLE_GENAI_API_KEY or GEMINI_API_KEY environment variable not set")
+    
+    # Read image file contents
+    image_contents = await file.read()
+    
+    tmp_file_path = None
+    try:
+        from google import genai
+        from PIL import Image
+        import importlib.metadata
+        import base64
+        try:
+            genai_version = importlib.metadata.version("google-genai")
+            logger.info(f"google-genai SDK version: {genai_version}")
+        except Exception:
+            logger.warning("Could not determine google-genai version")
+        
+        # Create a temporary file for PIL to open
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+            tmp_file.write(image_contents)
+            tmp_file_path = tmp_file.name
+        
+        # Initialize Google GenAI client
+        client = genai.Client(api_key=google_api_key)
+        
+        # Open image with PIL
+        image = Image.open(tmp_file_path)
+        
+        # Create prompt for text editing
+        prompt = (
+            f"Edit this image to change text in the image.\n\n"
+            f"TEXT EDITING INSTRUCTIONS:\n"
+            f"- Find and locate the text: '{text_to_find}'\n"
+            f"- Replace it with: '{text_to_replace}'\n"
+            f"- Maintain the exact same font style, size, color, and position as the original text\n"
+            f"- Keep all other elements of the image exactly the same\n"
+            f"- Ensure the new text blends seamlessly with the image background\n"
+            f"- Preserve the original text's visual appearance (font, color, effects) as closely as possible\n\n"
+            f"OUTPUT: Return the edited image with only the specified text changed."
+        )
+        
+        logger.info(f"Running Google Gemini image editing model (gemini-3-pro-image-preview) for text editing: '{text_to_find}' -> '{text_to_replace}'")
+        
+        # Call Google Gemini API for image editing with retry logic for quota limits
+        import time
+        max_retries = 3
+        retry_delay = 5  # Start with 5 seconds
+        
+        response = None
+        for attempt in range(max_retries):
+            try:
+                # Configure with response_modalities and safety settings
+                config = {
+                    "response_modalities": ["TEXT", "IMAGE"],
+                    "safety_settings": [
+                        {
+                            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HARASSMENT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HATE_SPEECH",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                    ]
+                }
+                
+                response = client.models.generate_content(
+                    model="gemini-3-pro-image-preview",
+                    contents=[prompt, image],
+                    config=config
+                )
+                
+                logger.info(f"Response received. Type: {type(response)}")
+                if hasattr(response, 'candidates') and response.candidates:
+                    logger.info(f"Response has {len(response.candidates)} candidates")
+                
+                break  # Success, exit retry loop
+            except Exception as e:
+                error_str = str(e)
+                # Check if it's a quota/rate limit error (429)
+                if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * (2 ** attempt)
+                        logger.warning(f"Quota exceeded, retrying in {wait_time} seconds (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        raise HTTPException(
+                            status_code=429,
+                            detail=f"Quota exceeded. Please wait and try again later, or upgrade your Google AI plan. Error: {error_str}"
+                        )
+                else:
+                    raise
+        
+        # Extract image from response
+        result_bytes = None
+        
+        try:
+            if not response:
+                raise HTTPException(status_code=500, detail="No response received from Google Gemini API")
+            
+            if not hasattr(response, 'candidates') or not response.candidates:
+                logger.error(f"Response has no candidates. Response type: {type(response)}")
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Google Gemini API returned no candidates."
+                )
+            
+            candidate = response.candidates[0]
+            
+            if not hasattr(candidate, 'content') or not candidate.content:
+                finish_reason = getattr(candidate, 'finish_reason', None)
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Google Gemini API candidate has no content. Finish reason: {finish_reason}"
+                )
+            
+            parts = getattr(candidate.content, 'parts', None)
+            if not parts:
+                parts = getattr(response, 'parts', None)
+            
+            if not parts or (isinstance(parts, list) and len(parts) == 0):
+                finish_reason = getattr(candidate, 'finish_reason', None)
+                raise HTTPException(status_code=500, detail=f"Response contained no parts. Finish reason: {finish_reason}")
+            
+            # Iterate over parts to find image data
+            for part in parts:
+                if hasattr(part, 'inline_data') and part.inline_data:
+                    inline_data = part.inline_data
+                    
+                    if hasattr(inline_data, 'data'):
+                        data_value = inline_data.data
+                        if isinstance(data_value, bytes):
+                            result_bytes = data_value
+                        elif isinstance(data_value, str):
+                            result_bytes = base64.b64decode(data_value)
+                        else:
+                            raise HTTPException(status_code=500, detail=f"Unexpected inline_data.data type: {type(data_value)}")
+                        break
+                    elif hasattr(inline_data, 'bytes'):
+                        result_bytes = inline_data.bytes
+                        break
+            
+            if not result_bytes:
+                raise HTTPException(status_code=500, detail="No image content found in response from Google Gemini")
+        
+        except AttributeError as e:
+            logger.error(f"Error accessing response structure: {e}")
+            raise HTTPException(status_code=500, detail=f"Error parsing Google Gemini response: {str(e)}")
+        
+        # Verify it's a valid image by checking magic bytes
+        is_png = result_bytes[:4] == b'\x89PNG'
+        is_jpeg = result_bytes[:2] == b'\xff\xd8'
+        
+        if not is_png and not is_jpeg:
+            logger.error(f"Response does not appear to be a valid image. First bytes: {result_bytes[:20]}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Response from Google Gemini does not appear to be image data. Received {len(result_bytes)} bytes."
+            )
+        
+        # Determine media type based on image format
+        media_type = "image/png" if is_png else "image/jpeg"
+        logger.info(f"Successfully validated {media_type} image ({len(result_bytes)} bytes)")
+        
+        return Response(content=result_bytes, media_type=media_type)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Error in Google Gemini text editing: {error_msg}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error processing image with Google Gemini: {error_msg}")
     
     finally:

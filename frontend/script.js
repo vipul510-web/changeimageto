@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { href: '/change-image-background.html', label: 'Change image background' },
             { href: '/convert-image-format.html', label: 'Convert image format' },
             { href: '/blur-background.html', label: 'Blur Background' },
-        { href: '/grayscale-background.html', label: 'Grayscale Background' },
+        { href: '/grayscale-background.html', label: 'Black & White Image Background' },
             { href: '/bulk-image-resizer.html', label: 'Bulk Image Resizer' },
             { href: '/image-quality-checker.html', label: 'Image Quality Checker' },
           ].map(i => `<a href="${i.href}">${i.label}</a>`).join('');
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { href: '/upscale-image.html', label: 'Upscale Image' },
         { href: '/enhance-image.html', label: 'Enhance Image' },
         { href: '/blur-background.html', label: 'Blur Background' },
-        { href: '/grayscale-background.html', label: 'Grayscale Background' },
+        { href: '/grayscale-background.html', label: 'Black & White Image Background' },
         { href: '/convert-image-format.html', label: 'Convert Image Format' },
         { href: '/remove-people-from-photo.html', label: 'Remove People / Objects' },
         { href: '/remove-text-from-image.html', label: 'Remove Text / Watermark' },
