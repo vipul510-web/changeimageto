@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Black & White Image Background Online | Free Background to Black and White</title>
-    <meta name="description" content="Convert image background to black and white while keeping the foreground in color. Free online tool using AI segmentation. No login, no watermark." />
-    <meta name="keywords" content="black and white image background, black and white background, color foreground black white background, convert background to black and white, desaturate background" />
+    <title>Convert Image to PDF Online | Free Image to PDF Converter</title>
+    <meta name="description" content="Convert images to PDF online for free. Transform JPG, PNG, or any image format to PDF instantly. No login required, no watermarks." />
+    <meta name="keywords" content="convert image to pdf, image to pdf, jpg to pdf, png to pdf, photo to pdf, image pdf converter, online image to pdf" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://www.changeimageto.com/grayscale-background.html" />
+    <link rel="canonical" href="https://www.changeimageto.com/convert-image-to-pdf.html" />
 
-    <meta property="og:title" content="Black & White Image Background Online" />
-    <meta property="og:description" content="Keep your subject in color while converting the background to black and white. Free and fast." />
+    <meta property="og:title" content="Convert Image to PDF Online" />
+    <meta property="og:description" content="Convert images to PDF online for free. Transform any image format to PDF instantly." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.changeimageto.com/grayscale-background.html" />
+    <meta property="og:url" content="https://www.changeimageto.com/convert-image-to-pdf.html" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,13 +24,11 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   if (window.location.hash.includes(":~:text")) {
-    // Check if gtag is already available
     if (typeof gtag === "function") {
       gtag("event", "ai_overview", {
         anchor: window.location.hash
       });
     } else {
-      // If gtag is not available yet, wait for it (for dynamic loading pattern)
       const checkGtag = setInterval(() => {
         if (typeof gtag === "function") {
           clearInterval(checkGtag);
@@ -39,7 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         }
       }, 100);
-      // Stop checking after 10 seconds
       setTimeout(() => clearInterval(checkGtag), 10000);
     }
   }
@@ -52,7 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-D3Q582VFCG');
 </script>
   </head>
@@ -60,24 +56,14 @@ document.addEventListener("DOMContentLoaded", () => {
     <header class="container header">
       <a href="/" class="logo-link"><img src="./logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
       <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
-        <h1 style="margin:0">Black & White Image Background (Free)</h1>
+        <h1 style="margin:0">Convert Image to PDF Online</h1>
         <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
       </div>
-      <p>Convert the background to black and white while keeping your subject in full color. Perfect for portraits and product photos. No login, no watermark.</p>
+      <p>Convert images to PDF format online for free. Transform JPG, PNG, or any image format to PDF instantly. No login required, no watermarks.</p>
     </header>
 
     <main class="container main">
       <form id="upload-form">
-        <div class="controls">
-          <label>Photo Type</label>
-          <div class="category-buttons" role="group" aria-label="Choose photo type">
-            <button type="button" class="cat-btn active" data-cat="portrait" id="cat-portrait">Portrait / People</button>
-            <button type="button" class="cat-btn" data-cat="product" id="cat-product">Product / Object</button>
-            <button type="button" class="cat-btn" data-cat="general" id="cat-general">General</button>
-          </div>
-          <input type="hidden" id="category" name="category" value="portrait" />
-        </div>
-
         <div class="uploader" id="dropzone">
           <input type="file" id="file-input" accept="image/*" />
           <div class="uploader-instructions">
@@ -86,25 +72,34 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
 
-        <button id="process-btn" type="submit" disabled>Convert Background to Black & White</button>
+        <button id="process-btn" type="submit" disabled>Convert to PDF</button>
       </form>
+      
+      <div id="status" class="status" style="display:none; margin-top: 16px;"></div>
 
       <section class="preview" id="preview-section" hidden>
         <div class="preview-grid">
           <div>
-            <h3>Original</h3>
+            <h3>Original Image</h3>
             <img id="original-img" alt="Original preview" />
           </div>
           <div>
-            <h3>Black & White Image Background</h3>
-            <p id="process-prompt" class="prompt">Press "Convert Background to Black & White" to process.</p>
+            <h3>PDF Ready</h3>
+            <p id="process-prompt" class="prompt">Press "Convert to PDF" to process.</p>
             <div id="result-wrapper" hidden>
-              <div class="checkerboard">
-                <img id="result-img" alt="Grayscale background result" />
+              <div style="padding: 24px; background: var(--card); border-radius: 8px; text-align: center;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 16px; color: var(--accent);">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10,9 9,9 8,9"/>
+                </svg>
+                <p style="color: var(--muted); margin: 0 0 16px;">PDF conversion complete!</p>
+                <a id="download-link" download="converted.pdf" class="btn">Download PDF</a>
               </div>
               <div class="actions">
-                <a id="download-link" download="grayscale-background.png" class="btn">Download PNG</a>
-                <button id="reset-btn" class="btn secondary" type="button">Try Another Image</button>
+                <button id="reset-btn" class="btn secondary" type="button">Convert Another Image</button>
               </div>
             </div>
           </div>
@@ -112,36 +107,31 @@ document.addEventListener("DOMContentLoaded", () => {
       </section>
 
       <section class="seo">
-        <h2>How to convert background to black and white?</h2>
+        <h2>How to convert image to PDF?</h2>
         <ol>
-          <li>Upload your image using the uploader above.</li>
-          <li>Select the <strong>Photo Type</strong> that best matches your image (Portrait, Product, or General).</li>
-          <li>Click <strong>Convert Background to Black & White</strong> and wait a few seconds.</li>
-          <li>Download your PNG—your subject stays in full color while the background becomes black and white.</li>
+          <li>Upload your image using the uploader above (supports JPG, PNG, WEBP, and other formats).</li>
+          <li>Click <strong>Convert to PDF</strong> to process your image.</li>
+          <li>Download your PDF file instantly.</li>
         </ol>
-        <p>Tip: For best results with portraits, select "Portrait / People". For products, use "Product / Object".</p>
-        
-        <h3>Why convert background to black and white?</h3>
+
+        <h3>Why convert images to PDF?</h3>
         <ul>
-          <li><strong>Portraits:</strong> Make your subject stand out with a dramatic black and white background. Perfect for professional headshots and profile photos.</li>
-          <li><strong>Ecommerce:</strong> Draw attention to your products by desaturating distracting backgrounds.</li>
-          <li><strong>Social Media:</strong> Create eye-catching posts with a cinematic color vs. black and white contrast.</li>
-          <li><strong>Artistic Effect:</strong> Add a creative, artistic touch to your photos with selective colorization.</li>
+          <li><strong>Document sharing:</strong> PDFs are universally compatible and maintain formatting across devices.</li>
+          <li><strong>Professional presentations:</strong> Convert images to PDF for reports, portfolios, and documents.</li>
+          <li><strong>Email attachments:</strong> PDFs are smaller and more reliable than image attachments.</li>
+          <li><strong>Printing:</strong> PDFs ensure consistent printing results across different printers.</li>
+          <li><strong>Archiving:</strong> PDF format is ideal for long-term storage and archiving.</li>
         </ul>
 
-        <h3>How it works</h3>
-        <p>Our tool uses advanced AI segmentation (U-2-Net) to automatically detect and separate the foreground from the background. The background is then converted to black and white while preserving the full color of your subject. This creates a striking visual effect that emphasizes your main subject.</p>
+        <h3>Supported image formats</h3>
+        <p>We support all major image formats including JPG, JPEG, PNG, WEBP, GIF, BMP, TIFF, and more. Upload any image and convert it to PDF instantly.</p>
 
         <h3>Related Tools</h3>
-        <p>Looking for other background effects? Try these related tools:</p>
+        <p>Looking for other conversion tools? Try these:</p>
         <ul>
-          <li><a href="/blur-background.html">Blur Background</a> - Create a portrait effect by blurring the background</li>
-          <li><a href="/change-image-background.html">Change Background</a> - Replace background with solid colors or custom images</li>
-          <li><a href="/remove-background-from-image.html">Remove Background</a> - Create transparent backgrounds for your images</li>
-          <li><a href="/enhance-image.html">Enhance Image</a> - Improve image quality with AI-powered enhancements</li>
-          <li><a href="/convert-image-format.html">Convert Image Format</a> - Convert between PNG, JPG, WEBP formats</li>
-          <li><a href="/convert-image-to-pdf.html">Convert Image to PDF</a> - Transform images to PDF format for documents</li>
+          <li><a href="/convert-image-format.html">Convert Image Format</a> - Convert between PNG, JPG, WEBP, and other formats</li>
           <li><a href="/convert-image-to-text.html">Convert Image to Text</a> - Extract text from images using OCR</li>
+          <li><a href="/remove-background-from-image.html">Remove Background</a> - Remove backgrounds from images</li>
         </ul>
       </section>
     </main>
@@ -151,24 +141,24 @@ document.addEventListener("DOMContentLoaded", () => {
       <h2>Frequently Asked Questions</h2>
       <div class="faq-list" style="margin-top: 20px;">
         <div class="faq-item" style="margin-bottom: 20px;">
-          <h3>How do I convert the background to black and white?</h3>
-          <p>Upload your image, select the photo type (Portrait/People, Product/Object, or General), then click "Convert Background to Black & White". Our AI will automatically detect the subject and convert only the background to black and white while keeping your subject in full color.</p>
-        </div>
-        <div class="faq-item" style="margin-bottom: 20px;">
-          <h3>Which photo type should I select?</h3>
-          <p>Select "Portrait / People" for photos with people, "Product / Object" for product photos, or "General" for other types of images. Choosing the correct type helps our AI better identify the subject.</p>
-        </div>
-        <div class="faq-item" style="margin-bottom: 20px;">
-          <h3>Is the black and white background tool free to use?</h3>
-          <p>Yes, our black and white background tool is completely free to use. No registration, no watermarks, and no hidden fees.</p>
+          <h3>How do I convert an image to PDF?</h3>
+          <p>Upload your image, then click "Convert to PDF". The tool will process your image and provide a downloadable PDF file instantly.</p>
         </div>
         <div class="faq-item" style="margin-bottom: 20px;">
           <h3>What image formats are supported?</h3>
-          <p>We support all major image formats including JPG, PNG, and other common formats. Upload your image and get instant results with a black and white background.</p>
+          <p>We support all major image formats including JPG, PNG, WEBP, GIF, BMP, TIFF, and more. Upload any image format and convert it to PDF.</p>
         </div>
         <div class="faq-item" style="margin-bottom: 20px;">
-          <h3>Can I convert the subject to black and white instead?</h3>
-          <p>Currently, our tool converts the background to black and white while keeping the subject in color. For inverting this effect, you would need to use image editing software or try our <a href="/change-image-background.html">Change Background</a> tool with a colored background.</p>
+          <h3>Is the image to PDF converter free to use?</h3>
+          <p>Yes, our image to PDF converter is completely free to use. No registration, no watermarks, and no hidden fees.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>Can I convert multiple images to one PDF?</h3>
+          <p>Currently, you can convert one image at a time. For multiple images, you can convert them individually and combine them using PDF editing software.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>Will the PDF maintain image quality?</h3>
+          <p>Yes, the PDF conversion preserves the original image quality. The image is embedded in the PDF at high resolution.</p>
         </div>
       </div>
     </section>
@@ -177,9 +167,9 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="/remove-background-from-image.html">Remove Background from Image</a>
       <a href="/change-color-of-image.html">Change color of image online</a>
       <a href="/change-image-background.html">Change image background</a>
-      <a href="/blur-background.html">Blur Background</a>
-      <a href="/grayscale-background.html">Black & White Image Background</a>
       <a href="/convert-image-format.html">Convert image format</a>
+      <a href="/convert-image-to-pdf.html">Convert Image to PDF</a>
+      <a href="/convert-image-to-text.html">Convert Image to Text</a>
       <a href="/upscale-image.html">AI Image Upscaler</a>
       <a href="/enhance-image.html">Enhance Image</a>
     </nav>
@@ -220,12 +210,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <ul class="footer-links">
               <li><a href="/remove-background-from-image.html">Remove Background</a></li>
               <li><a href="/change-image-background.html">Change Background</a></li>
-              <li><a href="/grayscale-background.html">Black & White Image Background</a></li>
               <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
               <li><a href="/upscale-image.html">Upscale Image</a></li>
               <li><a href="/enhance-image.html">Enhance Image</a></li>
               <li><a href="/blur-background.html">Blur Background</a></li>
               <li><a href="/convert-image-format.html">Convert Image Format</a></li>
+              <li><a href="/convert-image-to-pdf.html">Convert Image to PDF</a></li>
+              <li><a href="/convert-image-to-text.html">Convert Image to Text</a></li>
               <li><a href="/remove-people-from-photo.html">Remove People / Objects</a></li>
               <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
               <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
@@ -290,6 +281,133 @@ document.addEventListener("DOMContentLoaded", () => {
     </footer>
 
     <script src="./script.js?v=20251220-1" defer></script>
+    <script>
+      // Image to PDF functionality
+      (function() {
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const dropzone = document.getElementById('dropzone');
+        const processBtn = document.getElementById('process-btn');
+        const originalImg = document.getElementById('original-img');
+        const previewSection = document.getElementById('preview-section');
+        const resultWrapper = document.getElementById('result-wrapper');
+        const processPrompt = document.getElementById('process-prompt');
+        const downloadLink = document.getElementById('download-link');
+        const resetBtn = document.getElementById('reset-btn');
+        const statusDiv = document.getElementById('status');
+        
+        let currentFile = null;
+        
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+        
+        function showStatus(message, type = 'info') {
+          statusDiv.textContent = message;
+          statusDiv.className = `status ${type}`;
+          statusDiv.style.display = 'block';
+        }
+        
+        function hideStatus() {
+          statusDiv.style.display = 'none';
+        }
+        
+        function setOriginalPreview(file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            originalImg.src = e.target.result;
+            previewSection.hidden = false;
+            resultWrapper.hidden = true;
+            processPrompt.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+        
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            currentFile = file;
+            setOriginalPreview(file);
+            processBtn.disabled = false;
+            hideStatus();
+          }
+        });
+        
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = 'var(--accent)';
+        });
+        
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.style.borderColor = 'var(--border)';
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = 'var(--border)';
+          const file = e.dataTransfer.files[0];
+          if (file && file.type.startsWith('image/')) {
+            fileInput.files = e.dataTransfer.files;
+            currentFile = file;
+            setOriginalPreview(file);
+            processBtn.disabled = false;
+            hideStatus();
+          }
+        });
+        
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (!currentFile) return;
+          
+          processBtn.disabled = true;
+          processBtn.textContent = 'Converting...';
+          showStatus('Converting image to PDF...', 'info');
+          
+          try {
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            
+            const response = await fetch(`${API_BASE}/api/image-to-pdf`, {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            
+            downloadLink.href = url;
+            downloadLink.download = `${currentFile.name.split('.')[0] || 'image'}.pdf`;
+            
+            resultWrapper.hidden = false;
+            processPrompt.style.display = 'none';
+            showStatus('PDF conversion successful!', 'success');
+            
+          } catch (error) {
+            console.error('Error:', error);
+            showStatus('Error: ' + error.message, 'error');
+          } finally {
+            processBtn.disabled = false;
+            processBtn.textContent = 'Convert to PDF';
+          }
+        });
+        
+        if (resetBtn) {
+          resetBtn.addEventListener('click', () => {
+            currentFile = null;
+            fileInput.value = '';
+            previewSection.hidden = true;
+            resultWrapper.hidden = true;
+            processPrompt.style.display = 'block';
+            hideStatus();
+            processBtn.disabled = true;
+          });
+        }
+      })();
+    </script>
   </body>
 </html>
 

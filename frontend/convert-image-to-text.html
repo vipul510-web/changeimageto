@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Convert Image to Text Online | Free OCR Text Extractor</title>
+    <meta name="description" content="Extract text from images online for free using OCR. Convert images to text instantly. No login required, no watermarks." />
+    <meta name="keywords" content="convert image to text, image to text, ocr, extract text from image, image text extractor, online ocr, photo to text" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.changeimageto.com/convert-image-to-text.html" />
+
+    <meta property="og:title" content="Convert Image to Text Online" />
+    <meta property="og:description" content="Extract text from images online for free using OCR. Convert images to text instantly." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.changeimageto.com/convert-image-to-text.html" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="./logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Convert Image to Text Online</h1>
+        <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
+      </div>
+      <p>Extract text from images online for free using OCR (Optical Character Recognition). Convert images to text instantly. No login required, no watermarks.</p>
+    </header>
+
+    <main class="container main">
+      <form id="upload-form">
+        <div class="uploader" id="dropzone">
+          <input type="file" id="file-input" accept="image/*" />
+          <div class="uploader-instructions">
+            <strong>Drop image here</strong>
+            <span>or click to browse</span>
+          </div>
+        </div>
+
+        <button id="process-btn" type="submit" disabled>Extract Text from Image</button>
+      </form>
+      
+      <div id="status" class="status" style="display:none; margin-top: 16px;"></div>
+
+      <section class="preview" id="preview-section" hidden>
+        <div class="preview-grid">
+          <div>
+            <h3>Original Image</h3>
+            <img id="original-img" alt="Original preview" />
+          </div>
+          <div>
+            <h3>Extracted Text</h3>
+            <p id="process-prompt" class="prompt">Press "Extract Text from Image" to process.</p>
+            <div id="result-wrapper" hidden>
+              <div style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; min-height: 200px; max-height: 400px; overflow-y: auto;">
+                <pre id="extracted-text" style="margin: 0; white-space: pre-wrap; word-wrap: break-word; color: var(--fg); font-family: inherit; font-size: 14px; line-height: 1.6;"></pre>
+              </div>
+              <div class="actions" style="margin-top: 16px;">
+                <button id="copy-btn" class="btn" type="button">Copy Text</button>
+                <button id="download-btn" class="btn secondary" type="button">Download as TXT</button>
+                <button id="reset-btn" class="btn secondary" type="button">Extract from Another Image</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="seo">
+        <h2>How to extract text from an image?</h2>
+        <ol>
+          <li>Upload your image containing text (supports JPG, PNG, and other formats).</li>
+          <li>Click <strong>Extract Text from Image</strong> to process using OCR.</li>
+          <li>Copy or download the extracted text instantly.</li>
+        </ol>
+
+        <h3>Why use OCR to extract text from images?</h3>
+        <ul>
+          <li><strong>Document digitization:</strong> Convert scanned documents, receipts, and forms to editable text.</li>
+          <li><strong>Accessibility:</strong> Extract text from images for screen readers and accessibility tools.</li>
+          <li><strong>Data entry:</strong> Quickly extract text from screenshots, photos of documents, or printed materials.</li>
+          <li><strong>Translation:</strong> Extract text from images in foreign languages for translation.</li>
+          <li><strong>Note-taking:</strong> Convert handwritten notes or printed text from photos to digital text.</li>
+        </ul>
+
+        <h3>Best practices for accurate OCR</h3>
+        <ul>
+          <li><strong>Image quality:</strong> Use clear, high-resolution images with good contrast.</li>
+          <li><strong>Text clarity:</strong> Ensure text is clearly visible and not blurred or distorted.</li>
+          <li><strong>Lighting:</strong> Avoid shadows, glare, or uneven lighting that can obscure text.</li>
+          <li><strong>Orientation:</strong> Ensure text is right-side up and properly oriented.</li>
+          <li><strong>Language:</strong> Our OCR works best with English text. Other languages may have reduced accuracy.</li>
+        </ul>
+
+        <h3>Related Tools</h3>
+        <p>Looking for other conversion tools? Try these:</p>
+        <ul>
+          <li><a href="/convert-image-to-pdf.html">Convert Image to PDF</a> - Convert images to PDF format</li>
+          <li><a href="/convert-image-format.html">Convert Image Format</a> - Convert between PNG, JPG, WEBP, and other formats</li>
+          <li><a href="/edit-text-in-image.html">Edit Text in Image</a> - Edit and change text in images</li>
+        </ul>
+      </section>
+    </main>
+
+    <!-- FAQ Section -->
+    <section class="container faq-section" style="margin-top: 40px; padding: 40px 0;">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list" style="margin-top: 20px;">
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>How do I extract text from an image?</h3>
+          <p>Upload your image containing text, then click "Extract Text from Image". Our OCR (Optical Character Recognition) tool will analyze the image and extract all readable text, which you can then copy or download.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>What is OCR?</h3>
+          <p>OCR (Optical Character Recognition) is a technology that recognizes and extracts text from images. It can read text from photos, scanned documents, screenshots, and other image formats.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>Is the image to text converter free to use?</h3>
+          <p>Yes, our image to text converter is completely free to use. No registration, no watermarks, and no hidden fees.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>What image formats are supported?</h3>
+          <p>We support all major image formats including JPG, PNG, WEBP, GIF, BMP, and TIFF. Upload any image format and extract text instantly.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>How accurate is the text extraction?</h3>
+          <p>Accuracy depends on image quality, text clarity, and font type. Clear, high-resolution images with standard fonts typically achieve high accuracy. Handwritten text or low-quality images may have reduced accuracy.</p>
+        </div>
+      </div>
+    </section>
+
+    <nav class="seo-links">
+      <a href="/remove-background-from-image.html">Remove Background from Image</a>
+      <a href="/change-color-of-image.html">Change color of image online</a>
+      <a href="/change-image-background.html">Change image background</a>
+      <a href="/convert-image-format.html">Convert image format</a>
+      <a href="/convert-image-to-pdf.html">Convert Image to PDF</a>
+      <a href="/convert-image-to-text.html">Convert Image to Text</a>
+      <a href="/upscale-image.html">AI Image Upscaler</a>
+      <a href="/enhance-image.html">Enhance Image</a>
+    </nav>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <!-- Brand Section -->
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+            <div class="footer-social">
+              <a href="https://x.com/vipulawl" aria-label="Follow us on Twitter" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+              <a href="https://www.youtube.com/@changeimageto" aria-label="Subscribe on YouTube" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+              </a>
+              <a href="https://linkedin.com/company/make-a-video/" aria-label="Connect on LinkedIn" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tools Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+              <li><a href="/blur-background.html">Blur Background</a></li>
+              <li><a href="/convert-image-format.html">Convert Image Format</a></li>
+              <li><a href="/convert-image-to-pdf.html">Convert Image to PDF</a></li>
+              <li><a href="/convert-image-to-text.html">Convert Image to Text</a></li>
+              <li><a href="/remove-people-from-photo.html">Remove People / Objects</a></li>
+              <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
+              <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
+              <li><a href="/image-quality-checker.html">Image Quality Checker</a></li>
+              <li><a href="/real-estate-photo-enhancement.html">Real Estate Photo Enhancement</a></li>
+            </ul>
+          </div>
+
+          <!-- Blog Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Latest Blog Posts</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/remove-background-from-image.html">Remove Background from Image</a></li>
+              <li><a href="/blog/upscale-image.html">Upscale Image Quality</a></li>
+              <li><a href="/blog/change-image-background-color.html">Change Image Background Color</a></li>
+              <li><a href="/blog/remove-background-from-image-photoshop.html">Remove Background in Photoshop</a></li>
+              <li><a href="/blog/change-image-background-color-online.html">Change Background Color Online</a></li>
+              <li><a href="/blog/remove-background-from-image-canva.html">Remove Background in Canva</a></li>
+              <li><a href="/blog/change-image-background-color-photoshop.html">Change Background in Photoshop</a></li>
+              <li><a href="/blog/remove-background-from-image-android.html">Remove Background on Android</a></li>
+            </ul>
+          </div>
+
+          <!-- Alternatives Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Tool Alternatives</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/photopea-vs-canva.html">Photopea vs Canva</a></li>
+              <li><a href="/blog/capcut-vs-davinci-resolve.html">CapCut vs DaVinci Resolve</a></li>
+              <li><a href="/blog/canva-vs-photopea.html">Canva vs Photopea</a></li>
+              <li><a href="/blog/free-photoshop-alternatives.html">Free Photoshop Alternatives</a></li>
+              <li><a href="/blog/ai-background-removers.html">AI Background Removers</a></li>
+            </ul>
+          </div>
+
+          <!-- Company Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+            <div class="footer-bottom-links">
+              <a href="/privacy-policy.html">Privacy</a>
+              <a href="#terms">Terms</a>
+              <a href="#cookies">Cookies</a>
+              <a href="#security">Security</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./script.js?v=20251220-1" defer></script>
+    <script>
+      // Image to Text (OCR) functionality
+      (function() {
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const dropzone = document.getElementById('dropzone');
+        const processBtn = document.getElementById('process-btn');
+        const originalImg = document.getElementById('original-img');
+        const previewSection = document.getElementById('preview-section');
+        const resultWrapper = document.getElementById('result-wrapper');
+        const processPrompt = document.getElementById('process-prompt');
+        const extractedTextEl = document.getElementById('extracted-text');
+        const copyBtn = document.getElementById('copy-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const statusDiv = document.getElementById('status');
+        
+        let currentFile = null;
+        let extractedText = '';
+        
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app';
+        
+        function showStatus(message, type = 'info') {
+          statusDiv.textContent = message;
+          statusDiv.className = `status ${type}`;
+          statusDiv.style.display = 'block';
+        }
+        
+        function hideStatus() {
+          statusDiv.style.display = 'none';
+        }
+        
+        function setOriginalPreview(file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            originalImg.src = e.target.result;
+            previewSection.hidden = false;
+            resultWrapper.hidden = true;
+            processPrompt.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+        
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            currentFile = file;
+            setOriginalPreview(file);
+            processBtn.disabled = false;
+            hideStatus();
+          }
+        });
+        
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = 'var(--accent)';
+        });
+        
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.style.borderColor = 'var(--border)';
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = 'var(--border)';
+          const file = e.dataTransfer.files[0];
+          if (file && file.type.startsWith('image/')) {
+            fileInput.files = e.dataTransfer.files;
+            currentFile = file;
+            setOriginalPreview(file);
+            processBtn.disabled = false;
+            hideStatus();
+          }
+        });
+        
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (!currentFile) return;
+          
+          processBtn.disabled = true;
+          processBtn.textContent = 'Extracting text...';
+          showStatus('Extracting text from image using OCR...', 'info');
+          
+          try {
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            
+            const response = await fetch(`${API_BASE}/api/image-to-text`, {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const data = await response.json();
+            extractedText = data.text || '';
+            
+            if (!extractedText || extractedText.trim() === '') {
+              showStatus('No text could be extracted from this image. Please try a clearer image with visible text.', 'error');
+              resultWrapper.hidden = true;
+            } else {
+              extractedTextEl.textContent = extractedText;
+              resultWrapper.hidden = false;
+              processPrompt.style.display = 'none';
+              showStatus('Text extracted successfully!', 'success');
+            }
+            
+          } catch (error) {
+            console.error('Error:', error);
+            showStatus('Error: ' + error.message, 'error');
+            resultWrapper.hidden = true;
+          } finally {
+            processBtn.disabled = false;
+            processBtn.textContent = 'Extract Text from Image';
+          }
+        });
+        
+        if (copyBtn) {
+          copyBtn.addEventListener('click', async () => {
+            if (!extractedText) return;
+            try {
+              await navigator.clipboard.writeText(extractedText);
+              copyBtn.textContent = 'Copied!';
+              setTimeout(() => {
+                copyBtn.textContent = 'Copy Text';
+              }, 2000);
+            } catch (err) {
+              // Fallback for older browsers
+              const textArea = document.createElement('textarea');
+              textArea.value = extractedText;
+              document.body.appendChild(textArea);
+              textArea.select();
+              document.execCommand('copy');
+              document.body.removeChild(textArea);
+              copyBtn.textContent = 'Copied!';
+              setTimeout(() => {
+                copyBtn.textContent = 'Copy Text';
+              }, 2000);
+            }
+          });
+        }
+        
+        if (downloadBtn) {
+          downloadBtn.addEventListener('click', () => {
+            if (!extractedText) return;
+            const blob = new Blob([extractedText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentFile.name.split('.')[0] || 'extracted-text'}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          });
+        }
+        
+        if (resetBtn) {
+          resetBtn.addEventListener('click', () => {
+            currentFile = null;
+            extractedText = '';
+            fileInput.value = '';
+            previewSection.hidden = true;
+            resultWrapper.hidden = true;
+            processPrompt.style.display = 'block';
+            hideStatus();
+            processBtn.disabled = true;
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
+

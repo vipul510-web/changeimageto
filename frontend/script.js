@@ -197,6 +197,8 @@ function getPageType() {
   if (path === '/edit-text-in-image.html') return 'edit_text';
   if (path === '/remove-people-from-photo.html') return 'remove_people';
   if (path === '/remove-gemini-watermark.html') return 'remove_gemini_watermark';
+  if (path === '/convert-image-to-pdf.html') return 'image_to_pdf';
+  if (path === '/convert-image-to-text.html') return 'image_to_text';
   
   return 'unknown';
 }

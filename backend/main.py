@@ -654,6 +654,8 @@ def render_article_html(title: str, slug: str, body_sections: list) -> str:
               <li><a href="/enhance-image.html">Enhance Image</a></li>
               <li><a href="/blur-background.html">Blur Background</a></li>
               <li><a href="/convert-image-format.html">Convert Image Format</a></li>
+              <li><a href="/convert-image-to-pdf.html">Convert Image to PDF</a></li>
+              <li><a href="/convert-image-to-text.html">Convert Image to Text</a></li>
               <li><a href="/remove-people-from-photo.html">Remove People / Objects</a></li>
               <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
               <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
@@ -751,6 +753,9 @@ def build_sections(keyword: str) -> list:
             "<li><a href=\"/change-image-background.html\">Change image background</a></li>"
             "<li><a href=\"/upscale-image.html\">AI Image Upscaler</a></li>"
             "<li><a href=\"/enhance-image.html\">Enhance image quality</a></li>"
+            "<li><a href=\"/convert-image-format.html\">Convert image format</a></li>"
+            "<li><a href=\"/convert-image-to-pdf.html\">Convert image to PDF</a></li>"
+            "<li><a href=\"/convert-image-to-text.html\">Convert image to text (OCR)</a></li>"
             "</ul></section>"
         )
 
@@ -6223,6 +6228,133 @@ async def test_unscribe(
     except Exception as e:
         logger.error(f"Unscribe test error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Unscribe error: {str(e)}")
+
+
+@app.post("/api/image-to-pdf")
+async def image_to_pdf(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Convert an image to PDF format."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    log_user_action("image_to_pdf_request", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "filename": file.filename,
+    })
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        
+        # Convert to RGB if necessary (PDF doesn't support transparency directly)
+        if image.mode in ('RGBA', 'LA', 'P'):
+            # Create white background for transparent images
+            rgb_image = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            rgb_image.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+            image = rgb_image
+        elif image.mode != 'RGB':
+            image = image.convert('RGB')
+        
+        # Save to PDF
+        buf = io.BytesIO()
+        image.save(buf, format="PDF", resolution=100.0)
+        buf.seek(0)
+        
+        log_user_action("image_to_pdf_success", {
+            "filename": file.filename,
+            "output_size": len(buf.getvalue()),
+        })
+        
+        return Response(
+            content=buf.getvalue(),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{file.filename.rsplit(".", 1)[0] if "." in (file.filename or "") else "image"}.pdf"'}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("image_to_pdf_error", {"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"Error converting image to PDF: {str(e)}")
+
+
+@app.post("/api/image-to-text")
+async def image_to_text(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Extract text from an image using OCR (Optical Character Recognition)."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    if not pytesseract:
+        raise HTTPException(status_code=500, detail="OCR functionality not available. Tesseract OCR is not installed.")
+    
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    log_user_action("image_to_text_request", {
+        "client_ip": client_ip,
+        "user_agent": user_agent,
+        "filename": file.filename,
+    })
+    
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        
+        # Convert to RGB for OCR
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        
+        # Downscale if too large for better OCR performance
+        max_dimension = 2000
+        if max(image.size) > max_dimension:
+            ratio = max_dimension / max(image.size)
+            new_size = (int(image.size[0] * ratio), int(image.size[1] * ratio))
+            image = image.resize(new_size, Image.LANCZOS)
+        
+        # Extract text using Tesseract OCR
+        try:
+            extracted_text = pytesseract.image_to_string(image, lang='eng')
+            
+            # Clean up the text
+            extracted_text = extracted_text.strip()
+            
+            if not extracted_text:
+                log_user_action("no_text_extracted", {})
+                return Response(
+                    content=json.dumps({"text": "", "message": "No text could be extracted from this image."}),
+                    media_type="application/json"
+                )
+            
+            log_user_action("image_to_text_success", {
+                "filename": file.filename,
+                "text_length": len(extracted_text),
+            })
+            
+            return Response(
+                content=json.dumps({"text": extracted_text}),
+                media_type="application/json"
+            )
+            
+        except Exception as e:
+            log_user_action("ocr_error", {"error": str(e)})
+            raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("image_to_text_error", {"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"Error processing image for OCR: {str(e)}")
 
 
 @app.post("/api/remove-painted-areas")

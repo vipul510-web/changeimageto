@@ -31,7 +31,32 @@
             <priority>0.9</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/convert-image-to-pdf.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/convert-image-to-text.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/edit-text-in-image.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/enhance-image.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/grayscale-background.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/remove-gemini-watermark.html</loc>
             <changefreq>weekly</changefreq>
             <priority>0.9</priority>
         </url>
