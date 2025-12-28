@@ -212,7 +212,13 @@ function updateCtaText(){
   const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
   const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
   const isChristmasBgPage = window.location.pathname === '/add-christmas-background.html';
+  const isEditTextPage = window.location.pathname === '/edit-text-in-image.html';
   const isDenoisePage = false;
+  
+  // Don't update button text on edit-text-in-image page - it has its own payment flow
+  if (isEditTextPage) {
+    return;
+  }
   
   if (isColorChangePage) {
     processBtn.textContent = 'Change Image Color';
