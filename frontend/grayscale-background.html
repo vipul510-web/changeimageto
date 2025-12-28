@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Blur Background of Image Online | Free Portrait Background Blur</title>
-    <meta name="description" content="Blur the background of a photo online for free. Keep the subject sharp and create a professional portrait effect. No login, no watermark." />
-    <meta name="keywords" content="blur background, background blur, portrait blur, free background blur, blur photo background online" />
+    <title>Convert Background to Black and White Online | Free Grayscale Background</title>
+    <meta name="description" content="Convert image background to black and white while keeping the foreground in color. Free online tool using AI segmentation. No login, no watermark." />
+    <meta name="keywords" content="grayscale background, black and white background, color foreground grayscale background, convert background to black and white, desaturate background" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://www.changeimageto.com/blur-background.html" />
+    <link rel="canonical" href="https://www.changeimageto.com/grayscale-background.html" />
 
-    <meta property="og:title" content="Blur Background of Image Online" />
-    <meta property="og:description" content="Keep the subject sharp and blur the background. Free and fast." />
+    <meta property="og:title" content="Convert Background to Black and White Online" />
+    <meta property="og:description" content="Keep your subject in color while converting the background to black and white. Free and fast." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.changeimageto.com/blur-background.html" />
+    <meta property="og:url" content="https://www.changeimageto.com/grayscale-background.html" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+
   gtag('config', 'G-D3Q582VFCG');
 </script>
   </head>
@@ -59,22 +60,22 @@ document.addEventListener("DOMContentLoaded", () => {
     <header class="container header">
       <a href="/" class="logo-link"><img src="./logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
       <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
-        <h1 style="margin:0">Blur Background of Image (Free)</h1>
+        <h1 style="margin:0">Convert Background to Black and White (Free)</h1>
         <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
       </div>
-      <p>Create a portrait look by blurring the background while keeping your subject sharp. No login, no watermark.</p>
+      <p>Convert the background to black and white while keeping your subject in full color. Perfect for portraits and product photos. No login, no watermark.</p>
     </header>
 
     <main class="container main">
       <form id="upload-form">
         <div class="controls">
-          <label>Background Blur</label>
-          <select id="blur-radius" name="blur_radius" aria-label="Blur Radius">
-            <option value="8">Light</option>
-            <option value="12" selected>Medium</option>
-            <option value="20">Strong</option>
-            <option value="30">Max</option>
-          </select>
+          <label>Photo Type</label>
+          <div class="category-buttons" role="group" aria-label="Choose photo type">
+            <button type="button" class="cat-btn active" data-cat="portrait" id="cat-portrait">Portrait / People</button>
+            <button type="button" class="cat-btn" data-cat="product" id="cat-product">Product / Object</button>
+            <button type="button" class="cat-btn" data-cat="general" id="cat-general">General</button>
+          </div>
+          <input type="hidden" id="category" name="category" value="portrait" />
         </div>
 
         <div class="uploader" id="dropzone">
@@ -85,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
 
-        <button id="process-btn" type="submit" disabled>Blur Background</button>
+        <button id="process-btn" type="submit" disabled>Convert Background to Grayscale</button>
       </form>
 
       <section class="preview" id="preview-section" hidden>
@@ -95,14 +96,14 @@ document.addEventListener("DOMContentLoaded", () => {
             <img id="original-img" alt="Original preview" />
           </div>
           <div>
-            <h3>Background Blurred</h3>
-            <p id="process-prompt" class="prompt">Press "Blur Background" to process.</p>
+            <h3>Grayscale Background</h3>
+            <p id="process-prompt" class="prompt">Press "Convert Background to Grayscale" to process.</p>
             <div id="result-wrapper" hidden>
               <div class="checkerboard">
-                <img id="result-img" alt="Blurred background result" />
+                <img id="result-img" alt="Grayscale background result" />
               </div>
               <div class="actions">
-                <a id="download-link" download="blurred-background.png" class="btn">Download PNG</a>
+                <a id="download-link" download="grayscale-background.png" class="btn">Download PNG</a>
                 <button id="reset-btn" class="btn secondary" type="button">Try Another Image</button>
               </div>
             </div>
@@ -111,36 +112,33 @@ document.addEventListener("DOMContentLoaded", () => {
       </section>
 
       <section class="seo">
-       
-
-        <h2>How can you blur the background of a photo?</h2>
+        <h2>How to convert background to black and white?</h2>
         <ol>
           <li>Upload your image using the uploader above.</li>
-          <li>Select a <strong>Background Blur</strong> level (Light, Medium, Strong, Max).</li>
-          <li>Click <strong>Blur Background</strong> and wait a couple of seconds.</li>
-          <li>Download your PNG—your subject stays sharp while the background is softly blurred.</li>
+          <li>Select the <strong>Photo Type</strong> that best matches your image (Portrait, Product, or General).</li>
+          <li>Click <strong>Convert Background to Grayscale</strong> and wait a few seconds.</li>
+          <li>Download your PNG—your subject stays in full color while the background becomes black and white.</li>
         </ol>
-        <p>Tip: For portraits, start with <strong>Medium</strong>. For busy scenes, try <strong>Strong</strong> or <strong>Max</strong>.</p>
+        <p>Tip: For best results with portraits, select "Portrait / People". For products, use "Product / Object".</p>
         
-        <h3>Why bg blur helps?</h3>
+        <h3>Why convert background to grayscale?</h3>
         <ul>
-          <li><strong>Portraits:</strong> Make subjects pop with a clean, soft background. <a href="/blur-background-for-portraits.html">Learn more about blurring backgrounds for portraits</a>.</li>
-          <li><strong>Ecommerce:</strong> Reduce distractions behind products.</li>
-          <li><strong>Social:</strong> Add a pro look to profile photos and posts.</li>
+          <li><strong>Portraits:</strong> Make your subject stand out with a dramatic black and white background. Perfect for professional headshots and profile photos.</li>
+          <li><strong>Ecommerce:</strong> Draw attention to your products by desaturating distracting backgrounds.</li>
+          <li><strong>Social Media:</strong> Create eye-catching posts with a cinematic color vs. grayscale contrast.</li>
+          <li><strong>Artistic Effect:</strong> Add a creative, artistic touch to your photos with selective colorization.</li>
         </ul>
 
-        <h3>Learn How to Blur Images in Different Tools</h3>
-        <p>Step-by-step guides for blurring images in popular tools and platforms:</p>
+        <h3>How it works</h3>
+        <p>Our tool uses advanced AI segmentation (U-2-Net) to automatically detect and separate the foreground from the background. The background is then converted to grayscale while preserving the full color of your subject. This creates a striking visual effect that emphasizes your main subject.</p>
+
+        <h3>Related Tools</h3>
+        <p>Looking for other background effects? Try these related tools:</p>
         <ul>
-          <li><a href="/blog/how-to-blur-image-in-capcut.html">How to Blur Image in CapCut</a> - Complete CapCut blur guide</li>
-          <li><a href="/blog/how-to-blur-image-in-photoshop.html">How to Blur Image in Photoshop</a> - Professional Photoshop blur tutorial</li>
-          <li><a href="/blog/how-to-blur-image-in-canva.html">How to Blur Image in Canva</a> - Canva blur effects guide</li>
-          <li><a href="/blog/how-to-blur-image-in-powerpoint.html">How to Blur Image in PowerPoint</a> - PowerPoint blur tutorial</li>
-          <li><a href="/blog/how-to-blur-image-in-ppt.html">How to Blur Image in PPT</a> - Quick PPT blur guide</li>
-          <li><a href="/blog/how-to-blur-image-in-paint.html">How to Blur Image in Paint</a> - Windows Paint blur guide</li>
-          <li><a href="/blog/how-to-blur-image-in-figma.html">How to Blur Image in Figma</a> - Figma blur effects tutorial</li>
-          <li><a href="/blog/how-to-blur-images-on-iphone.html">How to Blur Images on iPhone</a> - iPhone blur methods guide</li>
-          <li><a href="/blog/how-to-blur-images-in-google-slides.html">How to Blur Images in Google Slides</a> - Google Slides blur workaround</li>
+          <li><a href="/blur-background.html">Blur Background</a> - Create a portrait effect by blurring the background</li>
+          <li><a href="/change-image-background.html">Change Background</a> - Replace background with solid colors or custom images</li>
+          <li><a href="/remove-background-from-image.html">Remove Background</a> - Create transparent backgrounds for your images</li>
+          <li><a href="/enhance-image.html">Enhance Image</a> - Improve image quality with AI-powered enhancements</li>
         </ul>
       </section>
     </main>
@@ -192,11 +190,11 @@ document.addEventListener("DOMContentLoaded", () => {
             <ul class="footer-links">
               <li><a href="/remove-background-from-image.html">Remove Background</a></li>
               <li><a href="/change-image-background.html">Change Background</a></li>
-              <li><a href="/blur-background.html">Blur Background</a></li>
               <li><a href="/grayscale-background.html">Grayscale Background</a></li>
               <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
               <li><a href="/upscale-image.html">Upscale Image</a></li>
               <li><a href="/enhance-image.html">Enhance Image</a></li>
+              <li><a href="/blur-background.html">Blur Background</a></li>
               <li><a href="/convert-image-format.html">Convert Image Format</a></li>
               <li><a href="/remove-people-from-photo.html">Remove People / Objects</a></li>
               <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
@@ -264,5 +262,4 @@ document.addEventListener("DOMContentLoaded", () => {
     <script src="./script.js?v=20251220-1" defer></script>
   </body>
 </html>
-
 

@@ -82,6 +82,7 @@ function setupDownloadTracking() {
       const actionType = pageType === 'upscale_image' ? 'upscale' :
                         pageType === 'color_change' ? 'color_change' :
                         pageType === 'blur_background' ? 'blur_background' :
+                        pageType === 'grayscale_background' ? 'grayscale_background' :
                         pageType === 'enhance_image' ? 'enhance' :
                         pageType === 'remove_text' ? 'remove_text' :
                         pageType === 'remove_gemini_watermark' ? 'remove_gemini_watermark' :
@@ -137,6 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { href: '/change-image-background.html', label: 'Change image background' },
             { href: '/convert-image-format.html', label: 'Convert image format' },
             { href: '/blur-background.html', label: 'Blur Background' },
+        { href: '/grayscale-background.html', label: 'Grayscale Background' },
             { href: '/bulk-image-resizer.html', label: 'Bulk Image Resizer' },
             { href: '/image-quality-checker.html', label: 'Image Quality Checker' },
           ].map(i => `<a href="${i.href}">${i.label}</a>`).join('');
@@ -157,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { href: '/upscale-image.html', label: 'Upscale Image' },
         { href: '/enhance-image.html', label: 'Enhance Image' },
         { href: '/blur-background.html', label: 'Blur Background' },
+        { href: '/grayscale-background.html', label: 'Grayscale Background' },
         { href: '/convert-image-format.html', label: 'Convert Image Format' },
         { href: '/remove-people-from-photo.html', label: 'Remove People / Objects' },
         { href: '/remove-text-from-image.html', label: 'Remove Text / Watermark' },
@@ -187,6 +190,7 @@ function getPageType() {
     if (path === '/convert-image-format.html') return 'convert_format';
     if (path === '/upscale-image.html') return 'upscale_image';
     if (path === '/blur-background.html') return 'blur_background';
+    if (path === '/grayscale-background.html') return 'grayscale_background';
     if (path === '/enhance-image.html') return 'enhance_image';
   if (path === '/remove-text-from-image.html') return 'remove_text';
   if (path === '/remove-people-from-photo.html') return 'remove_people';
@@ -201,6 +205,7 @@ function updateCtaText(){
   const isColorChangePage = window.location.pathname === '/change-color-of-image.html';
   const isUpscalePage = window.location.pathname === '/upscale-image.html';
   const isBlurPage = window.location.pathname === '/blur-background.html';
+  const isGrayscalePage = window.location.pathname === '/grayscale-background.html';
   const isEnhancePage = window.location.pathname === '/enhance-image.html';
   const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
   const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
@@ -243,6 +248,7 @@ function updatePromptText(){
   const isColorChangePage = window.location.pathname === '/change-color-of-image.html';
   const isUpscalePage = window.location.pathname === '/upscale-image.html';
   const isBlurPage = window.location.pathname === '/blur-background.html';
+  const isGrayscalePage = window.location.pathname === '/grayscale-background.html';
   const isEnhancePage = window.location.pathname === '/enhance-image.html';
   const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
   const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
@@ -628,6 +634,9 @@ if (form) form.addEventListener('submit', async (e) => {
       endpoint = '/api/blur-background';
       const radius = document.getElementById('blur-radius')?.value || '12';
       body.append('blur_radius', radius);
+    } else if (window.location.pathname === '/grayscale-background.html') {
+      endpoint = '/api/grayscale-background';
+      body.append('category', categoryInput?.value || 'portrait');
     } else if (window.location.pathname === '/enhance-image.html') {
       endpoint = '/api/enhance-image';
       const preset = document.getElementById('enhance-preset')?.value || 'balanced';
@@ -694,6 +703,8 @@ if (form) form.addEventListener('submit', async (e) => {
           downloadLink.download = `color-changed-${Date.now()}.png`;
         } else if (pageType === 'blur_background') {
           downloadLink.download = `blur-background-${Date.now()}.png`;
+        } else if (pageType === 'grayscale_background') {
+          downloadLink.download = `grayscale-background-${Date.now()}.png`;
         } else if (pageType === 'enhance_image') {
           downloadLink.download = `enhanced-${Date.now()}.png`;
         } else if (pageType === 'remove_text') {
@@ -1281,6 +1292,7 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
     if (path === '/change-color-of-image.html') return 'change_color';
     if (path === '/upscale-image.html') return 'upscale';
     if (path === '/blur-background.html') return 'blur_background';
+    if (path === '/grayscale-background.html') return 'grayscale_background';
     if (path === '/enhance-image.html') return 'enhance';
   if (path === '/remove-text-from-image.html') return 'remove_text';
   if (path === '/remove-people-from-photo.html') return 'remove_people';

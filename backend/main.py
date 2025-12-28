@@ -2247,7 +2247,7 @@ async def blog_index():
     <p class='blog-sub'>Guides for removing backgrounds, changing colors, upscaling, blurring, and enhancing images.</p>
     <ul class='blog-list'>{lis}</ul>
   </main>
-  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/blur-background.html'>Blur Background</a><a href='/enhance-image.html'>Enhance Image</a></nav>
+  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/blur-background.html'>Blur Background</a><a href='/grayscale-background.html'>Grayscale Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/enhance-image.html'>Enhance Image</a></nav>
   <footer class='container footer'><p>Built for speed and quality. <a href='#' rel='nofollow'>Contact</a></p></footer>
   <script src='/script.js?v=20250916-3' defer></script>
 </body></html>"""
@@ -2948,7 +2948,7 @@ async def update_blog_index():
         
         index_html += """</ul>                                                                                                
   </main>
-  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/blur-background.html'>Blur Background</a><a href='/enhance-image.html'>Enhance Image</a></nav>                                   
+  <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/blur-background.html'>Blur Background</a><a href='/grayscale-background.html'>Grayscale Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/enhance-image.html'>Enhance Image</a></nav>                                   
   <footer class='container footer'><p>Built for speed and quality. <a href='#' rel='nofollow'>Contact</a></p></footer>                                                                                
   <script src='/script.js?v=20250916-3' defer></script>
 </body></html>"""
@@ -3122,6 +3122,66 @@ async def blur_background(
     except Exception as e:
         log_user_action("blur_background_error", {"message": str(e)})
         raise HTTPException(status_code=500, detail=f"Blur background error: {str(e)}")
+
+
+@app.post("/api/grayscale-background")
+async def grayscale_background(
+    request: Request,
+    file: UploadFile = File(...),
+    category: str = Form("portrait"),
+):
+    """Convert the background to grayscale while keeping the foreground in color using U-2-Net segmentation."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGBA")
+        original_size = image.size
+        
+        # Downscale for processing efficiency
+        proc_image = downscale_image_if_needed(image)
+        
+        # Segment foreground using rembg (which uses U-2-Net)
+        session = get_session_for_category(category)
+        async with PROCESS_SEM:
+            cutout = remove(
+                proc_image,
+                session=session,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_size=10,
+                post_process_mask=True,
+            )
+        
+        # Build mask from alpha channel
+        if cutout.mode != "RGBA":
+            cutout = cutout.convert("RGBA")
+        mask = cutout.split()[-1]
+        
+        # Prepare grayscale background from original image
+        base_rgb = image.convert("RGB")
+        grayscale_bg = ImageOps.grayscale(base_rgb)
+        # Convert back to RGBA for compositing
+        grayscale_rgba = grayscale_bg.convert("RGBA")
+        
+        # Resize cutout and mask to original size if we downscaled
+        if cutout.size != image.size:
+            cutout = cutout.resize(image.size, Image.LANCZOS)
+            mask = mask.resize(image.size, Image.LANCZOS)
+        
+        # Composite: paste color foreground onto grayscale background
+        output = grayscale_rgba.copy()
+        output.paste(cutout, (0, 0), mask=mask)
+        
+        buf = io.BytesIO()
+        output.save(buf, format="PNG")
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_user_action("grayscale_background_error", {"message": str(e)})
+        raise HTTPException(status_code=500, detail=f"Grayscale background error: {str(e)}")
 
 
 @app.post("/api/enhance-image")
@@ -4870,6 +4930,111 @@ async def test_google_professional_headshot(
         error_msg = str(e)
         logger.error(f"Error in Google Gemini professional headshot: {error_msg}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error processing image with Google Gemini: {error_msg}")
+    
+    finally:
+        # Clean up temporary file
+        if tmp_file_path:
+            try:
+                os.unlink(tmp_file_path)
+            except Exception:
+                pass
+
+@app.post("/api/test-replicate-professional-headshot")
+async def test_replicate_professional_headshot(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Test professional headshot creation using Replicate's Stable Diffusion models."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    replicate_api_token = os.getenv("REPLICATE_API_TOKEN")
+    if not replicate_api_token:
+        raise HTTPException(status_code=500, detail="REPLICATE_API_TOKEN environment variable not set")
+    
+    tmp_file_path = None
+    try:
+        import replicate
+        
+        # Read image file
+        contents = await file.read()
+        
+        # Create a temporary file for Replicate API
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+            tmp_file.write(contents)
+            tmp_file_path = tmp_file.name
+        
+        # Initialize Replicate client
+        client = replicate.Client(api_token=replicate_api_token)
+        
+        # Use Stable Diffusion XL for professional headshot generation
+        # This model can do image-to-image generation with control
+        logger.info(f"Running Stable Diffusion XL for professional headshot with image: {tmp_file_path}")
+        
+        with open(tmp_file_path, 'rb') as img_file:
+            # Try using google/nano-banana-pro which supports image-to-image with prompts
+            # Or use stability-ai/sdxl for professional headshots
+            output = client.run(
+                "google/nano-banana-pro",
+                input={
+                    "prompt": "A professional corporate headshot portrait. The person is wearing a premium navy blue business suit, crisp white dress shirt, and subtle silk tie. Professional studio lighting with soft Rembrandt lighting and subtle catchlight in the eyes. Neutral, out-of-focus dark professional studio background. Chest-up framing, centered alignment, shallow depth of field. Hyper-realistic 4K resolution, preserving natural skin texture and hair details. Maintain the exact facial features, identity, and appearance of the person in the input image.",
+                    "image_input": [img_file],
+                    "aspect_ratio": "match_input_image",
+                    "output_format": "png",
+                    "resolution": "2K",
+                    "safety_filter_level": "block_only_high"
+                }
+            )
+        
+        logger.info(f"Stable Diffusion output type: {type(output)}")
+        
+        # Handle output - could be FileOutput, URL string, or list
+        result_bytes = None
+        
+        if isinstance(output, str):
+            # If output is a URL string, download it
+            logger.info(f"Output is URL: {output}")
+            response = requests.get(output, timeout=120)
+            response.raise_for_status()
+            result_bytes = response.content
+        elif isinstance(output, (list, tuple)) and len(output) > 0:
+            # Handle list of outputs
+            file_output = output[0]
+            if isinstance(file_output, str):
+                # URL in list
+                response = requests.get(file_output, timeout=120)
+                response.raise_for_status()
+                result_bytes = response.content
+            elif hasattr(file_output, 'read'):
+                result_bytes = file_output.read()
+            else:
+                raise HTTPException(status_code=500, detail=f"Unexpected output format in list: {type(file_output)}")
+        elif hasattr(output, 'read'):
+            # Handle FileOutput object
+            logger.info("Output is FileOutput, reading bytes...")
+            result_bytes = output.read()
+        else:
+            logger.error(f"Unexpected output format: {type(output)}, value: {output}")
+            raise HTTPException(status_code=500, detail=f"Unexpected output format from Replicate: {type(output)}")
+        
+        if not result_bytes or len(result_bytes) == 0:
+            raise HTTPException(status_code=500, detail="No image content found in response")
+        
+        logger.info(f"Successfully got {len(result_bytes)} bytes from Stable Diffusion")
+        return Response(content=result_bytes, media_type="image/png")
+    
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Error in Replicate professional headshot: {error_msg}", exc_info=True)
+        
+        # Provide more helpful error messages
+        if "No image content" in error_msg or "ModelError" in str(type(e)):
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Model did not return an image. This might mean: 1) The model doesn't support this use case, 2) The prompt needs adjustment, or 3) The image format isn't supported. Error: {error_msg}"
+            )
+        else:
+            raise HTTPException(status_code=500, detail=f"Error processing image with Replicate: {error_msg}")
     
     finally:
         # Clean up temporary file
