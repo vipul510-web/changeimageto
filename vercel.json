@@ -3,6 +3,7 @@
   "builds": [
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
+  "cleanUrls": true,
   "redirects": [
     { "source": "/index.html", "destination": "/", "permanent": true }
   ],
