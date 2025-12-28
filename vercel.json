@@ -4,15 +4,12 @@
     { "src": "frontend/**", "use": "@vercel/static" },
     { "src": "api/**/*.js", "use": "@vercel/node" }
   ],
-  "cleanUrls": true,
   "redirects": [
     { "source": "/index.html", "destination": "/", "permanent": true }
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/api/$1" },
-    { "source": "/blog/(.*\\.html)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" },
-    { "source": "/(.*\\.txt)", "destination": "/$1" },
-    { "source": "/(.*)", "destination": "/$1" }
+    { "source": "/blog/(.*\\.html)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" }
   ],
   "headers": [
     {
