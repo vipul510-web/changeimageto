@@ -401,6 +401,7 @@ function enableProcess(enabled){
 }
 
 function setOriginalPreview(file){
+  if (!originalImg) return; // Skip if element doesn't exist (e.g., on convert-image-to-pdf page)
   const reader = new FileReader();
   reader.onload = () => {
     originalImg.src = reader.result;
@@ -417,8 +418,8 @@ function setOriginalPreview(file){
     const imageColumns = document.querySelectorAll('.image-column');
     imageColumns.forEach(col => col.style.display = 'block');
     
-    resultImg.src = '';
-    downloadLink.removeAttribute('href');
+    if (resultImg) resultImg.src = '';
+    if (downloadLink) downloadLink.removeAttribute('href');
     const prompt = document.getElementById('process-prompt');
     if(prompt) prompt.style.display = 'block';
     const resultWrap = document.getElementById('result-wrapper');
@@ -704,8 +705,8 @@ if (form) form.addEventListener('submit', async (e) => {
         const blob = await res.blob();
         console.log('Response blob size:', blob.size, 'bytes');
         const objectUrl = URL.createObjectURL(blob);
-        resultImg.src = objectUrl;
-        downloadLink.href = objectUrl;
+        if (resultImg) resultImg.src = objectUrl;
+        if (downloadLink) downloadLink.href = objectUrl;
         // Set a sensible filename based on page type
         if (pageType === 'upscale_image') {
           downloadLink.download = `upscaled-${Date.now()}.png`;
@@ -1138,10 +1139,12 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
   });
   
   currentFile = null;
-  fileInput.value = '';
-  originalImg.src = '';
-  originalImg.style.display = 'none';
-  resultImg.src = '';
+  if (fileInput) fileInput.value = '';
+  if (originalImg) {
+    originalImg.src = '';
+    originalImg.style.display = 'none';
+  }
+  if (resultImg) resultImg.src = '';
   
   // Show upload prompt
   const uploadPrompt = document.getElementById('upload-prompt');
@@ -1558,8 +1561,8 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
       try{
         var blob = await toColorBackground(downloadLink.href);
         var coloredUrl = URL.createObjectURL(blob);
-        resultImg.src = coloredUrl;
-        downloadLink.href = coloredUrl;
+        if (resultImg) resultImg.src = coloredUrl;
+        if (downloadLink) downloadLink.href = coloredUrl;
         var hex = color.replace('#','');
         downloadLink.download = 'bg-' + hex + '-' + Date.now() + '.png';
       }catch(err){ console.warn('Color composite failed', err); }

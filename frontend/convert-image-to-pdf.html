@@ -283,7 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <script src="./script.js?v=20251220-1" defer></script>
     <script>
       // Image to PDF functionality
-      (function() {
+      document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('upload-form');
         const fileInput = document.getElementById('file-input');
         const dropzone = document.getElementById('dropzone');
@@ -295,6 +295,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const downloadLink = document.getElementById('download-link');
         const resetBtn = document.getElementById('reset-btn');
         const statusDiv = document.getElementById('status');
+        
+        if (!form || !fileInput || !dropzone || !processBtn || !originalImg || !previewSection || !resultWrapper || !processPrompt || !downloadLink || !statusDiv) {
+          console.error('Required elements not found');
+          return;
+        }
         
         let currentFile = null;
         
@@ -406,7 +411,7 @@ document.addEventListener("DOMContentLoaded", () => {
             processBtn.disabled = true;
           });
         }
-      })();
+      });
     </script>
   </body>
 </html>
