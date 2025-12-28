@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test Replicate Professional Headshot</title>
+    <style>
+      :root{--bg:#0b0f13;--fg:#eaf0f6;--muted:#9aa7b2;--accent:#6aa7ff;--card:#12171d;--border:#1e2630}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6;padding:24px}
+      .container{max-width:1200px;margin:0 auto}
+      h1{margin:0 0 8px}
+      p{margin:0;color:var(--muted);margin-bottom:16px}
+      .uploader{position:relative;border:2px dashed var(--border);border-radius:12px;padding:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card);margin:24px 0}
+      .uploader input{position:absolute;inset:0;opacity:0;cursor:pointer;display:block;width:100%;height:100%}
+      .uploader-instructions{display:flex;flex-direction:column;align-items:center;color:var(--muted)}
+      button, .btn{background:var(--accent);color:#001633;border:none;padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;margin-top:16px}
+      button[disabled]{opacity:.5;cursor:not-allowed}
+      .preview{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+      @media(max-width:768px){.preview{grid-template-columns:1fr}}
+      .checkerboard{padding:0;min-height:auto;display:block}
+      .preview img{max-width:100%;height:auto;border-radius:8px;display:block}
+      .status{margin-top:16px;padding:12px;border-radius:8px;background:var(--card);color:var(--muted)}
+      .status.error{background:#3a1f1f;color:#ff6b6b}
+      .status.success{background:#1f3a1f;color:#6bff6b}
+      .status.info{background:#1f3a3a;color:#6bffff}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Test Replicate Professional Headshot</h1>
+      <p>Upload an image to create a professional headshot using Replicate's Stable Diffusion models (similar to Professional-Headshot-with-single-image repo)</p>
+
+      <form id="upload-form">
+        <div class="uploader" id="dropzone">
+          <input type="file" id="file-input" accept="image/*" />
+          <div class="uploader-instructions">
+            <strong>Drop image here</strong>
+            <span>or click to browse</span>
+          </div>
+        </div>
+
+        <button id="process-btn" type="submit" disabled>Create Professional Headshot</button>
+      </form>
+      
+      <div id="status" class="status" style="display:none;"></div>
+
+      <section class="preview" id="preview-section" style="display:none;">
+        <div>
+          <h3>Original</h3>
+          <div class="checkerboard">
+            <img id="original-img" alt="Original preview" style="display:none;" />
+          </div>
+        </div>
+        <div id="result-container" style="display:none;">
+          <h3>Professional Headshot</h3>
+          <div class="checkerboard">
+            <img id="result-img" alt="Professional headshot result" style="display:none;" />
+          </div>
+          <div style="margin-top:16px;">
+            <a id="download-link" download="professional-headshot.png" class="btn">Download Result</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const form = document.getElementById('upload-form');
+      const fileInput = document.getElementById('file-input');
+      const dropzone = document.getElementById('dropzone');
+      const processBtn = document.getElementById('process-btn');
+      const originalImg = document.getElementById('original-img');
+      const resultImg = document.getElementById('result-img');
+      const previewSection = document.getElementById('preview-section');
+      const statusDiv = document.getElementById('status');
+      const downloadLink = document.getElementById('download-link');
+      const resultContainer = document.getElementById('result-container');
+
+      let currentFile = null;
+
+      function showStatus(message, type = 'info') {
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+        statusDiv.style.display = 'block';
+      }
+
+      function hideStatus() {
+        statusDiv.style.display = 'none';
+      }
+
+      function setOriginalPreview(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          originalImg.src = dataUrl;
+          originalImg.style.display = 'block';
+          previewSection.style.display = 'grid';
+          resultContainer.style.display = 'none';
+        };
+        reader.onerror = () => {
+          showStatus('Error reading file', 'error');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          currentFile = file;
+          processBtn.disabled = false;
+          resultContainer.style.display = 'none';
+          setOriginalPreview(file);
+          hideStatus();
+        }
+      });
+
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--accent)';
+      });
+
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.style.borderColor = 'var(--border)';
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--border)';
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+          fileInput.files = e.dataTransfer.files;
+          currentFile = file;
+          processBtn.disabled = false;
+          resultContainer.style.display = 'none';
+          setOriginalPreview(file);
+          hideStatus();
+        }
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentFile) return;
+
+        processBtn.disabled = true;
+        processBtn.textContent = 'Processing...';
+        showStatus('Creating professional headshot with Replicate Stable Diffusion...', 'info');
+        resultContainer.style.display = 'none';
+
+        try {
+          const API_BASE = 'http://127.0.0.1:8000';
+          
+          const formData = new FormData();
+          formData.append('file', currentFile);
+          
+          const response = await fetch(`${API_BASE}/api/test-replicate-professional-headshot`, {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+          
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          
+          // Show result
+          resultImg.src = url;
+          resultImg.style.display = 'block';
+          resultContainer.style.display = 'block';
+          previewSection.style.display = 'grid';
+          
+          downloadLink.href = url;
+          downloadLink.download = `professional-headshot-${Date.now()}.png`;
+          
+          showStatus('Professional headshot created successfully!', 'success');
+          
+        } catch (error) {
+          console.error('Error:', error);
+          showStatus('Error: ' + error.message, 'error');
+        } finally {
+          processBtn.disabled = false;
+          processBtn.textContent = 'Create Professional Headshot';
+        }
+      });
+    </script>
+  </body>
+</html>

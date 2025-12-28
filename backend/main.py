@@ -2200,11 +2200,55 @@ async def blog_index():
                 except Exception:
                     pass
     items = list(dedup.values())
-    # simple HTML list
-    lis = "".join([
-        f"<li><a href='/blog/{p['slug']}.html'>{p['title']}</a> <span class='date'>— {p.get('date','')[:10]}</span></li>"
-        for p in items
-    ])
+    # Extract snippets from blog posts
+    import re
+    from html import unescape
+    
+    def extract_snippet(slug: str, title: str) -> str:
+        """Extract snippet from blog post HTML or generate from title"""
+        if BLOG_BUCKET:
+            try:
+                client = get_storage_client()
+                bucket = get_or_create_bucket(client)
+                blob = bucket.blob(f"blog/{slug}.html")
+                if blob.exists():
+                    html_content = blob.download_as_text()
+                    # Try to extract meta description
+                    meta_desc_match = re.search(r'<meta\s+name=["\']description["\']\s+content=["\']([^"\']+)["\']', html_content, re.IGNORECASE)
+                    if meta_desc_match:
+                        snippet = unescape(meta_desc_match.group(1))
+                        # Remove the generic "– practical guide and tips." if present
+                        snippet = snippet.replace(" – practical guide and tips.", "").strip()
+                        if snippet and len(snippet) > 20:
+                            return snippet[:150] + "..." if len(snippet) > 150 else snippet
+                    # Fallback: extract first paragraph from content
+                    p_match = re.search(r'<p[^>]*>([^<]+)</p>', html_content, re.IGNORECASE | re.DOTALL)
+                    if p_match:
+                        snippet = unescape(re.sub(r'\s+', ' ', p_match.group(1)).strip())
+                        if snippet and len(snippet) > 20:
+                            return snippet[:150] + "..." if len(snippet) > 150 else snippet
+            except Exception:
+                pass
+        # Fallback: generate snippet from title
+        return f"Learn how to {title.lower()}. Step-by-step guide with practical tips and examples."
+    
+    # Generate blog cards with snippets
+    blog_cards = []
+    for p in items:
+        snippet = extract_snippet(p['slug'], p['title'])
+        date_str = p.get('date', '')[:10] if p.get('date') else ''
+        blog_cards.append(f"""
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/{p['slug']}.html">{p['title']}</a></h2>
+          <p class="blog-card-snippet">{snippet}</p>
+          <div class="blog-card-meta">
+            <time datetime="{p.get('date', '')}">{date_str}</time>
+          </div>
+        </div>
+      </article>""")
+    
+    blog_grid = "".join(blog_cards)
     page_title = "Image Editing Blog | Tutorials, Tips & How‑To Guides"
     page_desc = "Learn image editing: remove background, change colors, upscale, blur, enhance images. Free tutorials and guides."
     json_ld = json.dumps({
@@ -2224,15 +2268,23 @@ async def blog_index():
 <link rel='stylesheet' href='/styles.css?v=20250916-3'/>
 <link rel='stylesheet' href='https://www.changeimageto.com/styles.css?v=20250916-3'/>
 <style>
-  .blog-wrap{{max-width:1000px;margin:0 auto;padding:24px}}
+  .blog-wrap{{max-width:1200px;margin:0 auto;padding:24px}}
   .blog-title{{margin:0 0 12px}}
-  .blog-sub{{color:var(--muted);margin:0 0 16px}}
-  .blog-list{{list-style:none;padding:0;margin:0}}
-  .blog-list li{{padding:10px 0;border-bottom:1px solid var(--border)}}
-  .blog-list li:last-child{{border-bottom:none}}
-  .blog-list a{{color:#fff;text-decoration:none;font-weight:700}}
-  .blog-list a:hover{{text-decoration:underline}}
-  .blog-list .date{{color:var(--muted);font-weight:400}}
+  .blog-sub{{color:var(--muted);margin:0 0 32px;font-size:18px}}
+  .blog-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;margin-top:32px}}
+  .blog-card{{background:var(--card,#12171d);border:1px solid var(--border,#1e2630);border-radius:12px;padding:24px;transition:transform 0.2s,box-shadow 0.2s}}
+  .blog-card:hover{{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}}
+  .blog-card-content{{display:flex;flex-direction:column;gap:12px}}
+  .blog-card-title{{margin:0;font-size:20px;line-height:1.4}}
+  .blog-card-title a{{color:#fff;text-decoration:none;font-weight:600}}
+  .blog-card-title a:hover{{color:var(--accent,#6aa7ff);text-decoration:underline}}
+  .blog-card-snippet{{color:var(--muted,#9aa7b2);margin:0;line-height:1.6;font-size:15px;flex:1}}
+  .blog-card-meta{{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid var(--border,#1e2630)}}
+  .blog-card-meta time{{color:var(--muted,#9aa7b2);font-size:14px}}
+  @media(max-width:768px){{
+    .blog-grid{{grid-template-columns:1fr;gap:16px}}
+    .blog-card{{padding:20px}}
+  }}
 </style>
 </head>
 <body>
@@ -2245,7 +2297,8 @@ async def blog_index():
   </header>
   <main class='blog-wrap'>
     <p class='blog-sub'>Guides for removing backgrounds, changing colors, upscaling, blurring, and enhancing images.</p>
-    <ul class='blog-list'>{lis}</ul>
+    <div class='blog-grid'>{blog_grid}
+    </div>
   </main>
   <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/blur-background.html'>Blur Background</a><a href='/grayscale-background.html'>Black & White Image Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/enhance-image.html'>Enhance Image</a></nav>
   <footer class='container footer'><p>Built for speed and quality. <a href='#' rel='nofollow'>Contact</a></p></footer>
@@ -2909,6 +2962,51 @@ async def update_blog_index():
         # Sort by date (newest first)
         blog_posts.sort(key=lambda x: x['date'], reverse=True)
         
+        # Extract snippets from blog posts
+        import re
+        from html import unescape
+        
+        def extract_snippet(slug: str, title: str) -> str:
+            """Extract snippet from blog post HTML or generate from title"""
+            try:
+                blob = bucket.blob(f"blog/{slug}.html")
+                if blob.exists():
+                    html_content = blob.download_as_text()
+                    # Try to extract meta description
+                    meta_desc_match = re.search(r'<meta\s+name=["\']description["\']\s+content=["\']([^"\']+)["\']', html_content, re.IGNORECASE)
+                    if meta_desc_match:
+                        snippet = unescape(meta_desc_match.group(1))
+                        # Remove the generic "– practical guide and tips." if present
+                        snippet = snippet.replace(" – practical guide and tips.", "").strip()
+                        if snippet and len(snippet) > 20:
+                            return snippet[:150] + "..." if len(snippet) > 150 else snippet
+                    # Fallback: extract first paragraph from content
+                    p_match = re.search(r'<p[^>]*>([^<]+)</p>', html_content, re.IGNORECASE | re.DOTALL)
+                    if p_match:
+                        snippet = unescape(re.sub(r'\s+', ' ', p_match.group(1)).strip())
+                        if snippet and len(snippet) > 20:
+                            return snippet[:150] + "..." if len(snippet) > 150 else snippet
+            except Exception:
+                pass
+            # Fallback: generate snippet from title
+            return f"Learn how to {title.lower()}. Step-by-step guide with practical tips and examples."
+        
+        # Generate blog cards with snippets
+        blog_cards_html = ""
+        for post in blog_posts:
+            snippet = extract_snippet(post['slug'], post['title'])
+            date_str = post.get('date', '')[:10] if post.get('date') else ''
+            blog_cards_html += f"""
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/{post['slug']}.html">{post['title']}</a></h2>
+          <p class="blog-card-snippet">{snippet}</p>
+          <div class="blog-card-meta">
+            <time datetime="{post.get('date', '')}">{date_str}</time>
+          </div>
+        </div>
+      </article>"""
+        
         # Generate new index HTML
         index_html = f"""<!doctype html><html lang='en'><head>
 <meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
@@ -2920,15 +3018,23 @@ async def update_blog_index():
 <link rel='stylesheet' href='/styles.css?v=20250916-3'/>
 <link rel='stylesheet' href='https://www.changeimageto.com/styles.css?v=20250916-3'/>
 <style>
-  .blog-wrap{{max-width:1000px;margin:0 auto;padding:24px}}
+  .blog-wrap{{max-width:1200px;margin:0 auto;padding:24px}}
   .blog-title{{margin:0 0 12px}}
-  .blog-sub{{color:var(--muted);margin:0 0 16px}}
-  .blog-list{{list-style:none;padding:0;margin:0}}
-  .blog-list li{{padding:10px 0;border-bottom:1px solid var(--border)}}
-  .blog-list li:last-child{{border-bottom:none}}
-  .blog-list a{{color:#fff;text-decoration:none;font-weight:700}}
-  .blog-list a:hover{{text-decoration:underline}}
-  .blog-list .date{{color:var(--muted);font-weight:400}}
+  .blog-sub{{color:var(--muted);margin:0 0 32px;font-size:18px}}
+  .blog-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;margin-top:32px}}
+  .blog-card{{background:var(--card,#12171d);border:1px solid var(--border,#1e2630);border-radius:12px;padding:24px;transition:transform 0.2s,box-shadow 0.2s}}
+  .blog-card:hover{{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}}
+  .blog-card-content{{display:flex;flex-direction:column;gap:12px}}
+  .blog-card-title{{margin:0;font-size:20px;line-height:1.4}}
+  .blog-card-title a{{color:#fff;text-decoration:none;font-weight:600}}
+  .blog-card-title a:hover{{color:var(--accent,#6aa7ff);text-decoration:underline}}
+  .blog-card-snippet{{color:var(--muted,#9aa7b2);margin:0;line-height:1.6;font-size:15px;flex:1}}
+  .blog-card-meta{{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid var(--border,#1e2630)}}
+  .blog-card-meta time{{color:var(--muted,#9aa7b2);font-size:14px}}
+  @media(max-width:768px){{
+    .blog-grid{{grid-template-columns:1fr;gap:16px}}
+    .blog-card{{padding:20px}}
+  }}
 </style>
 </head>
 <body>
@@ -2941,12 +3047,55 @@ async def update_blog_index():
   </header>
   <main class='blog-wrap'>
     <p class='blog-sub'>Guides for removing backgrounds, changing colors, upscaling, blurring, and enhancing images.</p>                                                                              
-    <ul class='blog-list'>"""
+    <div class='blog-grid'>{blog_cards_html}
+    </div>"""
         
+        # Extract snippets from blog posts
+        import re
+        from html import unescape
+        
+        def extract_snippet(slug: str, title: str) -> str:
+            """Extract snippet from blog post HTML or generate from title"""
+            try:
+                blob = bucket.blob(f"blog/{slug}.html")
+                if blob.exists():
+                    html_content = blob.download_as_text()
+                    # Try to extract meta description
+                    meta_desc_match = re.search(r'<meta\s+name=["\']description["\']\s+content=["\']([^"\']+)["\']', html_content, re.IGNORECASE)
+                    if meta_desc_match:
+                        snippet = unescape(meta_desc_match.group(1))
+                        # Remove the generic "– practical guide and tips." if present
+                        snippet = snippet.replace(" – practical guide and tips.", "").strip()
+                        if snippet and len(snippet) > 20:
+                            return snippet[:150] + "..." if len(snippet) > 150 else snippet
+                    # Fallback: extract first paragraph from content
+                    p_match = re.search(r'<p[^>]*>([^<]+)</p>', html_content, re.IGNORECASE | re.DOTALL)
+                    if p_match:
+                        snippet = unescape(re.sub(r'\s+', ' ', p_match.group(1)).strip())
+                        if snippet and len(snippet) > 20:
+                            return snippet[:150] + "..." if len(snippet) > 150 else snippet
+            except Exception:
+                pass
+            # Fallback: generate snippet from title
+            return f"Learn how to {title.lower()}. Step-by-step guide with practical tips and examples."
+        
+        # Generate blog cards with snippets
         for post in blog_posts:
-            index_html += f"<li><a href='/blog/{post['slug']}.html'>{post['title']}</a> <span class='date'>— {post['date']}</span></li>"
+            snippet = extract_snippet(post['slug'], post['title'])
+            date_str = post.get('date', '')[:10] if post.get('date') else ''
+            index_html += f"""
+      <article class="blog-card">
+        <div class="blog-card-content">
+          <h2 class="blog-card-title"><a href="/blog/{post['slug']}.html">{post['title']}</a></h2>
+          <p class="blog-card-snippet">{snippet}</p>
+          <div class="blog-card-meta">
+            <time datetime="{post.get('date', '')}">{date_str}</time>
+          </div>
+        </div>
+      </article>"""
         
-        index_html += """</ul>                                                                                                
+        index_html += """
+    </div>                                                                                                
   </main>
   <nav class='seo-links'><a href='/remove-background-from-image.html'>Remove Background</a><a href='/change-image-background.html'>Change Background</a><a href='/blur-background.html'>Blur Background</a><a href='/grayscale-background.html'>Black & White Image Background</a><a href='/change-color-of-image.html'>Change Color</a><a href='/upscale-image.html'>AI Image Upscaler</a><a href='/enhance-image.html'>Enhance Image</a></nav>                                   
   <footer class='container footer'><p>Built for speed and quality. <a href='#' rel='nofollow'>Contact</a></p></footer>                                                                                

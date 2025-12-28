@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test Google Gemini Text Removal</title>
+    <style>
+      :root{--bg:#0b0f13;--fg:#eaf0f6;--muted:#9aa7b2;--accent:#6aa7ff;--card:#12171d;--border:#1e2630}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6;padding:24px}
+      .container{max-width:1200px;margin:0 auto}
+      h1{margin:0 0 8px}
+      p{margin:0;color:var(--muted)}
+      .uploader{position:relative;border:2px dashed var(--border);border-radius:12px;padding:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card);margin:24px 0}
+      .uploader input{position:absolute;inset:0;opacity:0;cursor:pointer;display:block;width:100%;height:100%}
+      .uploader-instructions{display:flex;flex-direction:column;align-items:center;color:var(--muted)}
+      button, .btn{background:var(--accent);color:#001633;border:none;padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;margin-top:16px}
+      button[disabled]{opacity:.5;cursor:not-allowed}
+      .preview{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+      @media(max-width:768px){.preview{grid-template-columns:1fr}}
+      .checkerboard{padding:0;min-height:auto;display:block}
+      .preview img{max-width:100%;height:auto;border-radius:8px;display:block}
+      .status{margin-top:16px;padding:12px;border-radius:8px;background:var(--card);color:var(--muted)}
+      .status.error{background:#3a1f1f;color:#ff6b6b}
+      .status.success{background:#1f3a1f;color:#6bff6b}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Test Google Gemini Text Removal</h1>
+      <p>Upload an image to test text removal using Google's Gemini image editing API</p>
+
+      <form id="upload-form">
+        <div class="uploader" id="dropzone">
+          <input type="file" id="file-input" accept="image/*" />
+          <div class="uploader-instructions">
+            <strong>Drop image here</strong>
+            <span>or click to browse</span>
+          </div>
+        </div>
+
+        <button id="pay-btn" type="button" disabled>Pay & Process Image</button>
+        <button id="process-btn" type="submit" disabled style="display:none;">Process Image</button>
+      </form>
+      
+      <div id="payment-status" class="status" style="display:none;"></div>
+
+      <div id="status" class="status" style="display:none;"></div>
+
+      <section class="preview" id="preview-section" style="display:none;">
+        <div>
+          <h3>Original</h3>
+          <div class="checkerboard">
+            <img id="original-img" alt="Original preview" style="display:none;" />
+          </div>
+        </div>
+        <div id="result-container" style="display:none;">
+          <h3>Result (Text Removed)</h3>
+          <div class="checkerboard">
+            <img id="result-img" alt="Result preview" style="display:none;" />
+          </div>
+          <div style="margin-top:16px;">
+            <a id="download-link" download="text-removed.png" class="btn">Download Result</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const form = document.getElementById('upload-form');
+      const fileInput = document.getElementById('file-input');
+      const dropzone = document.getElementById('dropzone');
+      const payBtn = document.getElementById('pay-btn');
+      const processBtn = document.getElementById('process-btn');
+      const originalImg = document.getElementById('original-img');
+      const resultImg = document.getElementById('result-img');
+      const previewSection = document.getElementById('preview-section');
+      const statusDiv = document.getElementById('status');
+      const paymentStatusDiv = document.getElementById('payment-status');
+      const downloadLink = document.getElementById('download-link');
+
+      let currentFile = null;
+      let paymentSessionId = null;
+      let hasProcessed = false; // Track if processing has been completed
+
+      function showStatus(message, type = 'info') {
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+        statusDiv.style.display = 'block';
+      }
+
+      function hideStatus() {
+        statusDiv.style.display = 'none';
+      }
+
+      function setOriginalPreview(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          // Set image source and show it
+          originalImg.src = dataUrl;
+          originalImg.style.display = 'block';
+          // Show preview section immediately (original only, result hidden)
+          previewSection.style.display = 'grid';
+          // Hide result container until processing is done
+          document.getElementById('result-container').style.display = 'none';
+          // Store file data in sessionStorage for restoration after redirect
+          sessionStorage.setItem('pendingImageData', dataUrl);
+          sessionStorage.setItem('pendingImageName', file.name);
+          sessionStorage.setItem('pendingImageType', file.type);
+        };
+        reader.onerror = () => {
+          showStatus('Error reading file', 'error');
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      function restorePendingFile() {
+        const imageData = sessionStorage.getItem('pendingImageData');
+        const imageName = sessionStorage.getItem('pendingImageName');
+        const imageType = sessionStorage.getItem('pendingImageType');
+        
+        if (imageData && imageName && imageType) {
+          // Convert data URL back to File object
+          fetch(imageData)
+            .then(res => res.blob())
+            .then(blob => {
+              const file = new File([blob], imageName, { type: imageType });
+              currentFile = file;
+              
+              // Set preview - restore original image display
+              originalImg.src = imageData;
+              originalImg.style.display = 'block';
+              previewSection.style.display = 'grid';
+              // Hide result container until processing is done
+              document.getElementById('result-container').style.display = 'none';
+              
+              // Enable process button if payment is verified
+              if (paymentSessionId) {
+                payBtn.style.display = 'none';
+                processBtn.style.display = 'inline-block';
+                processBtn.disabled = false;
+              } else {
+                payBtn.disabled = false;
+              }
+              
+              // Don't clear stored data yet - keep it in case of page refresh
+              // sessionStorage.removeItem('pendingImageData');
+              // sessionStorage.removeItem('pendingImageName');
+              // sessionStorage.removeItem('pendingImageType');
+            })
+            .catch(err => {
+              console.error('Error restoring file:', err);
+              showStatus('Error restoring image. Please upload again.', 'error');
+            });
+        }
+      }
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          currentFile = file;
+          // Reset payment state when new file is uploaded
+          paymentSessionId = null;
+          hasProcessed = false;
+          payBtn.disabled = false;
+          payBtn.style.display = 'inline-block';
+          processBtn.style.display = 'none';
+          processBtn.disabled = true;
+          // Hide result container
+          document.getElementById('result-container').style.display = 'none';
+          setOriginalPreview(file);
+        }
+      });
+
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--accent)';
+      });
+
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.style.borderColor = 'var(--border)';
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--border)';
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+          fileInput.files = e.dataTransfer.files;
+          currentFile = file;
+          // Reset payment state when new file is uploaded
+          paymentSessionId = null;
+          hasProcessed = false;
+          payBtn.disabled = false;
+          payBtn.style.display = 'inline-block';
+          processBtn.style.display = 'none';
+          processBtn.disabled = true;
+          // Hide result container
+          document.getElementById('result-container').style.display = 'none';
+          setOriginalPreview(file);
+        }
+      });
+
+      // Handle payment button click
+      payBtn.addEventListener('click', async () => {
+        if (!currentFile) return;
+
+        payBtn.disabled = true;
+        payBtn.textContent = 'Creating checkout...';
+        showStatus('Creating payment checkout...', 'info');
+
+        try {
+          const API_BASE = 'http://127.0.0.1:8000';
+          
+          // Create checkout session
+          const returnUrl = window.location.href.split('?')[0]; // Remove any existing query params
+          const checkoutResponse = await fetch(`${API_BASE}/api/create-payment-checkout`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              return_url: returnUrl
+            })
+          });
+
+          if (!checkoutResponse.ok) {
+            const errorText = await checkoutResponse.text();
+            throw new Error(`HTTP ${checkoutResponse.status}: ${errorText}`);
+          }
+
+          const checkoutData = await checkoutResponse.json();
+          paymentSessionId = checkoutData.session_id;
+          
+          // Redirect to checkout
+          window.location.href = checkoutData.checkout_url;
+          
+        } catch (error) {
+          console.error('Error:', error);
+          showStatus('Error: ' + error.message, 'error');
+          payBtn.disabled = false;
+          payBtn.textContent = 'Pay & Process Image';
+        }
+      });
+
+      // Check for payment success on page load (if returning from checkout)
+      window.addEventListener('load', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentStatus = urlParams.get('status');
+        const paymentId = urlParams.get('payment_id');
+        
+        // Check if payment succeeded (Dodo Payments returns status=succeeded in URL)
+        if (paymentStatus === 'succeeded' && paymentId) {
+          paymentSessionId = paymentId; // Use payment_id as session identifier
+          paymentStatusDiv.textContent = 'Payment verified! Restoring your image...';
+          paymentStatusDiv.className = 'status success';
+          paymentStatusDiv.style.display = 'block';
+          
+          // Restore the file that was uploaded before payment
+          restorePendingFile();
+          
+          // Clean URL to remove payment parameters
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Auto-process after a short delay to allow file restoration
+          setTimeout(() => {
+            if (currentFile && paymentSessionId) {
+              paymentStatusDiv.textContent = 'Payment verified! Processing image...';
+              form.dispatchEvent(new Event('submit'));
+            }
+          }, 1000);
+        } else if (paymentStatus && paymentStatus !== 'succeeded') {
+          paymentStatusDiv.textContent = `Payment ${paymentStatus}. Please try again.`;
+          paymentStatusDiv.className = 'status error';
+          paymentStatusDiv.style.display = 'block';
+        } else {
+          // No payment redirect, but check if there's a pending file to restore
+          restorePendingFile();
+        }
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentFile) return;
+        if (!paymentSessionId) {
+          showStatus('Please complete payment first', 'error');
+          return;
+        }
+        if (hasProcessed) {
+          showStatus('This payment has already been used. Please pay again to process another image.', 'error');
+          return;
+        }
+
+        processBtn.disabled = true;
+        processBtn.textContent = 'Processing...';
+        showStatus('Processing with Google Gemini...', 'info');
+
+        try {
+          const formData = new FormData();
+          formData.append('file', currentFile);
+          formData.append('payment_session_id', paymentSessionId);
+
+          const API_BASE = 'http://127.0.0.1:8000';
+          const response = await fetch(`${API_BASE}/api/test-google-text-removal`, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          
+          // Show result container and set result image
+          const resultContainer = document.getElementById('result-container');
+          resultContainer.style.display = 'block';
+          resultImg.src = url;
+          resultImg.style.display = 'block';
+          resultImg.onload = () => {
+            // Update grid to show both original and result side by side
+            previewSection.style.display = 'grid';
+            previewSection.style.gridTemplateColumns = '1fr 1fr';
+            showStatus('Text removal successful!', 'success');
+            // Mark as processed and disable button
+            hasProcessed = true;
+            processBtn.disabled = true;
+            processBtn.textContent = 'Processing Complete';
+          };
+          
+          downloadLink.href = url;
+          downloadLink.download = `google-gemini-text-removed-${Date.now()}.png`;
+        } catch (error) {
+          console.error('Error:', error);
+          showStatus('Error: ' + error.message, 'error');
+          // If error is about payment session already used, reset payment state
+          if (error.message.includes('already been used') || error.message.includes('403')) {
+            paymentSessionId = null;
+            hasProcessed = false;
+            payBtn.disabled = false;
+            payBtn.style.display = 'inline-block';
+            processBtn.style.display = 'none';
+          }
+        } finally {
+          // Only re-enable if not successfully processed
+          if (!hasProcessed) {
+            processBtn.disabled = false;
+            processBtn.textContent = 'Process Image';
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
+
