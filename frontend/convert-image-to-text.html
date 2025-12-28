@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
 
-        <button id="process-btn" type="submit" disabled>Extract Text from Image</button>
+        <button id="process-btn" type="submit" disabled>Convert to Text</button>
       </form>
       
       <div id="status" class="status" style="display:none; margin-top: 16px;"></div>
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <div>
             <h3>Extracted Text</h3>
-            <p id="process-prompt" class="prompt">Press "Extract Text from Image" to process.</p>
+            <p id="process-prompt" class="prompt">Press "Convert to Text" to process.</p>
             <div id="result-wrapper" hidden>
               <div style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; min-height: 200px; max-height: 400px; overflow-y: auto;">
                 <pre id="extracted-text" style="margin: 0; white-space: pre-wrap; word-wrap: break-word; color: var(--fg); font-family: inherit; font-size: 14px; line-height: 1.6;"></pre>
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <h2>How to extract text from an image?</h2>
         <ol>
           <li>Upload your image containing text (supports JPG, PNG, and other formats).</li>
-          <li>Click <strong>Extract Text from Image</strong> to process using OCR.</li>
+          <li>Click <strong>Convert to Text</strong> to process using OCR.</li>
           <li>Copy or download the extracted text instantly.</li>
         </ol>
 
@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="faq-list" style="margin-top: 20px;">
         <div class="faq-item" style="margin-bottom: 20px;">
           <h3>How do I extract text from an image?</h3>
-          <p>Upload your image containing text, then click "Extract Text from Image". Our OCR (Optical Character Recognition) tool will analyze the image and extract all readable text, which you can then copy or download.</p>
+          <p>Upload your image containing text, then click "Convert to Text". Our OCR (Optical Character Recognition) tool will analyze the image and extract all readable text, which you can then copy or download.</p>
         </div>
         <div class="faq-item" style="margin-bottom: 20px;">
           <h3>What is OCR?</h3>
@@ -398,7 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
             resultWrapper.hidden = true;
           } finally {
             processBtn.disabled = false;
-            processBtn.textContent = 'Extract Text from Image';
+            processBtn.textContent = 'Convert to Text';
           }
         });
         

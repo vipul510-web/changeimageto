@@ -215,10 +215,18 @@ function updateCtaText(){
   const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
   const isChristmasBgPage = window.location.pathname === '/add-christmas-background.html';
   const isEditTextPage = window.location.pathname === '/edit-text-in-image.html';
+  const isRemoveGeminiWatermarkPage = window.location.pathname === '/remove-gemini-watermark.html';
   const isDenoisePage = false;
   
   // Don't update button text on edit-text-in-image page - it has its own payment flow
   if (isEditTextPage) {
+    return;
+  }
+  
+  // Don't update button text on convert-image-to-pdf, convert-image-to-text, or remove-gemini-watermark pages - they have their own inline scripts
+  if (window.location.pathname === '/convert-image-to-pdf.html' || 
+      window.location.pathname === '/convert-image-to-text.html' ||
+      isRemoveGeminiWatermarkPage) {
     return;
   }
   
@@ -263,7 +271,15 @@ function updatePromptText(){
   const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
   const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
   const isChristmasBgPage = window.location.pathname === '/add-christmas-background.html';
+  const isRemoveGeminiWatermarkPage = window.location.pathname === '/remove-gemini-watermark.html';
   const isDenoisePage = false;
+  
+  // Don't update prompt text on pages with inline scripts
+  if (window.location.pathname === '/convert-image-to-pdf.html' || 
+      window.location.pathname === '/convert-image-to-text.html' ||
+      isRemoveGeminiWatermarkPage) {
+    return;
+  }
   
   if (isColorChangePage) {
     prompt.textContent = 'Press "Change Image Color" to process.';
