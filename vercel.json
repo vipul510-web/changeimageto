@@ -9,10 +9,8 @@
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/api/$1" },
-    { "source": "/blog/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" },
     { "source": "/blog", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog" },
-    { "source": "/(.*\\.txt)", "destination": "/$1" },
-    { "source": "/(.*)", "destination": "/$1" }
+    { "source": "/blog/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" }
   ],
   "headers": [
     {
