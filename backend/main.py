@@ -1207,6 +1207,11 @@ async def remove_bg(
         trim_offset_x = 0
         trim_offset_y = 0
         
+        # Calculate scale factor if image was downscaled for processing
+        proc_size = result.size
+        scale_factor_x = original_size[0] / proc_size[0] if proc_size[0] > 0 else 1.0
+        scale_factor_y = original_size[1] / proc_size[1] if proc_size[1] > 0 else 1.0
+        
         if background_image or bg_color:
             try:
                 alpha_channel = result.split()[-1]
@@ -1215,8 +1220,24 @@ async def remove_bg(
                     trim_offset_x = trim_bbox[0]
                     trim_offset_y = trim_bbox[1]
                     trimmed_result = result.crop(trim_bbox)
+                    
+                    # Scale trim offsets to original size
+                    trim_offset_x = int(trim_offset_x * scale_factor_x)
+                    trim_offset_y = int(trim_offset_y * scale_factor_y)
+                    
+                    # Scale trimmed result back to original size
+                    if scale_factor_x != 1.0 or scale_factor_y != 1.0:
+                        new_trimmed_w = int(trimmed_result.width * scale_factor_x)
+                        new_trimmed_h = int(trimmed_result.height * scale_factor_y)
+                        trimmed_result = trimmed_result.resize((new_trimmed_w, new_trimmed_h), Image.LANCZOS)
+                else:
+                    # No trimming needed, but still scale result back to original size if it was downscaled
+                    if scale_factor_x != 1.0 or scale_factor_y != 1.0:
+                        trimmed_result = trimmed_result.resize(original_size, Image.LANCZOS)
             except Exception:
-                pass
+                # If trimming fails, still scale result back to original size if it was downscaled
+                if scale_factor_x != 1.0 or scale_factor_y != 1.0:
+                    trimmed_result = trimmed_result.resize(original_size, Image.LANCZOS)
             
         # Optional background compositing (image or solid color)
         if background_image:
