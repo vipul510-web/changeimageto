@@ -64,6 +64,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <main class="container main">
       <form id="upload-form">
+        <div class="uploader" id="dropzone">
+          <input type="file" id="file-input" accept="image/*" />
+          <div class="uploader-instructions">
+            <strong>Drop image here</strong>
+            <span>or click to browse</span>
+          </div>
+        </div>
+
         <div class="text-inputs" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0">
           <div class="input-group" style="display:flex;flex-direction:column;gap:8px">
             <label for="text-to-find" style="font-weight:600;color:var(--fg)">Text to Find:</label>
@@ -75,16 +83,8 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
 
-        <div class="uploader" id="dropzone">
-          <input type="file" id="file-input" accept="image/*" />
-          <div class="uploader-instructions">
-            <strong>Drop image here</strong>
-            <span>or click to browse</span>
-          </div>
-        </div>
-
         <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-top: 16px;">
-          <button id="process-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">
+          <button id="process-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: not-allowed; font-size: 14px; opacity: 0.6;">
             Change Text $0.5 per image
           </button>
         </div>
@@ -117,9 +117,9 @@ document.addEventListener("DOMContentLoaded", () => {
       <section class="seo">
         <h2>How to edit text in an image?</h2>
         <ol>
-          <li>Enter the text you want to find and the replacement text in the fields above.</li>
-          <li>Upload your image using the uploader.</li>
-          <li>Click <strong>Change Text $0.5 per image</strong> to create a payment checkout.</li>
+          <li>Upload your image using the uploader above.</li>
+          <li>Enter the text you want to find and the replacement text in the fields below the image.</li>
+          <li>Click <strong>Change Text $0.5 per image</strong> to create a payment checkout (button will be enabled once all fields are filled).</li>
           <li>Complete the payment and return to this page.</li>
           <li>Your image will be automatically processed with the text edited.</li>
           <li>Download your edited image instantly.</li>
@@ -320,6 +320,11 @@ document.addEventListener("DOMContentLoaded", () => {
       #process-btn:disabled {
         opacity: 0.6;
         cursor: not-allowed;
+        pointer-events: none;
+      }
+      #process-btn:not(:disabled) {
+        cursor: pointer;
+        opacity: 1;
       }
       @media(max-width:768px){.text-inputs{grid-template-columns:1fr}}
     </style>
@@ -375,8 +380,22 @@ document.addEventListener("DOMContentLoaded", () => {
           const hasFile = currentFile !== null;
           const hasTextToFind = textToFindInput.value.trim() !== '';
           const hasTextToReplace = textToReplaceInput.value.trim() !== '';
-          processBtn.disabled = !(hasFile && hasTextToFind && hasTextToReplace);
+          const allFieldsFilled = hasFile && hasTextToFind && hasTextToReplace;
+          
+          processBtn.disabled = !allFieldsFilled;
+          
+          // Update button style based on state
+          if (allFieldsFilled) {
+            processBtn.style.opacity = '1';
+            processBtn.style.cursor = 'pointer';
+          } else {
+            processBtn.style.opacity = '0.6';
+            processBtn.style.cursor = 'not-allowed';
+          }
         }
+        
+        // Initialize button as disabled on page load
+        validateForm();
         
         // Enable button when file and text inputs are filled
         fileInput.addEventListener('change', (e) => {
