@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Add Text to Photo Online | Free Text Overlay Tool</title>
+    <meta name="description" content="Add text to photos online for free. Choose font, size, color, and position text anywhere on your image. Drag and drop text placement. No login required." />
+    <meta name="keywords" content="add text to photo, text on image, photo text overlay, image text editor, add caption to photo, text watermark" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.changeimageto.com/add-text-to-photo.html" />
+
+    <meta property="og:title" content="Add Text to Photo Online - Free Tool" />
+    <meta property="og:description" content="Add customizable text to photos with font, size, color, and position controls." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.changeimageto.com/add-text-to-photo.html" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
+
+<style>
+  .text-editor-container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  .text-controls {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    height: fit-content;
+    position: sticky;
+    top: 24px;
+  }
+  .control-group {
+    margin-bottom: 20px;
+  }
+  .control-group label {
+    display: block;
+    font-weight: 600;
+    color: var(--fg);
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .control-group input[type="text"],
+  .control-group input[type="number"],
+  .control-group select {
+    width: 100%;
+    padding: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--fg);
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .control-group input[type="range"] {
+    width: 100%;
+    margin: 8px 0;
+  }
+  .control-group input[type="color"] {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+  .emoji-button {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: #001633;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 8px;
+  }
+  .emoji-button:hover {
+    background: #4f46e5;
+    color: white;
+  }
+  .canvas-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: auto;
+  }
+  .canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    margin: 0 auto;
+  }
+  #image-canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: crosshair;
+  }
+  .text-box-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+  }
+  .text-box {
+    position: absolute;
+    border: 2px dashed var(--accent);
+    background: rgba(106, 167, 255, 0.1);
+    padding: 4px;
+    cursor: move;
+    min-width: 50px;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+  }
+  .text-box.active {
+    border-color: #4f46e5;
+    background: rgba(79, 70, 229, 0.15);
+  }
+  .text-box-content {
+    color: var(--fg);
+    user-select: none;
+    pointer-events: none;
+  }
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .btn {
+    flex: 1;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #001633;
+  }
+  .btn-primary:hover {
+    background: #4f46e5;
+    color: white;
+  }
+  .btn-secondary {
+    background: var(--border);
+    color: var(--fg);
+  }
+  .btn-secondary:hover {
+    background: #2a3441;
+  }
+  @media (max-width: 1024px) {
+    .text-editor-container {
+      grid-template-columns: 1fr;
+    }
+    .text-controls {
+      position: static;
+    }
+  }
+</style>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="./logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Add Text to Photo Online - Free</h1>
+        <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
+      </div>
+      <p>Add customizable text to your photos. Choose font, size, color, and drag text anywhere on your image. Free, no login required.</p>
+    </header>
+
+    <main class="container main">
+      <form id="upload-form">
+        <div class="uploader" id="dropzone">
+          <input type="file" id="file-input" accept="image/*" />
+          <div class="uploader-instructions">
+            <strong>Drop image here</strong>
+            <span>or click to browse</span>
+          </div>
+        </div>
+      </form>
+
+      <div id="editor-section" style="display: none;">
+        <div class="text-editor-container">
+          <div class="text-controls">
+            <div class="control-group">
+              <label for="text-input">Text</label>
+              <input type="text" id="text-input" placeholder="Enter your text here" value="Sample Text" />
+            </div>
+
+            <div class="control-group">
+              <label for="font-family">Font</label>
+              <select id="font-family">
+                <option value="Arial">Arial</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Palatino">Palatino</option>
+                <option value="Garamond">Garamond</option>
+                <option value="Comic Sans MS">Comic Sans MS</option>
+                <option value="Impact">Impact</option>
+                <option value="Trebuchet MS">Trebuchet MS</option>
+                <option value="Lucida Console">Lucida Console</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label for="font-size">Font Size: <span id="font-size-value">32</span>px</label>
+              <input type="range" id="font-size" min="12" max="120" value="32" />
+            </div>
+
+            <div class="control-group">
+              <label for="text-color">Text Color</label>
+              <input type="color" id="text-color" value="#ffffff" />
+            </div>
+
+            <div class="control-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="bold-text" />
+                <label for="bold-text" style="margin:0;font-weight:400">Bold</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="underline-text" />
+                <label for="underline-text" style="margin:0;font-weight:400">Underline</label>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <button type="button" class="emoji-button" id="emoji-button">😀 Add Emoji</button>
+            </div>
+
+            <div class="action-buttons">
+              <button type="button" class="btn btn-primary" id="download-btn">Download Image</button>
+              <button type="button" class="btn btn-secondary" id="reset-btn">Reset</button>
+            </div>
+          </div>
+
+          <div class="canvas-container">
+            <div class="canvas-wrapper" id="canvas-wrapper">
+              <canvas id="image-canvas"></canvas>
+              <div class="text-box-overlay" id="text-box-overlay"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="seo" style="margin-top: 40px;">
+        <h2>How to add text to a photo</h2>
+        <ol>
+          <li><strong>Upload your image:</strong> Click or drag and drop your photo into the upload area above.</li>
+          <li><strong>Enter your text:</strong> Type the text you want to add in the text input field.</li>
+          <li><strong>Customize appearance:</strong> Choose your preferred font, adjust the size, and select a color.</li>
+          <li><strong>Style your text:</strong> Make text bold or underlined, and add emojis if desired.</li>
+          <li><strong>Position text:</strong> Click and drag the text box to place it anywhere on your image.</li>
+          <li><strong>Download:</strong> Click "Download Image" to save your photo with text overlay.</li>
+        </ol>
+
+        <h3>Features</h3>
+        <ul>
+          <li><strong>Multiple Fonts:</strong> Choose from 12+ popular fonts including Arial, Times New Roman, Impact, and more.</li>
+          <li><strong>Customizable Size:</strong> Adjust text size from 12px to 120px to fit your design needs.</li>
+          <li><strong>Color Picker:</strong> Select any color for your text using the color picker tool.</li>
+          <li><strong>Text Styling:</strong> Make text bold or underlined for emphasis.</li>
+          <li><strong>Emoji Support:</strong> Add emojis to your text for fun and expressive captions.</li>
+          <li><strong>Drag & Drop Positioning:</strong> Click and drag text anywhere on your image for perfect placement.</li>
+          <li><strong>Free & No Watermarks:</strong> All features are completely free with no watermarks on your images.</li>
+        </ul>
+
+        <h3>Use cases</h3>
+        <ul>
+          <li><strong>Social Media:</strong> Add captions, quotes, or watermarks to photos for Instagram, Facebook, or Twitter.</li>
+          <li><strong>Memes:</strong> Create memes by adding funny text to images.</li>
+          <li><strong>Marketing:</strong> Add promotional text, prices, or call-to-action messages to product photos.</li>
+          <li><strong>Personal Projects:</strong> Add dates, names, or messages to personal photos and memories.</li>
+          <li><strong>Presentations:</strong> Add labels, titles, or annotations to images for presentations.</li>
+          <li><strong>Watermarking:</strong> Add your name or logo text to protect your images.</li>
+        </ul>
+
+        <h3>Related tools</h3>
+        <p>Looking for other text-related tools? Try these:</p>
+        <ul>
+          <li><a href="/edit-text-in-image.html">Edit Text in Image</a> - Change existing text in images using AI</li>
+          <li><a href="/remove-text-from-image.html">Remove Text from Image</a> - Remove unwanted text and watermarks</li>
+          <li><a href="/convert-image-to-text.html">Convert Image to Text</a> - Extract text from images using OCR</li>
+          <li><a href="/enhance-image.html">Enhance Image</a> - Improve image quality before adding text</li>
+        </ul>
+      </section>
+    </main>
+
+    <!-- FAQ Section -->
+    <section class="container faq-section" style="margin-top: 40px; padding: 40px 0;">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list" style="margin-top: 20px;">
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>How do I add text to a photo?</h3>
+          <p>Upload your image, enter your text in the text field, customize the font, size, and color, then drag the text box to position it on your image. Click "Download Image" to save your photo with text overlay.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>Can I move the text after placing it?</h3>
+          <p>Yes! Simply click and drag the text box to move it anywhere on your image. The text box will be highlighted when selected.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>What fonts are available?</h3>
+          <p>We offer 12+ popular fonts including Arial, Helvetica, Times New Roman, Courier New, Verdana, Georgia, Impact, Comic Sans MS, and more.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>Can I add emojis to my text?</h3>
+          <p>Yes! Click the "Add Emoji" button to open an emoji picker and add emojis to your text.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>Is the text overlay tool free to use?</h3>
+          <p>Yes, our text overlay tool is completely free to use. No registration, no watermarks, and no hidden fees.</p>
+        </div>
+        <div class="faq-item" style="margin-bottom: 20px;">
+          <h3>What image formats are supported?</h3>
+          <p>We support all major image formats including JPG, PNG, and other common formats. The downloaded image will be in PNG format to preserve quality.</p>
+        </div>
+      </div>
+    </section>
+
+    <nav class="seo-links">
+      <a href="/remove-background-from-image.html">Remove Background from Image</a>
+      <a href="/change-color-of-image.html">Change color of image online</a>
+      <a href="/change-image-background.html">Change image background</a>
+      <a href="/edit-text-in-image.html">Edit Text in Image</a>
+      <a href="/remove-text-from-image.html">Remove Text from Image</a>
+      <a href="/convert-image-format.html">Convert image format</a>
+      <a href="/upscale-image.html">AI Image Upscaler</a>
+      <a href="/enhance-image.html">Enhance Image</a>
+    </nav>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <!-- Brand Section -->
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+            <div class="footer-social">
+              <a href="https://x.com/vipulawl" aria-label="Follow us on Twitter" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+              <a href="https://www.youtube.com/@changeimageto" aria-label="Subscribe on YouTube" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+              </a>
+              <a href="https://linkedin.com/company/make-a-video/" aria-label="Connect on LinkedIn" class="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tools Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+              <li><a href="/blur-background.html">Blur Background</a></li>
+              <li><a href="/add-text-to-photo.html">Add Text to Photo</a></li>
+              <li><a href="/convert-image-format.html">Convert Image Format</a></li>
+              <li><a href="/remove-people-from-photo.html">Remove People / Objects</a></li>
+              <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
+              <li><a href="/remove-gemini-watermark.html">Remove Gemini Watermark</a></li>
+              <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
+              <li><a href="/image-quality-checker.html">Image Quality Checker</a></li>
+              <li><a href="/compress-image-online.html">Compress Image</a></li>
+            </ul>
+          </div>
+
+          <!-- Blog Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Latest Blog Posts</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/remove-background-from-image.html">Remove Background from Image</a></li>
+              <li><a href="/blog/upscale-image.html">Upscale Image Quality</a></li>
+              <li><a href="/blog/change-image-background-color.html">Change Image Background Color</a></li>
+              <li><a href="/blog/remove-background-from-image-photoshop.html">Remove Background in Photoshop</a></li>
+              <li><a href="/blog/change-image-background-color-online.html">Change Background Color Online</a></li>
+              <li><a href="/blog/remove-background-from-image-canva.html">Remove Background in Canva</a></li>
+              <li><a href="/blog/change-image-background-color-photoshop.html">Change Background in Photoshop</a></li>
+              <li><a href="/blog/remove-background-from-image-android.html">Remove Background on Android</a></li>
+            </ul>
+          </div>
+
+          <!-- Alternatives Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Tool Alternatives</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/photopea-vs-canva.html">Photopea vs Canva</a></li>
+              <li><a href="/blog/capcut-vs-davinci-resolve.html">CapCut vs DaVinci Resolve</a></li>
+              <li><a href="/blog/canva-vs-photopea.html">Canva vs Photopea</a></li>
+              <li><a href="/blog/free-photoshop-alternatives.html">Free Photoshop Alternatives</a></li>
+              <li><a href="/blog/ai-background-removers.html">AI Background Removers</a></li>
+            </ul>
+          </div>
+
+          <!-- Company Section -->
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+            <div class="footer-bottom-links">
+              <a href="/privacy-policy.html">Privacy</a>
+              <a href="#terms">Terms</a>
+              <a href="#cookies">Cookies</a>
+              <a href="#security">Security</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./script.js?v=20251220-1" defer></script>
+    <script>
+      (function() {
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
+        const editorSection = document.getElementById('editor-section');
+        const canvas = document.getElementById('image-canvas');
+        const ctx = canvas.getContext('2d');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
+        const textBoxOverlay = document.getElementById('text-box-overlay');
+        
+        const textInput = document.getElementById('text-input');
+        const fontFamily = document.getElementById('font-family');
+        const fontSize = document.getElementById('font-size');
+        const fontSizeValue = document.getElementById('font-size-value');
+        const textColor = document.getElementById('text-color');
+        const boldText = document.getElementById('bold-text');
+        const underlineText = document.getElementById('underline-text');
+        const emojiButton = document.getElementById('emoji-button');
+        const downloadBtn = document.getElementById('download-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        
+        let currentImage = null;
+        let imageObj = null;
+        let textBox = null;
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        let textPosition = { x: 50, y: 50 };
+        
+        // Emoji picker (common emojis)
+        const commonEmojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
+        
+        function showEmojiPicker() {
+          const emojiGrid = document.createElement('div');
+          emojiGrid.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:2px solid var(--border);border-radius:12px;padding:20px;z-index:10000;max-width:400px;max-height:400px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);';
+          
+          const emojiContainer = document.createElement('div');
+          emojiContainer.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:8px;';
+          
+          commonEmojis.forEach(emoji => {
+            const btn = document.createElement('button');
+            btn.textContent = emoji;
+            btn.style.cssText = 'font-size:24px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.2s;';
+            btn.onmouseover = () => btn.style.background = 'var(--accent)';
+            btn.onmouseout = () => btn.style.background = 'var(--bg)';
+            btn.onclick = () => {
+              textInput.value += emoji;
+              updateText();
+              emojiGrid.remove();
+            };
+            emojiContainer.appendChild(btn);
+          });
+          
+          const closeBtn = document.createElement('button');
+          closeBtn.textContent = 'Close';
+          closeBtn.style.cssText = 'margin-top:12px;width:100%;padding:8px;background:var(--border);border:none;border-radius:6px;color:var(--fg);cursor:pointer;';
+          closeBtn.onclick = () => emojiGrid.remove();
+          
+          emojiGrid.appendChild(emojiContainer);
+          emojiGrid.appendChild(closeBtn);
+          document.body.appendChild(emojiGrid);
+          
+          // Close on outside click
+          setTimeout(() => {
+            const closePicker = (e) => {
+              if (!emojiGrid.contains(e.target) && e.target !== emojiButton) {
+                emojiGrid.remove();
+                document.removeEventListener('click', closePicker);
+              }
+            };
+            document.addEventListener('click', closePicker);
+          }, 100);
+        }
+        
+        function loadImage(file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            imageObj = new Image();
+            imageObj.onload = () => {
+              // Set canvas size to image size
+              canvas.width = imageObj.width;
+              canvas.height = imageObj.height;
+              
+              // Draw image on canvas
+              ctx.drawImage(imageObj, 0, 0);
+              
+              // Wait for canvas to render, then sync overlay
+              setTimeout(() => {
+                syncOverlaySize();
+                
+                // Show editor
+                editorSection.style.display = 'block';
+                
+                // Initialize text position to center
+                textPosition = {
+                  x: canvas.width / 2,
+                  y: canvas.height / 2
+                };
+                
+                // Draw initial text
+                updateText();
+                
+                // Scroll to editor
+                editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            };
+            imageObj.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+        
+        function syncOverlaySize() {
+          const rect = canvas.getBoundingClientRect();
+          const wrapperRect = canvasWrapper.getBoundingClientRect();
+          textBoxOverlay.style.position = 'absolute';
+          textBoxOverlay.style.left = (rect.left - wrapperRect.left) + 'px';
+          textBoxOverlay.style.top = (rect.top - wrapperRect.top) + 'px';
+          textBoxOverlay.style.width = rect.width + 'px';
+          textBoxOverlay.style.height = rect.height + 'px';
+        }
+        
+        function updateText() {
+          if (!imageObj) return;
+          
+          // Redraw image
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(imageObj, 0, 0);
+          
+          // Get text properties
+          const text = textInput.value || 'Sample Text';
+          const size = parseInt(fontSize.value);
+          const color = textColor.value;
+          const font = fontFamily.value;
+          const bold = boldText.checked ? 'bold ' : '';
+          const underline = underlineText.checked;
+          
+          // Set font
+          ctx.font = `${bold}${size}px ${font}`;
+          ctx.fillStyle = color;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          // Measure text for positioning
+          const metrics = ctx.measureText(text);
+          const textWidth = metrics.width;
+          const textHeight = size;
+          
+          // Draw text
+          ctx.fillText(text, textPosition.x, textPosition.y);
+          
+          // Draw underline if needed
+          if (underline) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(textPosition.x - textWidth / 2, textPosition.y + textHeight / 2 + 4);
+            ctx.lineTo(textPosition.x + textWidth / 2, textPosition.y + textHeight / 2 + 4);
+            ctx.stroke();
+          }
+          
+          // Update text box visual indicator
+          updateTextBox(textWidth, textHeight);
+        }
+        
+        function updateTextBox(textWidth, textHeight) {
+          // Remove existing text box if any
+          const existingBox = textBoxOverlay.querySelector('.text-box');
+          if (existingBox) existingBox.remove();
+          
+          // Get canvas display size and scale
+          const canvasRect = canvas.getBoundingClientRect();
+          const scaleX = canvasRect.width / canvas.width;
+          const scaleY = canvasRect.height / canvas.height;
+          
+          // Update overlay size to match canvas display size
+          textBoxOverlay.style.width = canvasRect.width + 'px';
+          textBoxOverlay.style.height = canvasRect.height + 'px';
+          
+          // Create text box indicator positioned relative to overlay
+          const box = document.createElement('div');
+          box.className = 'text-box active';
+          box.style.left = (textPosition.x * scaleX - (textWidth * scaleX / 2) - 4) + 'px';
+          box.style.top = (textPosition.y * scaleY - (textHeight * scaleY / 2) - 4) + 'px';
+          box.style.width = (textWidth * scaleX + 8) + 'px';
+          box.style.height = (textHeight * scaleY + 8) + 'px';
+          
+          // Make draggable
+          box.addEventListener('mousedown', startDrag);
+          box.addEventListener('touchstart', startDrag);
+          
+          textBoxOverlay.appendChild(box);
+          textBox = box;
+        }
+        
+        function startDrag(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          isDragging = true;
+          
+          const rect = canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          
+          dragOffset.x = (clientX - rect.left) * scaleX - textPosition.x;
+          dragOffset.y = (clientY - rect.top) * scaleY - textPosition.y;
+          
+          document.addEventListener('mousemove', drag);
+          document.addEventListener('touchmove', drag);
+          document.addEventListener('mouseup', stopDrag);
+          document.addEventListener('touchend', stopDrag);
+        }
+        
+        function drag(e) {
+          if (!isDragging) return;
+          e.preventDefault();
+          
+          const rect = canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          
+          // Calculate position relative to canvas, accounting for scaling
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          
+          textPosition.x = (clientX - rect.left) * scaleX;
+          textPosition.y = (clientY - rect.top) * scaleY;
+          
+          // Constrain to canvas bounds
+          textPosition.x = Math.max(0, Math.min(canvas.width, textPosition.x));
+          textPosition.y = Math.max(0, Math.min(canvas.height, textPosition.y));
+          
+          updateText();
+        }
+        
+        function stopDrag() {
+          isDragging = false;
+          document.removeEventListener('mousemove', drag);
+          document.removeEventListener('touchmove', drag);
+          document.removeEventListener('mouseup', stopDrag);
+          document.removeEventListener('touchend', stopDrag);
+        }
+        
+        function downloadImage() {
+          if (!imageObj) return;
+          
+          // Update text one final time
+          updateText();
+          
+          // Convert canvas to blob and download
+          canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `text-overlay-${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Track download
+            if (typeof gtag === 'function') {
+              gtag('event', 'download', {
+                event_category: 'add_text_to_photo',
+                event_label: 'text_overlay_download'
+              });
+            }
+          }, 'image/png');
+        }
+        
+        // Event listeners
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = 'var(--accent)';
+        });
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.style.borderColor = 'var(--border)';
+        });
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = 'var(--border)';
+          const file = e.dataTransfer.files[0];
+          if (file && file.type.startsWith('image/')) {
+            loadImage(file);
+          }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+          if (e.target.files[0]) {
+            loadImage(e.target.files[0]);
+          }
+        });
+        
+        textInput.addEventListener('input', updateText);
+        fontFamily.addEventListener('change', updateText);
+        fontSize.addEventListener('input', () => {
+          fontSizeValue.textContent = fontSize.value;
+          updateText();
+        });
+        textColor.addEventListener('change', updateText);
+        boldText.addEventListener('change', updateText);
+        underlineText.addEventListener('change', updateText);
+        emojiButton.addEventListener('click', showEmojiPicker);
+        downloadBtn.addEventListener('click', downloadImage);
+        resetBtn.addEventListener('click', () => {
+          currentImage = null;
+          imageObj = null;
+          fileInput.value = '';
+          editorSection.style.display = 'none';
+          if (textBox) textBox.remove();
+          textInput.value = 'Sample Text';
+          fontSize.value = 32;
+          fontSizeValue.textContent = '32';
+          textColor.value = '#ffffff';
+          boldText.checked = false;
+          underlineText.checked = false;
+        });
+        
+        // Make canvas clickable for text positioning (only if not clicking on text box)
+        canvas.addEventListener('click', (e) => {
+          if (!imageObj || isDragging) return;
+          // Don't reposition if clicking on text box
+          if (e.target === textBox || textBox?.contains(e.target)) return;
+          
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          textPosition.x = (e.clientX - rect.left) * scaleX;
+          textPosition.y = (e.clientY - rect.top) * scaleY;
+          updateText();
+        });
+        
+        // Also allow clicking on overlay (but not on text box itself)
+        textBoxOverlay.addEventListener('click', (e) => {
+          if (!imageObj || isDragging || e.target.classList.contains('text-box')) return;
+          
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          textPosition.x = (e.clientX - rect.left) * scaleX;
+          textPosition.y = (e.clientY - rect.top) * scaleY;
+          updateText();
+        });
+        
+        // Update text box position on window resize
+        window.addEventListener('resize', () => {
+          if (imageObj) {
+            syncOverlaySize();
+            updateText();
+          }
+        });
+        
+        // Sync overlay when canvas size changes
+        const resizeObserver = new ResizeObserver(() => {
+          if (imageObj) {
+            syncOverlaySize();
+            updateText();
+          }
+        });
+        resizeObserver.observe(canvas);
+      })();
+    </script>
+  </body>
+</html>
+
