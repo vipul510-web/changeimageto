@@ -885,12 +885,22 @@ document.addEventListener("DOMContentLoaded", () => {
           renderAllText();
         }
         
-        function stopDrag() {
+        function stopDrag(e) {
           isDragging = false;
           document.removeEventListener('mousemove', drag);
           document.removeEventListener('touchmove', drag);
           document.removeEventListener('mouseup', stopDrag);
           document.removeEventListener('touchend', stopDrag);
+          
+          // After dragging, check if we should show/hide rotation handle
+          if (selectedLayerIndex >= 0 && !isRotating) {
+            // Small delay to avoid conflicts with click handler
+            setTimeout(() => {
+              if (selectedLayerIndex >= 0) {
+                showRotationHandle();
+              }
+            }, 100);
+          }
         }
         
         function startRotate(e) {
@@ -1082,34 +1092,125 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         }
         
-        // Also allow clicking to position selected text or hide rotation handle
-        canvas.addEventListener('click', (e) => {
+        // Function to check if click is on a text layer
+        function getClickedLayerIndex(clickX, clickY) {
+          if (!imageObj || textLayers.length === 0) return -1;
+          
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          
+          // Convert click position to canvas coordinates
+          const canvasX = (clickX - rect.left) * scaleX;
+          const canvasY = (clickY - rect.top) * scaleY;
+          
+          // Check each layer (in reverse order to get topmost)
+          for (let i = textLayers.length - 1; i >= 0; i--) {
+            const layer = textLayers[i];
+            const text = layer.text || 'Sample Text';
+            const size = layer.size || 32;
+            const font = layer.font || 'Arial';
+            const bold = layer.bold ? 'bold ' : '';
+            const rotation = layer.rotation || 0;
+            const x = layer.x || canvas.width / 2;
+            const y = layer.y || canvas.height / 2;
+            
+            // Set font to measure text
+            ctx.font = `${bold}${size}px ${font}`;
+            const metrics = ctx.measureText(text);
+            const textWidth = metrics.width;
+            const textHeight = size;
+            
+            // Rotate click point back to text's local coordinate system
+            const rotationRad = (-rotation * Math.PI) / 180;
+            const dx = canvasX - x;
+            const dy = canvasY - y;
+            const localX = dx * Math.cos(rotationRad) - dy * Math.sin(rotationRad);
+            const localY = dx * Math.sin(rotationRad) + dy * Math.cos(rotationRad);
+            
+            // Check if click is within text bounds
+            if (localX >= -textWidth / 2 && localX <= textWidth / 2 &&
+                localY >= -textHeight / 2 && localY <= textHeight / 2) {
+              return i;
+            }
+          }
+          
+          return -1;
+        }
+        
+        // Hide rotation handle
+        function hideRotationHandle() {
+          if (rotationHandle) {
+            rotationHandle.style.display = 'none';
+          }
+        }
+        
+        // Handle clicks on canvas
+        function handleCanvasClick(e) {
           if (!imageObj || isDragging || isRotating) return;
+          
+          const clickX = e.clientX || (e.touches && e.touches[0]?.clientX) || e.changedTouches?.[0]?.clientX;
+          const clickY = e.clientY || (e.touches && e.touches[0]?.clientY) || e.changedTouches?.[0]?.clientY;
+          
+          if (!clickX || !clickY) return;
           
           // Don't hide if clicking on rotation handle
           const handleRect = rotationHandle?.getBoundingClientRect();
-          const clickX = e.clientX;
-          const clickY = e.clientY;
           const clickedOnHandle = handleRect && 
             clickX >= handleRect.left && 
             clickX <= handleRect.right && 
             clickY >= handleRect.top && 
             clickY <= handleRect.bottom;
           
-          // Hide rotation handle when clicking on canvas (but not on the handle itself)
-          if (rotationHandle && !clickedOnHandle) {
-            rotationHandle.style.display = 'none';
+          if (clickedOnHandle) return;
+          
+          // Check if clicking on a text layer
+          const clickedLayerIndex = getClickedLayerIndex(clickX, clickY);
+          
+          if (clickedLayerIndex >= 0) {
+            // Clicked on a text layer - select it and show rotation handle
+            selectLayer(clickedLayerIndex);
+            showRotationHandle();
+          } else {
+            // Clicked outside text - hide rotation handle
+            hideRotationHandle();
+            
+            // If there's a selected layer, move it to click position
+            if (selectedLayerIndex >= 0) {
+              const rect = canvas.getBoundingClientRect();
+              const scaleX = canvas.width / rect.width;
+              const scaleY = canvas.height / rect.height;
+              const layer = textLayers[selectedLayerIndex];
+              layer.x = (clickX - rect.left) * scaleX;
+              layer.y = (clickY - rect.top) * scaleY;
+              renderAllText();
+            }
           }
-          
-          if (selectedLayerIndex < 0) return;
-          
-          const rect = canvas.getBoundingClientRect();
-          const scaleX = canvas.width / rect.width;
-          const scaleY = canvas.height / rect.height;
-          const layer = textLayers[selectedLayerIndex];
-          layer.x = (e.clientX - rect.left) * scaleX;
-          layer.y = (e.clientY - rect.top) * scaleY;
-          renderAllText();
+        }
+        
+        // Also allow clicking to position selected text or hide rotation handle
+        canvas.addEventListener('click', handleCanvasClick);
+        canvas.addEventListener('touchend', handleCanvasClick);
+        
+        // Hide handle when clicking outside canvas
+        document.addEventListener('click', (e) => {
+          if (!imageObj) return;
+          // Hide if clicking outside canvas and not on rotation handle
+          if (!canvas.contains(e.target) && !rotationHandle?.contains(e.target) && e.target !== rotationHandle) {
+            hideRotationHandle();
+          }
+        });
+        
+        // Also hide on touch outside
+        document.addEventListener('touchend', (e) => {
+          if (!imageObj) return;
+          const touch = e.changedTouches?.[0];
+          if (touch) {
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (!canvas.contains(target) && !rotationHandle?.contains(target) && target !== rotationHandle) {
+              hideRotationHandle();
+            }
+          }
         });
         
         // Show rotation handle when selecting a layer
