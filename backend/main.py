@@ -4759,8 +4759,28 @@ async def remove_gemini_watermark(
     
     try:
         contents = await file.read()
+        file_size_mb = len(contents) / (1024 * 1024)
+        
+        # Enforce file size limit (10MB) to prevent excessive resource usage
+        MAX_FILE_SIZE_MB = 10.0
+        if file_size_mb > MAX_FILE_SIZE_MB:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"File size ({file_size_mb:.1f}MB) exceeds maximum allowed size ({MAX_FILE_SIZE_MB}MB). Please compress or resize your image first."
+            )
+        
         image = Image.open(io.BytesIO(contents)).convert("RGB")
-        img_array = np.array(image)
+        original_size = image.size
+        
+        # Downscale large images to reduce memory and processing time
+        # LaMa inpainting is memory-intensive, so we limit to 1600px max side
+        proc_image = downscale_image_if_needed(image, max_side=int(os.getenv("MAX_IMAGE_SIDE", "1600")))
+        was_downscaled = proc_image.size != original_size
+        
+        if was_downscaled:
+            logger.info(f"Downscaled image from {original_size} to {proc_image.size} for processing")
+        
+        img_array = np.array(proc_image)
         
         # Convert RGB to BGR for OpenCV
         img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
@@ -4817,17 +4837,27 @@ async def remove_gemini_watermark(
         result_rgb = cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB)
         result_image = Image.fromarray(result_rgb)
         
+        # Scale result back to original size if it was downscaled
+        if was_downscaled:
+            result_image = result_image.resize(original_size, Image.LANCZOS)
+            logger.info(f"Scaled result back to original size: {original_size}")
+        
         # Save to bytes
         buf = io.BytesIO()
         result_image.save(buf, format="PNG")
         
         log_user_action("gemini_watermark_removal_success", {
-            "original_size": f"{w}x{h}",
-            "mask_size": f"{mask_width}x{mask_height}"
+            "original_size": f"{original_size[0]}x{original_size[1]}",
+            "processed_size": f"{w}x{h}",
+            "mask_size": f"{mask_width}x{mask_height}",
+            "file_size_mb": round(file_size_mb, 2),
+            "was_downscaled": was_downscaled
         })
         
         return Response(content=buf.getvalue(), media_type="image/png")
     
+    except HTTPException:
+        raise
     except Exception as e:
         error_msg = str(e)
         logger.error(f"Error removing Gemini watermark: {error_msg}", exc_info=True)
