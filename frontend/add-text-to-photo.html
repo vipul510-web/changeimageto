@@ -302,7 +302,11 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="canvas-container">
             <div class="canvas-wrapper" id="canvas-wrapper">
               <canvas id="image-canvas"></canvas>
-              <div id="rotation-handle" style="display: none; position: absolute; width: 20px; height: 20px; background: var(--accent); border: 2px solid white; border-radius: 50%; cursor: grab; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>
+              <div id="rotation-handle" style="display: none; position: absolute; width: 32px; height: 32px; background: var(--accent); border: 2px solid white; border-radius: 50%; cursor: grab; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
@@ -727,9 +731,9 @@ document.addEventListener("DOMContentLoaded", () => {
           const screenX = (rotatedX * scaleX) + (canvasRect.left - wrapperRect.left);
           const screenY = (rotatedY * scaleY) + (canvasRect.top - wrapperRect.top);
           
-          rotationHandle.style.left = (screenX - 10) + 'px';
-          rotationHandle.style.top = (screenY - 10) + 'px';
-          rotationHandle.style.display = 'block';
+          rotationHandle.style.left = (screenX - 16) + 'px';
+          rotationHandle.style.top = (screenY - 16) + 'px';
+          rotationHandle.style.display = 'flex';
         }
         
         function addNewTextLayer() {
@@ -768,7 +772,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
           }
           updateTextLayersList();
-          updateRotationHandle();
+          showRotationHandle();
         }
         
         function deleteLayer(index) {
@@ -806,7 +810,10 @@ document.addEventListener("DOMContentLoaded", () => {
           textLayers.forEach((layer, index) => {
             const item = document.createElement('div');
             item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px; margin-bottom: 4px; background: ' + (index === selectedLayerIndex ? 'var(--accent)' : 'var(--bg)') + '; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;';
-            item.onclick = () => selectLayer(index);
+            item.onclick = () => {
+              selectLayer(index);
+              showRotationHandle();
+            };
             
             const text = document.createElement('span');
             text.textContent = layer.text || 'Empty';
@@ -1075,9 +1082,26 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         }
         
-        // Also allow clicking to position selected text
+        // Also allow clicking to position selected text or hide rotation handle
         canvas.addEventListener('click', (e) => {
-          if (!imageObj || isDragging || selectedLayerIndex < 0) return;
+          if (!imageObj || isDragging || isRotating) return;
+          
+          // Don't hide if clicking on rotation handle
+          const handleRect = rotationHandle?.getBoundingClientRect();
+          const clickX = e.clientX;
+          const clickY = e.clientY;
+          const clickedOnHandle = handleRect && 
+            clickX >= handleRect.left && 
+            clickX <= handleRect.right && 
+            clickY >= handleRect.top && 
+            clickY <= handleRect.bottom;
+          
+          // Hide rotation handle when clicking on canvas (but not on the handle itself)
+          if (rotationHandle && !clickedOnHandle) {
+            rotationHandle.style.display = 'none';
+          }
+          
+          if (selectedLayerIndex < 0) return;
           
           const rect = canvas.getBoundingClientRect();
           const scaleX = canvas.width / rect.width;
@@ -1087,6 +1111,13 @@ document.addEventListener("DOMContentLoaded", () => {
           layer.y = (e.clientY - rect.top) * scaleY;
           renderAllText();
         });
+        
+        // Show rotation handle when selecting a layer
+        function showRotationHandle() {
+          if (selectedLayerIndex >= 0 && selectedLayerIndex < textLayers.length) {
+            updateRotationHandle();
+          }
+        }
         
         // Add new text layer button
         if (addTextBtn) {
