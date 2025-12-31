@@ -113,22 +113,6 @@ document.addEventListener("DOMContentLoaded", () => {
   .style-btn:hover:not(.active) {
     background: var(--border) !important;
   }
-  .emoji-button {
-    width: 100%;
-    padding: 10px;
-    background: var(--accent);
-    color: #001633;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 8px;
-  }
-  .emoji-button:hover {
-    background: #4f46e5;
-    color: white;
-  }
   .canvas-container {
     background: var(--card);
     border: 1px solid var(--border);
@@ -245,8 +229,20 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="text-editor-container">
           <div class="text-controls">
             <div class="control-group">
-              <label for="text-input">Text</label>
-              <input type="text" id="text-input" placeholder="Enter your text here" value="Sample Text" />
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label for="text-input" style="margin: 0;">Text Layers</label>
+                <button type="button" id="add-text-btn" style="padding: 6px 12px; background: var(--accent); color: #001633; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px;">+ Add Text</button>
+              </div>
+              <div id="text-layers-list" style="margin-bottom: 12px; max-height: 150px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 8px;">
+                <!-- Text layers will be listed here -->
+              </div>
+              <div style="position: relative;">
+                <input type="text" id="text-input" placeholder="Enter your text here" value="Sample Text" style="padding-right: 45px;" />
+                <button type="button" id="emoji-button" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-size: 24px; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='transparent'">😀</button>
+              </div>
+              <div id="emoji-picker" style="display: none; margin-top: 12px; padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; max-height: 300px; overflow-y: auto;">
+                <div id="emoji-grid" style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px;"></div>
+              </div>
             </div>
 
             <div class="control-group">
@@ -296,9 +292,6 @@ document.addEventListener("DOMContentLoaded", () => {
               <input type="number" id="text-rotation" min="-360" max="360" value="0" step="1" style="width: 100%;" />
             </div>
 
-            <div class="control-group">
-              <button type="button" class="emoji-button" id="emoji-button">😀 Add Emoji</button>
-            </div>
 
             <div class="action-buttons">
               <button type="button" class="btn btn-primary" id="download-btn">Download Image</button>
@@ -309,7 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="canvas-container">
             <div class="canvas-wrapper" id="canvas-wrapper">
               <canvas id="image-canvas"></canvas>
-              <div class="text-box-overlay" id="text-box-overlay"></div>
             </div>
           </div>
         </div>
@@ -519,7 +511,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const canvas = document.getElementById('image-canvas');
         const ctx = canvas.getContext('2d');
         const canvasWrapper = document.getElementById('canvas-wrapper');
-        const textBoxOverlay = document.getElementById('text-box-overlay');
         
         const textInput = document.getElementById('text-input');
         const fontFamily = document.getElementById('font-family');
@@ -530,64 +521,54 @@ document.addEventListener("DOMContentLoaded", () => {
         const textUrl = document.getElementById('text-url');
         const textRotation = document.getElementById('text-rotation');
         const emojiButton = document.getElementById('emoji-button');
+        const emojiPicker = document.getElementById('emoji-picker');
+        const emojiGrid = document.getElementById('emoji-grid');
+        const addTextBtn = document.getElementById('add-text-btn');
+        const textLayersList = document.getElementById('text-layers-list');
         const downloadBtn = document.getElementById('download-btn');
         const resetBtn = document.getElementById('reset-btn');
         
         let currentImage = null;
         let imageObj = null;
-        let textBox = null;
         let isDragging = false;
-        let isRotating = false;
         let dragOffset = { x: 0, y: 0 };
-        let textPosition = { x: 50, y: 50 };
-        let textRotationAngle = 0;
-        let isBold = false;
-        let isUnderline = false;
+        let textLayers = [];
+        let selectedLayerIndex = -1;
+        
+        // Text layer structure: { text, font, size, color, x, y, rotation, bold, underline, url, id }
         
         // Emoji picker (common emojis)
         const commonEmojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
         
-        function showEmojiPicker() {
-          const emojiGrid = document.createElement('div');
-          emojiGrid.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:2px solid var(--border);border-radius:12px;padding:20px;z-index:10000;max-width:400px;max-height:400px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);';
-          
-          const emojiContainer = document.createElement('div');
-          emojiContainer.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:8px;';
-          
+        // Initialize emoji grid
+        function initEmojiPicker() {
+          if (!emojiGrid) return;
+          emojiGrid.innerHTML = '';
           commonEmojis.forEach(emoji => {
             const btn = document.createElement('button');
             btn.textContent = emoji;
+            btn.type = 'button';
             btn.style.cssText = 'font-size:24px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.2s;';
             btn.onmouseover = () => btn.style.background = 'var(--accent)';
             btn.onmouseout = () => btn.style.background = 'var(--bg)';
             btn.onclick = () => {
-              textInput.value += emoji;
-              updateText();
-              emojiGrid.remove();
-            };
-            emojiContainer.appendChild(btn);
-          });
-          
-          const closeBtn = document.createElement('button');
-          closeBtn.textContent = 'Close';
-          closeBtn.style.cssText = 'margin-top:12px;width:100%;padding:8px;background:var(--border);border:none;border-radius:6px;color:var(--fg);cursor:pointer;';
-          closeBtn.onclick = () => emojiGrid.remove();
-          
-          emojiGrid.appendChild(emojiContainer);
-          emojiGrid.appendChild(closeBtn);
-          document.body.appendChild(emojiGrid);
-          
-          // Close on outside click
-          setTimeout(() => {
-            const closePicker = (e) => {
-              if (!emojiGrid.contains(e.target) && e.target !== emojiButton) {
-                emojiGrid.remove();
-                document.removeEventListener('click', closePicker);
+              if (selectedLayerIndex >= 0 && selectedLayerIndex < textLayers.length) {
+                textInput.value += emoji;
+                updateText();
               }
             };
-            document.addEventListener('click', closePicker);
-          }, 100);
+            emojiGrid.appendChild(btn);
+          });
         }
+        
+        function toggleEmojiPicker() {
+          if (!emojiPicker) return;
+          const isVisible = emojiPicker.style.display !== 'none';
+          emojiPicker.style.display = isVisible ? 'none' : 'block';
+        }
+        
+        // Initialize emoji picker on load
+        initEmojiPicker();
         
         function loadImage(file) {
           const reader = new FileReader();
@@ -601,135 +582,207 @@ document.addEventListener("DOMContentLoaded", () => {
               // Draw image on canvas
               ctx.drawImage(imageObj, 0, 0);
               
-              // Wait for canvas to render, then sync overlay
-              setTimeout(() => {
-                syncOverlaySize();
-                
-                // Show editor
-                editorSection.style.display = 'block';
-                
-                // Initialize text position to center
-                textPosition = {
+              // Show editor
+              editorSection.style.display = 'block';
+              
+              // Initialize with one text layer
+              if (textLayers.length === 0) {
+                textLayers.push({
+                  id: Date.now(),
+                  text: 'Sample Text',
+                  font: 'Arial',
+                  size: 32,
+                  color: '#ffffff',
                   x: canvas.width / 2,
-                  y: canvas.height / 2
-                };
-                
-                // Draw initial text
-                updateText();
-                
-                // Scroll to editor
-                editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }, 100);
+                  y: canvas.height / 2,
+                  rotation: 0,
+                  bold: false,
+                  underline: false,
+                  url: ''
+                });
+                selectLayer(0);
+                updateTextLayersList();
+              }
+              
+              // Draw initial text
+              renderAllText();
+              
+              // Scroll to editor
+              editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             };
             imageObj.src = e.target.result;
           };
           reader.readAsDataURL(file);
         }
         
-        function syncOverlaySize() {
-          const rect = canvas.getBoundingClientRect();
-          const wrapperRect = canvasWrapper.getBoundingClientRect();
-          textBoxOverlay.style.position = 'absolute';
-          textBoxOverlay.style.left = (rect.left - wrapperRect.left) + 'px';
-          textBoxOverlay.style.top = (rect.top - wrapperRect.top) + 'px';
-          textBoxOverlay.style.width = rect.width + 'px';
-          textBoxOverlay.style.height = rect.height + 'px';
+        function updateText() {
+          if (!imageObj) return;
+          
+          // Update selected layer if one is selected
+          if (selectedLayerIndex >= 0 && selectedLayerIndex < textLayers.length) {
+            const layer = textLayers[selectedLayerIndex];
+            layer.text = textInput.value || 'Sample Text';
+            layer.font = fontFamily.value;
+            layer.size = Math.max(1, parseInt(fontSize.value) || 32);
+            layer.color = textColor.value;
+            layer.rotation = parseFloat(textRotation.value) || 0;
+            layer.bold = isBold;
+            layer.underline = isUnderline;
+            layer.url = textUrl.value;
+          }
+          
+          renderAllText();
         }
         
-        function updateText() {
+        function renderAllText() {
           if (!imageObj) return;
           
           // Redraw image
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(imageObj, 0, 0);
           
-          // Get text properties
-          const text = textInput.value || 'Sample Text';
-          const size = Math.max(1, parseInt(fontSize.value) || 32);
-          const color = textColor.value;
-          const font = fontFamily.value;
-          const bold = isBold ? 'bold ' : '';
-          const rotation = parseFloat(textRotation.value) || 0;
-          textRotationAngle = rotation;
-          
-          // Set font
-          ctx.font = `${bold}${size}px ${font}`;
-          ctx.fillStyle = color;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          
-          // Measure text for positioning
-          const metrics = ctx.measureText(text);
-          const textWidth = metrics.width;
-          const textHeight = size;
-          
-          // Save context
-          ctx.save();
-          
-          // Apply rotation
-          ctx.translate(textPosition.x, textPosition.y);
-          ctx.rotate((rotation * Math.PI) / 180);
-          
-          // Draw text
-          ctx.fillText(text, 0, 0);
-          
-          // Draw underline if needed
-          if (isUnderline) {
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(-textWidth / 2, textHeight / 2 + 4);
-            ctx.lineTo(textWidth / 2, textHeight / 2 + 4);
-            ctx.stroke();
-          }
-          
-          // Restore context
-          ctx.restore();
-          
-          // Update text box visual indicator
-          updateTextBox(textWidth, textHeight);
+          // Render all text layers
+          textLayers.forEach((layer, index) => {
+            const text = layer.text || 'Sample Text';
+            const size = layer.size || 32;
+            const color = layer.color || '#ffffff';
+            const font = layer.font || 'Arial';
+            const bold = layer.bold ? 'bold ' : '';
+            const rotation = layer.rotation || 0;
+            const x = layer.x || canvas.width / 2;
+            const y = layer.y || canvas.height / 2;
+            
+            // Set font
+            ctx.font = `${bold}${size}px ${font}`;
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Measure text
+            const metrics = ctx.measureText(text);
+            const textWidth = metrics.width;
+            const textHeight = size;
+            
+            // Save context
+            ctx.save();
+            
+            // Apply rotation
+            ctx.translate(x, y);
+            ctx.rotate((rotation * Math.PI) / 180);
+            
+            // Draw text
+            ctx.fillText(text, 0, 0);
+            
+            // Draw underline if needed
+            if (layer.underline) {
+              ctx.strokeStyle = color;
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(-textWidth / 2, textHeight / 2 + 4);
+              ctx.lineTo(textWidth / 2, textHeight / 2 + 4);
+              ctx.stroke();
+            }
+            
+            // Restore context
+            ctx.restore();
+          });
         }
         
-        function updateTextBox(textWidth, textHeight) {
-          // Remove existing text box if any
-          const existingBox = textBoxOverlay.querySelector('.text-box');
-          if (existingBox) existingBox.remove();
+        function addNewTextLayer() {
+          const newLayer = {
+            id: Date.now(),
+            text: 'Sample Text',
+            font: 'Arial',
+            size: 32,
+            color: '#ffffff',
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            rotation: 0,
+            bold: false,
+            underline: false,
+            url: ''
+          };
+          textLayers.push(newLayer);
+          selectLayer(textLayers.length - 1);
+          updateTextLayersList();
+          renderAllText();
+        }
+        
+        function selectLayer(index) {
+          selectedLayerIndex = index;
+          if (index >= 0 && index < textLayers.length) {
+            const layer = textLayers[index];
+            textInput.value = layer.text;
+            fontFamily.value = layer.font;
+            fontSize.value = layer.size;
+            textColor.value = layer.color;
+            textRotation.value = layer.rotation;
+            textUrl.value = layer.url || '';
+            isBold = layer.bold;
+            isUnderline = layer.underline;
+            if (boldBtn) boldBtn.classList.toggle('active', isBold);
+            if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
+          }
+          updateTextLayersList();
+        }
+        
+        function deleteLayer(index) {
+          if (textLayers.length <= 1) {
+            // Don't allow deleting the last layer, just reset it
+            textLayers[0] = {
+              id: Date.now(),
+              text: 'Sample Text',
+              font: 'Arial',
+              size: 32,
+              color: '#ffffff',
+              x: canvas.width / 2,
+              y: canvas.height / 2,
+              rotation: 0,
+              bold: false,
+              underline: false,
+              url: ''
+            };
+            selectLayer(0);
+          } else {
+            textLayers.splice(index, 1);
+            if (selectedLayerIndex >= textLayers.length) {
+              selectedLayerIndex = textLayers.length - 1;
+            }
+            selectLayer(selectedLayerIndex);
+          }
+          updateTextLayersList();
+          renderAllText();
+        }
+        
+        function updateTextLayersList() {
+          if (!textLayersList) return;
+          textLayersList.innerHTML = '';
           
-          // Get canvas display size and scale
-          const canvasRect = canvas.getBoundingClientRect();
-          const scaleX = canvasRect.width / canvas.width;
-          const scaleY = canvasRect.height / canvas.height;
-          
-          // Update overlay size to match canvas display size
-          textBoxOverlay.style.width = canvasRect.width + 'px';
-          textBoxOverlay.style.height = canvasRect.height + 'px';
-          
-          // Calculate rotated bounding box
-          const rotation = textRotationAngle * Math.PI / 180;
-          const cos = Math.abs(Math.cos(rotation));
-          const sin = Math.abs(Math.sin(rotation));
-          const rotatedWidth = (textWidth * cos + textHeight * sin) * scaleX;
-          const rotatedHeight = (textWidth * sin + textHeight * cos) * scaleY;
-          
-          // Create text box indicator positioned relative to overlay
-          const box = document.createElement('div');
-          box.className = 'text-box active';
-          box.style.left = (textPosition.x * scaleX - rotatedWidth / 2 - 4) + 'px';
-          box.style.top = (textPosition.y * scaleY - rotatedHeight / 2 - 4) + 'px';
-          box.style.width = (rotatedWidth + 8) + 'px';
-          box.style.height = (rotatedHeight + 8) + 'px';
-          box.style.transform = `rotate(${textRotationAngle}deg)`;
-          box.style.transformOrigin = 'center center';
-          
-          // Make draggable
-          box.addEventListener('mousedown', startDrag);
-          box.addEventListener('touchstart', startDrag);
-          
-          textBoxOverlay.appendChild(box);
-          textBox = box;
+          textLayers.forEach((layer, index) => {
+            const item = document.createElement('div');
+            item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px; margin-bottom: 4px; background: ' + (index === selectedLayerIndex ? 'var(--accent)' : 'var(--bg)') + '; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;';
+            item.onclick = () => selectLayer(index);
+            
+            const text = document.createElement('span');
+            text.textContent = layer.text || 'Empty';
+            text.style.cssText = 'flex: 1; color: ' + (index === selectedLayerIndex ? '#001633' : 'var(--fg)') + '; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '×';
+            deleteBtn.style.cssText = 'background: transparent; border: none; color: ' + (index === selectedLayerIndex ? '#001633' : 'var(--fg)') + '; font-size: 20px; cursor: pointer; padding: 0 8px; font-weight: bold;';
+            deleteBtn.onclick = (e) => {
+              e.stopPropagation();
+              deleteLayer(index);
+            };
+            
+            item.appendChild(text);
+            item.appendChild(deleteBtn);
+            textLayersList.appendChild(item);
+          });
         }
         
         function startDrag(e) {
+          if (selectedLayerIndex < 0 || selectedLayerIndex >= textLayers.length) return;
           e.preventDefault();
           e.stopPropagation();
           isDragging = true;
@@ -740,9 +793,10 @@ document.addEventListener("DOMContentLoaded", () => {
           
           const scaleX = canvas.width / rect.width;
           const scaleY = canvas.height / rect.height;
+          const layer = textLayers[selectedLayerIndex];
           
-          dragOffset.x = (clientX - rect.left) * scaleX - textPosition.x;
-          dragOffset.y = (clientY - rect.top) * scaleY - textPosition.y;
+          dragOffset.x = (clientX - rect.left) * scaleX - layer.x;
+          dragOffset.y = (clientY - rect.top) * scaleY - layer.y;
           
           document.addEventListener('mousemove', drag);
           document.addEventListener('touchmove', drag);
@@ -751,7 +805,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         function drag(e) {
-          if (!isDragging) return;
+          if (!isDragging || selectedLayerIndex < 0 || selectedLayerIndex >= textLayers.length) return;
           e.preventDefault();
           
           const rect = canvas.getBoundingClientRect();
@@ -761,15 +815,16 @@ document.addEventListener("DOMContentLoaded", () => {
           // Calculate position relative to canvas, accounting for scaling
           const scaleX = canvas.width / rect.width;
           const scaleY = canvas.height / rect.height;
+          const layer = textLayers[selectedLayerIndex];
           
-          textPosition.x = (clientX - rect.left) * scaleX;
-          textPosition.y = (clientY - rect.top) * scaleY;
+          layer.x = (clientX - rect.left) * scaleX - dragOffset.x;
+          layer.y = (clientY - rect.top) * scaleY - dragOffset.y;
           
           // Constrain to canvas bounds
-          textPosition.x = Math.max(0, Math.min(canvas.width, textPosition.x));
-          textPosition.y = Math.max(0, Math.min(canvas.height, textPosition.y));
+          layer.x = Math.max(0, Math.min(canvas.width, layer.x));
+          layer.y = Math.max(0, Math.min(canvas.height, layer.y));
           
-          updateText();
+          renderAllText();
         }
         
         function stopDrag() {
@@ -783,7 +838,7 @@ document.addEventListener("DOMContentLoaded", () => {
         function downloadImage() {
           if (!imageObj) return;
           
-          // Update text one final time
+          // Update selected layer one final time
           updateText();
           
           // Convert canvas to blob and download
@@ -855,14 +910,30 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         }
         
-        emojiButton.addEventListener('click', showEmojiPicker);
+        if (emojiButton) {
+          emojiButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleEmojiPicker();
+          });
+        }
+        
+        // Close emoji picker when clicking outside
+        document.addEventListener('click', (e) => {
+          if (emojiPicker && emojiPicker.style.display !== 'none') {
+            if (!emojiPicker.contains(e.target) && e.target !== emojiButton) {
+              emojiPicker.style.display = 'none';
+            }
+          }
+        });
         downloadBtn.addEventListener('click', downloadImage);
         resetBtn.addEventListener('click', () => {
           currentImage = null;
           imageObj = null;
           fileInput.value = '';
           editorSection.style.display = 'none';
-          if (textBox) textBox.remove();
+          textLayers = [];
+          selectedLayerIndex = -1;
           textInput.value = 'Sample Text';
           fontSize.value = 32;
           textColor.value = '#ffffff';
@@ -872,50 +943,44 @@ document.addEventListener("DOMContentLoaded", () => {
           isUnderline = false;
           if (boldBtn) boldBtn.classList.remove('active');
           if (underlineBtn) underlineBtn.classList.remove('active');
+          if (textLayersList) textLayersList.innerHTML = '';
         });
         
-        // Make canvas clickable for text positioning (only if not clicking on text box)
+        // Make canvas clickable and draggable for text positioning
+        canvas.addEventListener('mousedown', (e) => {
+          if (!imageObj) return;
+          startDrag(e);
+        });
+        
+        canvas.addEventListener('touchstart', (e) => {
+          if (!imageObj) return;
+          startDrag(e);
+        });
+        
+        // Also allow clicking to position selected text
         canvas.addEventListener('click', (e) => {
-          if (!imageObj || isDragging) return;
-          // Don't reposition if clicking on text box
-          if (e.target === textBox || textBox?.contains(e.target)) return;
+          if (!imageObj || isDragging || selectedLayerIndex < 0) return;
           
           const rect = canvas.getBoundingClientRect();
           const scaleX = canvas.width / rect.width;
           const scaleY = canvas.height / rect.height;
-          textPosition.x = (e.clientX - rect.left) * scaleX;
-          textPosition.y = (e.clientY - rect.top) * scaleY;
-          updateText();
+          const layer = textLayers[selectedLayerIndex];
+          layer.x = (e.clientX - rect.left) * scaleX;
+          layer.y = (e.clientY - rect.top) * scaleY;
+          renderAllText();
         });
         
-        // Also allow clicking on overlay (but not on text box itself)
-        textBoxOverlay.addEventListener('click', (e) => {
-          if (!imageObj || isDragging || e.target.classList.contains('text-box')) return;
-          
-          const rect = canvas.getBoundingClientRect();
-          const scaleX = canvas.width / rect.width;
-          const scaleY = canvas.height / rect.height;
-          textPosition.x = (e.clientX - rect.left) * scaleX;
-          textPosition.y = (e.clientY - rect.top) * scaleY;
-          updateText();
-        });
+        // Add new text layer button
+        if (addTextBtn) {
+          addTextBtn.addEventListener('click', addNewTextLayer);
+        }
         
-        // Update text box position on window resize
+        // Update text on window resize
         window.addEventListener('resize', () => {
           if (imageObj) {
-            syncOverlaySize();
             updateText();
           }
         });
-        
-        // Sync overlay when canvas size changes
-        const resizeObserver = new ResizeObserver(() => {
-          if (imageObj) {
-            syncOverlaySize();
-            updateText();
-          }
-        });
-        resizeObserver.observe(canvas);
       })();
     </script>
   </body>
