@@ -113,6 +113,15 @@ document.addEventListener("DOMContentLoaded", () => {
   .style-btn:hover:not(.active) {
     background: var(--border) !important;
   }
+  .animation-btn.active {
+    background: var(--accent) !important;
+    color: #001633 !important;
+    border-color: var(--accent) !important;
+    font-weight: 600 !important;
+  }
+  .animation-btn:hover:not(.active) {
+    background: var(--border) !important;
+  }
   .canvas-container {
     background: var(--card);
     border: 1px solid var(--border);
@@ -291,7 +300,28 @@ document.addEventListener("DOMContentLoaded", () => {
               <label for="text-rotation">Rotation Angle (degrees)</label>
               <input type="number" id="text-rotation" min="-360" max="360" value="0" step="1" style="width: 100%;" />
             </div>
-
+            
+            <div class="control-group">
+              <label>Animation</label>
+              <div id="animation-buttons" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;">
+                <button type="button" class="animation-btn" data-animation="none" style="padding: 10px; background: var(--accent); color: #001633; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 11px;">None</button>
+                <button type="button" class="animation-btn" data-animation="pop" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 11px;">Pop</button>
+                <button type="button" class="animation-btn" data-animation="wipe" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 11px;">Wipe</button>
+                <button type="button" class="animation-btn" data-animation="blur" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 11px;">Blur</button>
+                <button type="button" class="animation-btn" data-animation="succession" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 11px;">Succession</button>
+                <button type="button" class="animation-btn" data-animation="breathe" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 11px;">Breathe</button>
+                <button type="button" class="animation-btn" data-animation="baseline" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 11px;">Baseline</button>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-top: 12px;">
+                <label for="animation-duration" style="flex: 0 0 80px; font-size: 12px;">Duration:</label>
+                <input type="number" id="animation-duration" min="0.5" max="5" step="0.1" value="1" style="flex: 1; padding: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--fg);" />
+                <span style="flex: 0 0 30px; font-size: 12px; color: var(--muted);">sec</span>
+              </div>
+              <label style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 400;">
+                <input type="checkbox" id="animation-loop" checked style="width: 18px; height: 18px;" />
+                <span>Loop animation</span>
+              </label>
+            </div>
 
             <div class="action-buttons">
               <button type="button" class="btn btn-primary" id="download-btn">Download Image</button>
@@ -525,6 +555,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const underlineBtn = document.getElementById('underline-btn');
         const textUrl = document.getElementById('text-url');
         const textRotation = document.getElementById('text-rotation');
+        const animationButtons = document.querySelectorAll('.animation-btn');
+        const animationDuration = document.getElementById('animation-duration');
+        const animationLoop = document.getElementById('animation-loop');
         const emojiButton = document.getElementById('emoji-button');
         const emojiPicker = document.getElementById('emoji-picker');
         const emojiGrid = document.getElementById('emoji-grid');
@@ -542,7 +575,11 @@ document.addEventListener("DOMContentLoaded", () => {
         let selectedLayerIndex = -1;
         const rotationHandle = document.getElementById('rotation-handle');
         
-        // Text layer structure: { text, font, size, color, x, y, rotation, bold, underline, url, id }
+        // Text layer structure: { text, font, size, color, x, y, rotation, bold, underline, url, id, animation, animationDuration, animationLoop }
+        let currentAnimationType = 'none';
+        let animationFrameId = null;
+        let animationStartTime = 0;
+        let isAnimating = false;
         
         // Emoji picker (common emojis)
         const commonEmojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
@@ -605,7 +642,10 @@ document.addEventListener("DOMContentLoaded", () => {
                   rotation: 0,
                   bold: false,
                   underline: false,
-                  url: ''
+                  url: '',
+                  animation: 'none',
+                  animationDuration: 1,
+                  animationLoop: true
                 });
                 selectLayer(0);
                 updateTextLayersList();
@@ -613,6 +653,7 @@ document.addEventListener("DOMContentLoaded", () => {
               
               // Draw initial text
               renderAllText();
+              startAnimation();
               
               // Scroll to editor
               editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -636,12 +677,16 @@ document.addEventListener("DOMContentLoaded", () => {
             layer.bold = isBold;
             layer.underline = isUnderline;
             layer.url = textUrl.value;
+            layer.animation = currentAnimationType;
+            layer.animationDuration = parseFloat(animationDuration.value) || 1;
+            layer.animationLoop = animationLoop.checked;
           }
           
           renderAllText();
+          startAnimation();
         }
         
-        function renderAllText() {
+        function renderAllText(progress = 0) {
           if (!imageObj) return;
           
           // Redraw image
@@ -655,15 +700,57 @@ document.addEventListener("DOMContentLoaded", () => {
             const color = layer.color || '#ffffff';
             const font = layer.font || 'Arial';
             const bold = layer.bold ? 'bold ' : '';
-            const rotation = layer.rotation || 0;
-            const x = layer.x || canvas.width / 2;
-            const y = layer.y || canvas.height / 2;
+            let rotation = layer.rotation || 0;
+            let x = layer.x || canvas.width / 2;
+            let y = layer.y || canvas.height / 2;
+            let opacity = 1;
+            let scale = 1;
+            let blur = 0;
+            let clipX = 0;
+            let offsetY = 0;
+            
+            // Apply animation effects
+            const animation = layer.animation || 'none';
+            const duration = layer.animationDuration || 1;
+            const loop = layer.animationLoop !== false;
+            
+            if (animation !== 'none' && progress !== undefined && progress !== null) {
+              let animProgress = progress % (duration * 1000);
+              if (!loop && progress >= duration * 1000) {
+                animProgress = duration * 1000;
+              }
+              const t = animProgress / (duration * 1000);
+              
+              switch (animation) {
+                case 'pop':
+                  scale = 0.5 + (Math.sin(t * Math.PI) * 0.5); // Scale from 0.5 to 1
+                  break;
+                case 'wipe':
+                  clipX = t * 100; // Wipe from left to right
+                  break;
+                case 'blur':
+                  blur = Math.sin(t * Math.PI) * 10; // Blur increases and decreases
+                  break;
+                case 'succession':
+                  opacity = Math.sin(t * Math.PI * 2) * 0.5 + 0.5; // Fade in/out
+                  scale = 0.8 + (Math.sin(t * Math.PI * 2) * 0.2);
+                  break;
+                case 'breathe':
+                  scale = 1 + (Math.sin(t * Math.PI * 2) * 0.1); // Subtle scale pulse
+                  opacity = 0.8 + (Math.sin(t * Math.PI * 2) * 0.2);
+                  break;
+                case 'baseline':
+                  offsetY = Math.sin(t * Math.PI * 2) * 10; // Vertical movement
+                  break;
+              }
+            }
             
             // Set font
             ctx.font = `${bold}${size}px ${font}`;
             ctx.fillStyle = color;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            ctx.globalAlpha = opacity;
             
             // Measure text
             const metrics = ctx.measureText(text);
@@ -673,9 +760,23 @@ document.addEventListener("DOMContentLoaded", () => {
             // Save context
             ctx.save();
             
-            // Apply rotation
-            ctx.translate(x, y);
+            // Apply transformations
+            ctx.translate(x, y + offsetY);
             ctx.rotate((rotation * Math.PI) / 180);
+            ctx.scale(scale, scale);
+            
+            // Apply blur if needed
+            if (blur > 0) {
+              ctx.shadowBlur = blur;
+              ctx.shadowColor = color;
+            }
+            
+            // Apply clip for wipe effect
+            if (animation === 'wipe' && clipX > 0) {
+              ctx.beginPath();
+              ctx.rect(-textWidth / 2, -textHeight / 2, (textWidth * clipX / 100), textHeight);
+              ctx.clip();
+            }
             
             // Draw text
             ctx.fillText(text, 0, 0);
@@ -694,8 +795,47 @@ document.addEventListener("DOMContentLoaded", () => {
             ctx.restore();
           });
           
+          // Reset global alpha and shadow after all layers
+          ctx.globalAlpha = 1;
+          ctx.shadowBlur = 0;
+          
           // Update rotation handle position for selected layer
           updateRotationHandle();
+        }
+        
+        function startAnimation() {
+          if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+          }
+          
+          const hasAnimation = textLayers.some(l => l.animation && l.animation !== 'none');
+          if (!hasAnimation) {
+            isAnimating = false;
+            renderAllText(0);
+            return;
+          }
+          
+          isAnimating = true;
+          animationStartTime = Date.now();
+          
+          function animate() {
+            if (!isAnimating) return;
+            
+            const elapsed = Date.now() - animationStartTime;
+            renderAllText(elapsed);
+            
+            animationFrameId = requestAnimationFrame(animate);
+          }
+          
+          animate();
+        }
+        
+        function stopAnimation() {
+          isAnimating = false;
+          if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+          }
         }
         
         function updateRotationHandle() {
@@ -745,15 +885,19 @@ document.addEventListener("DOMContentLoaded", () => {
             color: '#ffffff',
             x: canvas.width / 2,
             y: canvas.height / 2,
-            rotation: 0,
-            bold: false,
-            underline: false,
-            url: ''
-          };
-          textLayers.push(newLayer);
-          selectLayer(textLayers.length - 1);
-          updateTextLayersList();
-          renderAllText();
+              rotation: 0,
+              bold: false,
+              underline: false,
+              url: '',
+              animation: 'none',
+              animationDuration: 1,
+              animationLoop: true
+            };
+            textLayers.push(newLayer);
+            selectLayer(textLayers.length - 1);
+            updateTextLayersList();
+            renderAllText();
+            startAnimation();
         }
         
         function selectLayer(index) {
@@ -768,6 +912,26 @@ document.addEventListener("DOMContentLoaded", () => {
             textUrl.value = layer.url || '';
             isBold = layer.bold;
             isUnderline = layer.underline;
+            currentAnimationType = layer.animation || 'none';
+            
+            // Update animation button states
+            animationButtons.forEach(btn => {
+              if (btn.dataset.animation === currentAnimationType) {
+                btn.classList.add('active');
+                btn.style.background = 'var(--accent)';
+                btn.style.color = '#001633';
+                btn.style.borderColor = 'var(--accent)';
+              } else {
+                btn.classList.remove('active');
+                btn.style.background = 'var(--bg)';
+                btn.style.color = 'var(--fg)';
+                btn.style.borderColor = 'var(--border)';
+              }
+            });
+            
+            if (animationDuration) animationDuration.value = layer.animationDuration || 1;
+            if (animationLoop) animationLoop.checked = layer.animationLoop !== false;
+            
             if (boldBtn) boldBtn.classList.toggle('active', isBold);
             if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
           }
@@ -789,7 +953,10 @@ document.addEventListener("DOMContentLoaded", () => {
               rotation: 0,
               bold: false,
               underline: false,
-              url: ''
+              url: '',
+              animation: 'none',
+              animationDuration: 1,
+              animationLoop: true
             };
             selectLayer(0);
           } else {
@@ -958,8 +1125,14 @@ document.addEventListener("DOMContentLoaded", () => {
         function downloadImage() {
           if (!imageObj) return;
           
+          // Stop animation for static export
+          stopAnimation();
+          
           // Update selected layer one final time
           updateText();
+          
+          // Render static version
+          renderAllText(0);
           
           // Convert canvas to blob and download
           canvas.toBlob((blob) => {
@@ -971,6 +1144,9 @@ document.addEventListener("DOMContentLoaded", () => {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            
+            // Restart animation
+            startAnimation();
             
             // Track download
             if (typeof gtag === 'function') {
@@ -1011,6 +1187,35 @@ document.addEventListener("DOMContentLoaded", () => {
         fontSize.addEventListener('input', updateText);
         textColor.addEventListener('change', updateText);
         textRotation.addEventListener('input', updateText);
+        
+        // Animation button listeners
+        animationButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            currentAnimationType = btn.dataset.animation;
+            // Update button states
+            animationButtons.forEach(b => {
+              if (b === btn) {
+                b.classList.add('active');
+                b.style.background = 'var(--accent)';
+                b.style.color = '#001633';
+                b.style.borderColor = 'var(--accent)';
+              } else {
+                b.classList.remove('active');
+                b.style.background = 'var(--bg)';
+                b.style.color = 'var(--fg)';
+                b.style.borderColor = 'var(--border)';
+              }
+            });
+            updateText();
+          });
+        });
+        
+        if (animationDuration) {
+          animationDuration.addEventListener('input', updateText);
+        }
+        if (animationLoop) {
+          animationLoop.addEventListener('change', updateText);
+        }
         
         // Bold button toggle
         if (boldBtn) {
@@ -1061,9 +1266,26 @@ document.addEventListener("DOMContentLoaded", () => {
           textRotation.value = 0;
           isBold = false;
           isUnderline = false;
+          currentAnimationType = 'none';
           if (boldBtn) boldBtn.classList.remove('active');
           if (underlineBtn) underlineBtn.classList.remove('active');
           if (textLayersList) textLayersList.innerHTML = '';
+          if (animationDuration) animationDuration.value = 1;
+          if (animationLoop) animationLoop.checked = true;
+          // Reset animation buttons
+          animationButtons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = 'var(--bg)';
+            btn.style.color = 'var(--fg)';
+            btn.style.borderColor = 'var(--border)';
+            if (btn.dataset.animation === 'none') {
+              btn.classList.add('active');
+              btn.style.background = 'var(--accent)';
+              btn.style.color = '#001633';
+              btn.style.borderColor = 'var(--accent)';
+            }
+          });
+          stopAnimation();
         });
         
         // Make canvas clickable and draggable for text positioning
