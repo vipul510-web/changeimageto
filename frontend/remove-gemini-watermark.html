@@ -77,6 +77,14 @@ document.addEventListener("DOMContentLoaded", () => {
         <div style="text-align: center; margin-top: 12px; color: var(--muted); font-size: 0.9rem;">
           Maximum file size: 10MB. Large images will be automatically optimized for processing.
         </div>
+        
+        <div id="file-size-error" style="display: none; text-align: center; margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444;">
+          <strong>File too large:</strong> Maximum file size is 10MB. Please compress or resize your image first using our <a href="/compress-image-online.html" style="color: #ef4444; text-decoration: underline;">compression tool</a>.
+        </div>
+        
+        <div id="file-type-error" style="display: none; text-align: center; margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444;">
+          <strong>Invalid file type:</strong> Please upload an image file (JPG, PNG, WebP, etc.). Video files are not supported.
+        </div>
 
         <button id="process-btn" type="submit" disabled>Remove Watermark</button>
       </form>
@@ -308,6 +316,109 @@ document.addEventListener("DOMContentLoaded", () => {
     </footer>
 
     <script src="./script.js?v=20251220-1" defer></script>
+    <script>
+      (function() {
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+        const fileInput = document.getElementById('file-input');
+        const processBtn = document.getElementById('process-btn');
+        const fileSizeError = document.getElementById('file-size-error');
+        const fileTypeError = document.getElementById('file-type-error');
+        const dropzone = document.getElementById('dropzone');
+        
+        function isValidImageType(file) {
+          if (!file) return false;
+          const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/svg+xml'];
+          return validTypes.includes(file.type.toLowerCase());
+        }
+        
+        function validateFile(file) {
+          // Hide all errors first
+          if (fileSizeError) fileSizeError.style.display = 'none';
+          if (fileTypeError) fileTypeError.style.display = 'none';
+          
+          if (!file) {
+            if (processBtn) processBtn.disabled = true;
+            return false;
+          }
+          
+          // Check file type first
+          if (!isValidImageType(file)) {
+            if (fileTypeError) fileTypeError.style.display = 'block';
+            if (processBtn) processBtn.disabled = true;
+            // Clear the file input
+            if (fileInput) fileInput.value = '';
+            return false;
+          }
+          
+          // Check file size
+          if (file.size > MAX_FILE_SIZE) {
+            if (fileSizeError) fileSizeError.style.display = 'block';
+            if (processBtn) processBtn.disabled = true;
+            return false;
+          }
+          
+          // File is valid
+          if (processBtn) processBtn.disabled = false;
+          return true;
+        }
+        
+        // Handle file input change
+        if (fileInput) {
+          fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            validateFile(file);
+          });
+        }
+        
+        // Handle drag and drop
+        if (dropzone) {
+          dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--accent)';
+          });
+          
+          dropzone.addEventListener('dragleave', () => {
+            dropzone.style.borderColor = 'var(--border)';
+          });
+          
+          dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--border)';
+            const file = e.dataTransfer.files[0];
+            if (file) {
+              // Validate file type
+              if (!isValidImageType(file)) {
+                validateFile(file);
+                return;
+              }
+              
+              // Set the file input
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              if (fileInput) {
+                fileInput.files = dataTransfer.files;
+                // Trigger change event
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+              }
+              validateFile(file);
+            }
+          });
+        }
+        
+        // Also validate on form submit to prevent submission
+        const form = document.getElementById('upload-form');
+        if (form) {
+          form.addEventListener('submit', (e) => {
+            const file = fileInput?.files[0];
+            if (!validateFile(file)) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+          });
+        }
+      })();
+    </script>
   </body>
 </html>
 
