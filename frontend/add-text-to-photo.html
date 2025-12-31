@@ -291,10 +291,32 @@ document.addEventListener("DOMContentLoaded", () => {
               <label for="text-rotation">Rotation Angle (degrees)</label>
               <input type="number" id="text-rotation" min="-360" max="360" value="0" step="1" style="width: 100%;" />
             </div>
-
+            
+            <div class="control-group">
+              <label>Animation</label>
+              <select id="animation-type" style="width: 100%; margin-bottom: 8px;">
+                <option value="none">None</option>
+                <option value="rise">Rise</option>
+                <option value="pan">Pan</option>
+                <option value="fade">Fade</option>
+                <option value="pop">Pop</option>
+                <option value="wipe">Wipe</option>
+                <option value="blur">Blur</option>
+              </select>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <label for="animation-duration" style="flex: 0 0 80px; font-size: 12px;">Duration:</label>
+                <input type="number" id="animation-duration" min="0.5" max="5" step="0.1" value="1" style="flex: 1;" />
+                <span style="flex: 0 0 30px; font-size: 12px; color: var(--muted);">sec</span>
+              </div>
+              <label style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 400;">
+                <input type="checkbox" id="animation-loop" checked style="width: 18px; height: 18px;" />
+                <span>Loop animation</span>
+              </label>
+            </div>
 
             <div class="action-buttons">
               <button type="button" class="btn btn-primary" id="download-btn">Download Image</button>
+              <button type="button" class="btn btn-primary" id="download-gif-btn" style="display: none;">Download Animated GIF</button>
               <button type="button" class="btn btn-secondary" id="reset-btn">Reset</button>
             </div>
           </div>
@@ -302,6 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="canvas-container">
             <div class="canvas-wrapper" id="canvas-wrapper">
               <canvas id="image-canvas"></canvas>
+              <div id="rotation-handle" style="display: none; position: absolute; width: 20px; height: 20px; background: var(--accent); border: 2px solid white; border-radius: 50%; cursor: grab; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>
             </div>
           </div>
         </div>
@@ -503,6 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
     </footer>
 
     <script src="./script.js?v=20251220-1" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
     <script>
       (function() {
         const dropzone = document.getElementById('dropzone');
@@ -531,11 +555,16 @@ document.addEventListener("DOMContentLoaded", () => {
         let currentImage = null;
         let imageObj = null;
         let isDragging = false;
+        let isRotating = false;
         let dragOffset = { x: 0, y: 0 };
         let textLayers = [];
         let selectedLayerIndex = -1;
+        const rotationHandle = document.getElementById('rotation-handle');
+        let animationFrameId = null;
+        let animationStartTime = 0;
+        let isAnimating = false;
         
-        // Text layer structure: { text, font, size, color, x, y, rotation, bold, underline, url, id }
+        // Text layer structure: { text, font, size, color, x, y, rotation, bold, underline, url, id, animation, animationDuration, animationLoop }
         
         // Emoji picker (common emojis)
         const commonEmojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
@@ -598,14 +627,18 @@ document.addEventListener("DOMContentLoaded", () => {
                   rotation: 0,
                   bold: false,
                   underline: false,
-                  url: ''
+                  url: '',
+                  animation: 'none',
+                  animationDuration: 1,
+                  animationLoop: true
                 });
                 selectLayer(0);
                 updateTextLayersList();
               }
               
               // Draw initial text
-              renderAllText();
+              renderAllText(0);
+              startAnimation();
               
               // Scroll to editor
               editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -629,12 +662,21 @@ document.addEventListener("DOMContentLoaded", () => {
             layer.bold = isBold;
             layer.underline = isUnderline;
             layer.url = textUrl.value;
+            layer.animation = animationType.value;
+            layer.animationDuration = parseFloat(animationDuration.value) || 1;
+            layer.animationLoop = animationLoop.checked;
           }
           
+          // Update download button visibility
+          const hasAnimation = textLayers.some(l => l.animation && l.animation !== 'none');
+          if (downloadGifBtn) downloadGifBtn.style.display = hasAnimation ? 'block' : 'none';
+          if (downloadBtn) downloadBtn.style.display = hasAnimation ? 'none' : 'block';
+          
           renderAllText();
+          startAnimation();
         }
         
-        function renderAllText() {
+        function renderAllText(progress = 0) {
           if (!imageObj) return;
           
           // Redraw image
@@ -648,15 +690,53 @@ document.addEventListener("DOMContentLoaded", () => {
             const color = layer.color || '#ffffff';
             const font = layer.font || 'Arial';
             const bold = layer.bold ? 'bold ' : '';
-            const rotation = layer.rotation || 0;
-            const x = layer.x || canvas.width / 2;
-            const y = layer.y || canvas.height / 2;
+            let rotation = layer.rotation || 0;
+            let x = layer.x || canvas.width / 2;
+            let y = layer.y || canvas.height / 2;
+            let opacity = 1;
+            let scale = 1;
+            let blur = 0;
+            let clipX = 0;
+            
+            // Apply animation effects
+            const animation = layer.animation || 'none';
+            const duration = layer.animationDuration || 1;
+            const loop = layer.animationLoop !== false;
+            
+            if (animation !== 'none' && progress !== undefined) {
+              let animProgress = progress % (duration * 1000);
+              if (!loop && progress >= duration * 1000) animProgress = duration * 1000;
+              const t = animProgress / (duration * 1000);
+              
+              switch (animation) {
+                case 'rise':
+                  y = y - (t * 50); // Move up
+                  opacity = 1 - t;
+                  break;
+                case 'pan':
+                  x = x + (t * 100 - 50); // Pan left to right
+                  break;
+                case 'fade':
+                  opacity = Math.sin(t * Math.PI); // Fade in and out
+                  break;
+                case 'pop':
+                  scale = 0.5 + (Math.sin(t * Math.PI) * 0.5); // Scale from 0.5 to 1
+                  break;
+                case 'wipe':
+                  clipX = t * 100; // Wipe from left to right
+                  break;
+                case 'blur':
+                  blur = t * 10; // Blur increases
+                  break;
+              }
+            }
             
             // Set font
             ctx.font = `${bold}${size}px ${font}`;
             ctx.fillStyle = color;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            ctx.globalAlpha = opacity;
             
             // Measure text
             const metrics = ctx.measureText(text);
@@ -666,9 +746,23 @@ document.addEventListener("DOMContentLoaded", () => {
             // Save context
             ctx.save();
             
-            // Apply rotation
+            // Apply transformations
             ctx.translate(x, y);
             ctx.rotate((rotation * Math.PI) / 180);
+            ctx.scale(scale, scale);
+            
+            // Apply blur if needed
+            if (blur > 0) {
+              ctx.shadowBlur = blur;
+              ctx.shadowColor = color;
+            }
+            
+            // Apply clip for wipe effect
+            if (animation === 'wipe' && clipX > 0) {
+              ctx.beginPath();
+              ctx.rect(-textWidth / 2, -textHeight / 2, (textWidth * clipX / 100), textHeight);
+              ctx.clip();
+            }
             
             // Draw text
             ctx.fillText(text, 0, 0);
@@ -685,7 +779,84 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // Restore context
             ctx.restore();
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
           });
+          
+          // Update rotation handle position for selected layer
+          updateRotationHandle();
+        }
+        
+        function startAnimation() {
+          if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+          }
+          
+          const hasAnimation = textLayers.some(l => l.animation && l.animation !== 'none');
+          if (!hasAnimation) {
+            isAnimating = false;
+            return;
+          }
+          
+          isAnimating = true;
+          animationStartTime = Date.now();
+          
+          function animate() {
+            if (!isAnimating) return;
+            
+            const elapsed = Date.now() - animationStartTime;
+            renderAllText(elapsed);
+            
+            animationFrameId = requestAnimationFrame(animate);
+          }
+          
+          animate();
+        }
+        
+        function stopAnimation() {
+          isAnimating = false;
+          if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+          }
+        }
+        
+        function updateRotationHandle() {
+          if (!rotationHandle || selectedLayerIndex < 0 || selectedLayerIndex >= textLayers.length) {
+            if (rotationHandle) rotationHandle.style.display = 'none';
+            return;
+          }
+          
+          const layer = textLayers[selectedLayerIndex];
+          const canvasRect = canvas.getBoundingClientRect();
+          const wrapperRect = canvasWrapper.getBoundingClientRect();
+          const scaleX = canvasRect.width / canvas.width;
+          const scaleY = canvasRect.height / canvas.height;
+          
+          // Calculate text dimensions
+          ctx.font = `${layer.bold ? 'bold ' : ''}${layer.size}px ${layer.font}`;
+          const metrics = ctx.measureText(layer.text || 'Sample Text');
+          const textHeight = layer.size || 32;
+          
+          // Position handle above the text (at a distance)
+          const handleDistance = Math.max(textHeight / 2 + 30, 40); // At least 40px above text
+          const rotationRad = (layer.rotation * Math.PI) / 180;
+          
+          // Calculate handle position in canvas coordinates
+          const handleX = layer.x;
+          const handleY = layer.y - handleDistance;
+          
+          // Rotate the handle position around text center
+          const rotatedX = layer.x + (handleX - layer.x) * Math.cos(rotationRad) - (handleY - layer.y) * Math.sin(rotationRad);
+          const rotatedY = layer.y + (handleX - layer.x) * Math.sin(rotationRad) + (handleY - layer.y) * Math.cos(rotationRad);
+          
+          // Convert to screen coordinates
+          const screenX = (rotatedX * scaleX) + (canvasRect.left - wrapperRect.left);
+          const screenY = (rotatedY * scaleY) + (canvasRect.top - wrapperRect.top);
+          
+          rotationHandle.style.left = (screenX - 10) + 'px';
+          rotationHandle.style.top = (screenY - 10) + 'px';
+          rotationHandle.style.display = 'block';
         }
         
         function addNewTextLayer() {
@@ -700,12 +871,16 @@ document.addEventListener("DOMContentLoaded", () => {
             rotation: 0,
             bold: false,
             underline: false,
-            url: ''
+            url: '',
+            animation: 'none',
+            animationDuration: 1,
+            animationLoop: true
           };
           textLayers.push(newLayer);
           selectLayer(textLayers.length - 1);
           updateTextLayersList();
-          renderAllText();
+          renderAllText(0);
+          startAnimation();
         }
         
         function selectLayer(index) {
@@ -720,10 +895,15 @@ document.addEventListener("DOMContentLoaded", () => {
             textUrl.value = layer.url || '';
             isBold = layer.bold;
             isUnderline = layer.underline;
+            if (animationType) animationType.value = layer.animation || 'none';
+            if (animationDuration) animationDuration.value = layer.animationDuration || 1;
+            if (animationLoop) animationLoop.checked = layer.animationLoop !== false;
             if (boldBtn) boldBtn.classList.toggle('active', isBold);
             if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
           }
           updateTextLayersList();
+          updateRotationHandle();
+          updateText();
         }
         
         function deleteLayer(index) {
@@ -782,6 +962,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         function startDrag(e) {
+          // Check if clicking on rotation handle
+          if (e.target === rotationHandle || rotationHandle.contains(e.target)) {
+            startRotate(e);
+            return;
+          }
+          
           if (selectedLayerIndex < 0 || selectedLayerIndex >= textLayers.length) return;
           e.preventDefault();
           e.stopPropagation();
@@ -835,11 +1021,69 @@ document.addEventListener("DOMContentLoaded", () => {
           document.removeEventListener('touchend', stopDrag);
         }
         
+        function startRotate(e) {
+          if (selectedLayerIndex < 0 || selectedLayerIndex >= textLayers.length) return;
+          e.preventDefault();
+          e.stopPropagation();
+          isRotating = true;
+          
+          document.addEventListener('mousemove', rotate);
+          document.addEventListener('touchmove', rotate);
+          document.addEventListener('mouseup', stopRotate);
+          document.addEventListener('touchend', stopRotate);
+        }
+        
+        function rotate(e) {
+          if (!isRotating || selectedLayerIndex < 0 || selectedLayerIndex >= textLayers.length) return;
+          e.preventDefault();
+          
+          const layer = textLayers[selectedLayerIndex];
+          const canvasRect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / canvasRect.width;
+          const scaleY = canvas.height / canvasRect.height;
+          
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          
+          // Convert mouse position to canvas coordinates
+          const mouseX = (clientX - canvasRect.left) * scaleX;
+          const mouseY = (clientY - canvasRect.top) * scaleY;
+          
+          // Calculate angle from text center to mouse position
+          const dx = mouseX - layer.x;
+          const dy = mouseY - layer.y;
+          let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+          
+          // Normalize to -180 to 180
+          angle = angle % 360;
+          if (angle > 180) angle -= 360;
+          if (angle < -180) angle += 360;
+          
+          layer.rotation = angle;
+          if (textRotation) textRotation.value = Math.round(angle);
+          
+          renderAllText();
+        }
+        
+        function stopRotate() {
+          isRotating = false;
+          document.removeEventListener('mousemove', rotate);
+          document.removeEventListener('touchmove', rotate);
+          document.removeEventListener('mouseup', stopRotate);
+          document.removeEventListener('touchend', stopRotate);
+        }
+        
         function downloadImage() {
           if (!imageObj) return;
           
+          // Stop animation for static export
+          stopAnimation();
+          
           // Update selected layer one final time
           updateText();
+          
+          // Render static version
+          renderAllText(0);
           
           // Convert canvas to blob and download
           canvas.toBlob((blob) => {
@@ -852,6 +1096,9 @@ document.addEventListener("DOMContentLoaded", () => {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
+            // Restart animation
+            startAnimation();
+            
             // Track download
             if (typeof gtag === 'function') {
               gtag('event', 'download', {
@@ -860,6 +1107,92 @@ document.addEventListener("DOMContentLoaded", () => {
               });
             }
           }, 'image/png');
+        }
+        
+        async function downloadAnimatedGif() {
+          if (!imageObj) return;
+          
+          const hasAnimation = textLayers.some(l => l.animation && l.animation !== 'none');
+          if (!hasAnimation) {
+            alert('Please select an animation type first');
+            return;
+          }
+          
+          // Stop current animation
+          stopAnimation();
+          
+          // Update selected layer
+          updateText();
+          
+          // Get max duration
+          const maxDuration = Math.max(...textLayers.map(l => l.animationDuration || 1));
+          const fps = 10; // 10 frames per second
+          const totalFrames = Math.ceil(maxDuration * fps);
+          const frameDelay = 1000 / fps;
+          
+          // Show loading
+          if (downloadGifBtn) {
+            downloadGifBtn.disabled = true;
+            downloadGifBtn.textContent = 'Creating GIF...';
+          }
+          
+          try {
+            // Create GIF encoder
+            const gif = new GIF({
+              workers: 2,
+              quality: 10,
+              width: canvas.width,
+              height: canvas.height,
+              repeat: textLayers.some(l => l.animationLoop !== false) ? 0 : -1
+            });
+            
+            // Capture frames
+            for (let frame = 0; frame < totalFrames; frame++) {
+              const progress = frame * frameDelay;
+              renderAllText(progress);
+              
+              // Add frame to GIF
+              gif.addFrame(canvas, { delay: frameDelay });
+            }
+            
+            // Render and download
+            gif.on('finished', (blob) => {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `animated-text-${Date.now()}.gif`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              
+              // Restart animation
+              startAnimation();
+              
+              if (downloadGifBtn) {
+                downloadGifBtn.disabled = false;
+                downloadGifBtn.textContent = 'Download Animated GIF';
+              }
+              
+              // Track download
+              if (typeof gtag === 'function') {
+                gtag('event', 'download', {
+                  event_category: 'add_text_to_photo',
+                  event_label: 'animated_gif_download'
+                });
+              }
+            });
+            
+            gif.render();
+          } catch (error) {
+            console.error('Error creating GIF:', error);
+            alert('Error creating animated GIF. Please try again.');
+            if (downloadGifBtn) {
+              downloadGifBtn.disabled = false;
+              downloadGifBtn.textContent = 'Download Animated GIF';
+            }
+            startAnimation();
+          }
         }
         
         // Event listeners
@@ -927,6 +1260,21 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
         downloadBtn.addEventListener('click', downloadImage);
+        if (downloadGifBtn) {
+          downloadGifBtn.addEventListener('click', downloadAnimatedGif);
+        }
+        
+        // Animation control listeners
+        if (animationType) {
+          animationType.addEventListener('change', updateText);
+        }
+        if (animationDuration) {
+          animationDuration.addEventListener('input', updateText);
+        }
+        if (animationLoop) {
+          animationLoop.addEventListener('change', updateText);
+        }
+        
         resetBtn.addEventListener('click', () => {
           currentImage = null;
           imageObj = null;
@@ -957,6 +1305,21 @@ document.addEventListener("DOMContentLoaded", () => {
           startDrag(e);
         });
         
+        // Make rotation handle draggable
+        if (rotationHandle) {
+          rotationHandle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startRotate(e);
+          });
+          
+          rotationHandle.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startRotate(e);
+          });
+        }
+        
         // Also allow clicking to position selected text
         canvas.addEventListener('click', (e) => {
           if (!imageObj || isDragging || selectedLayerIndex < 0) return;
@@ -978,9 +1341,20 @@ document.addEventListener("DOMContentLoaded", () => {
         // Update text on window resize
         window.addEventListener('resize', () => {
           if (imageObj) {
-            updateText();
+            renderAllText();
           }
         });
+        
+        // Update rotation handle when rotation input changes
+        if (textRotation) {
+          textRotation.addEventListener('input', () => {
+            if (selectedLayerIndex >= 0 && selectedLayerIndex < textLayers.length) {
+              const layer = textLayers[selectedLayerIndex];
+              layer.rotation = parseFloat(textRotation.value) || 0;
+              renderAllText();
+            }
+          });
+        }
       })();
     </script>
   </body>
