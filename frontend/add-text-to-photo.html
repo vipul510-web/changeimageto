@@ -574,6 +574,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let textLayers = [];
         let selectedLayerIndex = -1;
         const rotationHandle = document.getElementById('rotation-handle');
+        let rotationHandleVisible = false;
         
         // Text layer structure: { text, font, size, color, x, y, rotation, bold, underline, url, id, animation, animationDuration, animationLoop }
         let currentAnimationType = 'none';
@@ -839,7 +840,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         function updateRotationHandle() {
-          if (!rotationHandle || selectedLayerIndex < 0 || selectedLayerIndex >= textLayers.length) {
+          if (!rotationHandle || selectedLayerIndex < 0 || selectedLayerIndex >= textLayers.length || !rotationHandleVisible) {
             if (rotationHandle) rotationHandle.style.display = 'none';
             return;
           }
@@ -979,7 +980,8 @@ document.addEventListener("DOMContentLoaded", () => {
             item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px; margin-bottom: 4px; background: ' + (index === selectedLayerIndex ? 'var(--accent)' : 'var(--bg)') + '; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;';
             item.onclick = () => {
               selectLayer(index);
-              showRotationHandle();
+              rotationHandleVisible = true;
+              updateRotationHandle();
             };
             
             const text = document.createElement('span');
@@ -1059,15 +1061,8 @@ document.addEventListener("DOMContentLoaded", () => {
           document.removeEventListener('mouseup', stopDrag);
           document.removeEventListener('touchend', stopDrag);
           
-          // After dragging, check if we should show/hide rotation handle
-          if (selectedLayerIndex >= 0 && !isRotating) {
-            // Small delay to avoid conflicts with click handler
-            setTimeout(() => {
-              if (selectedLayerIndex >= 0) {
-                showRotationHandle();
-              }
-            }, 100);
-          }
+          // After dragging, don't automatically show rotation handle
+          // User needs to click on text to show it
         }
         
         function startRotate(e) {
@@ -1362,8 +1357,17 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // Hide rotation handle
         function hideRotationHandle() {
+          rotationHandleVisible = false;
           if (rotationHandle) {
             rotationHandle.style.display = 'none';
+          }
+        }
+        
+        // Show rotation handle
+        function showRotationHandle() {
+          if (selectedLayerIndex >= 0 && selectedLayerIndex < textLayers.length) {
+            rotationHandleVisible = true;
+            updateRotationHandle();
           }
         }
         
@@ -1392,7 +1396,8 @@ document.addEventListener("DOMContentLoaded", () => {
           if (clickedLayerIndex >= 0) {
             // Clicked on a text layer - select it and show rotation handle
             selectLayer(clickedLayerIndex);
-            showRotationHandle();
+            rotationHandleVisible = true;
+            updateRotationHandle();
           } else {
             // Clicked outside text - hide rotation handle
             hideRotationHandle();
@@ -1435,12 +1440,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
         
-        // Show rotation handle when selecting a layer
-        function showRotationHandle() {
-          if (selectedLayerIndex >= 0 && selectedLayerIndex < textLayers.length) {
-            updateRotationHandle();
-          }
-        }
         
         // Add new text layer button
         if (addTextBtn) {
