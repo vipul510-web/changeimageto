@@ -101,16 +101,17 @@ document.addEventListener("DOMContentLoaded", () => {
     border-radius: 8px;
     cursor: pointer;
   }
-  .checkbox-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
+  .style-btn {
+    transition: all 0.2s ease;
   }
-  .checkbox-group input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
+  .style-btn.active {
+    background: var(--accent) !important;
+    color: #001633 !important;
+    border-color: var(--accent) !important;
+    font-weight: 600 !important;
+  }
+  .style-btn:hover:not(.active) {
+    background: var(--border) !important;
   }
   .emoji-button {
     width: 100%;
@@ -267,8 +268,8 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="control-group">
-              <label for="font-size">Font Size: <span id="font-size-value">32</span>px</label>
-              <input type="range" id="font-size" min="12" max="120" value="32" />
+              <label for="font-size">Font Size (px)</label>
+              <input type="number" id="font-size" min="1" value="32" style="width: 100%;" />
             </div>
 
             <div class="control-group">
@@ -277,14 +278,22 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="control-group">
-              <div class="checkbox-group">
-                <input type="checkbox" id="bold-text" />
-                <label for="bold-text" style="margin:0;font-weight:400">Bold</label>
+              <label>Text Style</label>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button type="button" id="bold-btn" class="style-btn" style="flex: 1; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-weight: 400; transition: all 0.2s;">B</button>
+                <button type="button" id="underline-btn" class="style-btn" style="flex: 1; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; text-decoration: underline; transition: all 0.2s;">U</button>
               </div>
-              <div class="checkbox-group">
-                <input type="checkbox" id="underline-text" />
-                <label for="underline-text" style="margin:0;font-weight:400">Underline</label>
-              </div>
+            </div>
+            
+            <div class="control-group">
+              <label for="text-url">Hyperlink URL (optional)</label>
+              <input type="url" id="text-url" placeholder="https://example.com" style="width: 100%;" />
+              <small style="color: var(--muted); font-size: 0.85rem; margin-top: 4px; display: block;">Note: Hyperlinks work in PDF exports. PNG images don't support clickable links.</small>
+            </div>
+            
+            <div class="control-group">
+              <label for="text-rotation">Rotation Angle (degrees)</label>
+              <input type="number" id="text-rotation" min="-360" max="360" value="0" step="1" style="width: 100%;" />
             </div>
 
             <div class="control-group">
@@ -311,8 +320,10 @@ document.addEventListener("DOMContentLoaded", () => {
         <ol>
           <li><strong>Upload your image:</strong> Click or drag and drop your photo into the upload area above.</li>
           <li><strong>Enter your text:</strong> Type the text you want to add in the text input field.</li>
-          <li><strong>Customize appearance:</strong> Choose your preferred font, adjust the size, and select a color.</li>
-          <li><strong>Style your text:</strong> Make text bold or underlined, and add emojis if desired.</li>
+          <li><strong>Customize appearance:</strong> Choose your preferred font, enter any font size (no limits), and select a color.</li>
+          <li><strong>Style your text:</strong> Click the Bold (B) or Underline (U) buttons to toggle styling, and add emojis if desired.</li>
+          <li><strong>Add hyperlink (optional):</strong> Enter a URL to make your text a hyperlink (works in PDF exports).</li>
+          <li><strong>Rotate text:</strong> Adjust the rotation angle to rotate your text box.</li>
           <li><strong>Position text:</strong> Click and drag the text box to place it anywhere on your image.</li>
           <li><strong>Download:</strong> Click "Download Image" to save your photo with text overlay.</li>
         </ol>
@@ -320,7 +331,9 @@ document.addEventListener("DOMContentLoaded", () => {
         <h3>Features</h3>
         <ul>
           <li><strong>Multiple Fonts:</strong> Choose from 12+ popular fonts including Arial, Times New Roman, Impact, and more.</li>
-          <li><strong>Customizable Size:</strong> Adjust text size from 12px to 120px to fit your design needs.</li>
+          <li><strong>Unlimited Font Size:</strong> Enter any font size you want - no limits! Make text as big or small as needed.</li>
+          <li><strong>Text Rotation:</strong> Rotate your text at any angle from -360° to 360° for creative designs.</li>
+          <li><strong>Hyperlink Support:</strong> Add URLs to your text for clickable links (works in PDF exports).</li>
           <li><strong>Color Picker:</strong> Select any color for your text using the color picker tool.</li>
           <li><strong>Text Styling:</strong> Make text bold or underlined for emphasis.</li>
           <li><strong>Emoji Support:</strong> Add emojis to your text for fun and expressive captions.</li>
@@ -511,10 +524,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const textInput = document.getElementById('text-input');
         const fontFamily = document.getElementById('font-family');
         const fontSize = document.getElementById('font-size');
-        const fontSizeValue = document.getElementById('font-size-value');
         const textColor = document.getElementById('text-color');
-        const boldText = document.getElementById('bold-text');
-        const underlineText = document.getElementById('underline-text');
+        const boldBtn = document.getElementById('bold-btn');
+        const underlineBtn = document.getElementById('underline-btn');
+        const textUrl = document.getElementById('text-url');
+        const textRotation = document.getElementById('text-rotation');
         const emojiButton = document.getElementById('emoji-button');
         const downloadBtn = document.getElementById('download-btn');
         const resetBtn = document.getElementById('reset-btn');
@@ -523,8 +537,12 @@ document.addEventListener("DOMContentLoaded", () => {
         let imageObj = null;
         let textBox = null;
         let isDragging = false;
+        let isRotating = false;
         let dragOffset = { x: 0, y: 0 };
         let textPosition = { x: 50, y: 50 };
+        let textRotationAngle = 0;
+        let isBold = false;
+        let isUnderline = false;
         
         // Emoji picker (common emojis)
         const commonEmojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
@@ -627,11 +645,12 @@ document.addEventListener("DOMContentLoaded", () => {
           
           // Get text properties
           const text = textInput.value || 'Sample Text';
-          const size = parseInt(fontSize.value);
+          const size = Math.max(1, parseInt(fontSize.value) || 32);
           const color = textColor.value;
           const font = fontFamily.value;
-          const bold = boldText.checked ? 'bold ' : '';
-          const underline = underlineText.checked;
+          const bold = isBold ? 'bold ' : '';
+          const rotation = parseFloat(textRotation.value) || 0;
+          textRotationAngle = rotation;
           
           // Set font
           ctx.font = `${bold}${size}px ${font}`;
@@ -644,18 +663,28 @@ document.addEventListener("DOMContentLoaded", () => {
           const textWidth = metrics.width;
           const textHeight = size;
           
+          // Save context
+          ctx.save();
+          
+          // Apply rotation
+          ctx.translate(textPosition.x, textPosition.y);
+          ctx.rotate((rotation * Math.PI) / 180);
+          
           // Draw text
-          ctx.fillText(text, textPosition.x, textPosition.y);
+          ctx.fillText(text, 0, 0);
           
           // Draw underline if needed
-          if (underline) {
+          if (isUnderline) {
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(textPosition.x - textWidth / 2, textPosition.y + textHeight / 2 + 4);
-            ctx.lineTo(textPosition.x + textWidth / 2, textPosition.y + textHeight / 2 + 4);
+            ctx.moveTo(-textWidth / 2, textHeight / 2 + 4);
+            ctx.lineTo(textWidth / 2, textHeight / 2 + 4);
             ctx.stroke();
           }
+          
+          // Restore context
+          ctx.restore();
           
           // Update text box visual indicator
           updateTextBox(textWidth, textHeight);
@@ -675,13 +704,22 @@ document.addEventListener("DOMContentLoaded", () => {
           textBoxOverlay.style.width = canvasRect.width + 'px';
           textBoxOverlay.style.height = canvasRect.height + 'px';
           
+          // Calculate rotated bounding box
+          const rotation = textRotationAngle * Math.PI / 180;
+          const cos = Math.abs(Math.cos(rotation));
+          const sin = Math.abs(Math.sin(rotation));
+          const rotatedWidth = (textWidth * cos + textHeight * sin) * scaleX;
+          const rotatedHeight = (textWidth * sin + textHeight * cos) * scaleY;
+          
           // Create text box indicator positioned relative to overlay
           const box = document.createElement('div');
           box.className = 'text-box active';
-          box.style.left = (textPosition.x * scaleX - (textWidth * scaleX / 2) - 4) + 'px';
-          box.style.top = (textPosition.y * scaleY - (textHeight * scaleY / 2) - 4) + 'px';
-          box.style.width = (textWidth * scaleX + 8) + 'px';
-          box.style.height = (textHeight * scaleY + 8) + 'px';
+          box.style.left = (textPosition.x * scaleX - rotatedWidth / 2 - 4) + 'px';
+          box.style.top = (textPosition.y * scaleY - rotatedHeight / 2 - 4) + 'px';
+          box.style.width = (rotatedWidth + 8) + 'px';
+          box.style.height = (rotatedHeight + 8) + 'px';
+          box.style.transform = `rotate(${textRotationAngle}deg)`;
+          box.style.transformOrigin = 'center center';
           
           // Make draggable
           box.addEventListener('mousedown', startDrag);
@@ -795,13 +833,28 @@ document.addEventListener("DOMContentLoaded", () => {
         
         textInput.addEventListener('input', updateText);
         fontFamily.addEventListener('change', updateText);
-        fontSize.addEventListener('input', () => {
-          fontSizeValue.textContent = fontSize.value;
-          updateText();
-        });
+        fontSize.addEventListener('input', updateText);
         textColor.addEventListener('change', updateText);
-        boldText.addEventListener('change', updateText);
-        underlineText.addEventListener('change', updateText);
+        textRotation.addEventListener('input', updateText);
+        
+        // Bold button toggle
+        if (boldBtn) {
+          boldBtn.addEventListener('click', () => {
+            isBold = !isBold;
+            boldBtn.classList.toggle('active', isBold);
+            updateText();
+          });
+        }
+        
+        // Underline button toggle
+        if (underlineBtn) {
+          underlineBtn.addEventListener('click', () => {
+            isUnderline = !isUnderline;
+            underlineBtn.classList.toggle('active', isUnderline);
+            updateText();
+          });
+        }
+        
         emojiButton.addEventListener('click', showEmojiPicker);
         downloadBtn.addEventListener('click', downloadImage);
         resetBtn.addEventListener('click', () => {
@@ -812,10 +865,13 @@ document.addEventListener("DOMContentLoaded", () => {
           if (textBox) textBox.remove();
           textInput.value = 'Sample Text';
           fontSize.value = 32;
-          fontSizeValue.textContent = '32';
           textColor.value = '#ffffff';
-          boldText.checked = false;
-          underlineText.checked = false;
+          textUrl.value = '';
+          textRotation.value = 0;
+          isBold = false;
+          isUnderline = false;
+          if (boldBtn) boldBtn.classList.remove('active');
+          if (underlineBtn) underlineBtn.classList.remove('active');
         });
         
         // Make canvas clickable for text positioning (only if not clicking on text box)
