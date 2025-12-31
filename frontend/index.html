@@ -84,6 +84,29 @@
       .color-card span{color:#ffffff;font-weight:600;font-size:14px}
       .color-card p{color:#ffffff;margin:0;font-size:12px;opacity:0.9}
       @media(max-width:768px){.feature-grid{grid-template-columns:1fr;gap:20px}.feature-card{padding:24px}.color-grid{grid-template-columns:repeat(2,1fr);gap:16px}.container{padding:16px}}
+      /* Comparison Chart Section */
+      .comparison-section{margin:60px 0;padding:40px 0}
+      .comparison-title{text-align:center;font-size:32px;font-weight:700;margin-bottom:16px;color:var(--fg)}
+      .comparison-subtitle{text-align:center;color:var(--muted);font-size:16px;margin-bottom:40px}
+      .comparison-table{width:100%;max-width:1200px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+      .comparison-table table{width:100%;border-collapse:collapse}
+      .comparison-table thead{background:var(--border)}
+      .comparison-table th{text-align:left;padding:16px;font-weight:600;color:var(--fg);font-size:14px;border-bottom:2px solid var(--border)}
+      .comparison-table th:first-child{width:20%}
+      .comparison-table th:nth-child(2){background:linear-gradient(135deg,var(--accent),#4f46e5);color:#001633;font-weight:700;text-align:center;position:relative}
+      .comparison-table th:nth-child(2)::after{content:"✓ Best";position:absolute;top:4px;right:4px;font-size:10px;background:#001633;color:var(--accent);padding:2px 6px;border-radius:4px;font-weight:600}
+      .comparison-table th{font-size:13px}
+      .comparison-table td{font-size:13px}
+      .comparison-table td{padding:16px;border-bottom:1px solid var(--border);color:var(--muted);font-size:14px}
+      .comparison-table tbody tr:last-child td{border-bottom:none}
+      .comparison-table tbody tr:hover{background:rgba(106,167,255,0.05)}
+      .comparison-table td:first-child{font-weight:600;color:var(--fg)}
+      .comparison-table td:nth-child(2){text-align:center;color:var(--accent);font-weight:600}
+      .check-icon{color:#10b981;font-weight:700;font-size:16px}
+      .cross-icon{color:#ef4444;font-weight:700;font-size:16px}
+      .partial-icon{color:#f59e0b;font-weight:700;font-size:16px}
+      @media(max-width:1024px){.comparison-table{overflow-x:auto}.comparison-table table{min-width:1000px}}
+      @media(max-width:768px){.comparison-section{padding:32px 0}.comparison-title{font-size:24px}.comparison-table th,.comparison-table td{padding:10px;font-size:11px}.comparison-table th:nth-child(2)::after{font-size:8px;padding:1px 4px}.comparison-table th:first-child{width:18%}}
       /* Social Proof Section */
       .social-proof{margin:60px 0;padding:40px 0}
       .social-proof-stats{display:flex;justify-content:center;align-items:center;gap:48px;margin-bottom:48px;flex-wrap:wrap}
@@ -677,6 +700,129 @@ document.addEventListener("DOMContentLoaded", () => {
           <li><strong>Privacy Focused</strong> - Images are processed securely and not stored</li>
           <li><strong>Multiple Formats</strong> - Support for JPG, PNG, and WebP files</li>
         </ul>
+      </section>
+
+      <!-- Comparison Chart Section -->
+      <section class="comparison-section">
+        <h2 class="comparison-title">How We Compare</h2>
+        <p class="comparison-subtitle">See why ChangeImageTo.com is the best choice for your image editing needs</p>
+        
+        <div class="comparison-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>ChangeImageTo.com</th>
+                <th>Raphael AI</th>
+                <th>PicsArt</th>
+                <th>Pixelbin</th>
+                <th>iLoveIMG</th>
+                <th>SnapEdit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>100% Free</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="partial-icon">10 credits/day</span></td>
+                <td><span class="partial-icon">Limited</span></td>
+                <td><span class="partial-icon">10 credits only</span></td>
+                <td><span class="partial-icon">Limited</span></td>
+                <td><span class="partial-icon">Limited</span></td>
+              </tr>
+              <tr>
+                <td>No Registration Required</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="cross-icon">✗</span></td>
+                <td><span class="cross-icon">✗</span></td>
+                <td><span class="cross-icon">✗</span></td>
+                <td><span class="cross-icon">✗</span></td>
+                <td><span class="cross-icon">✗</span></td>
+              </tr>
+              <tr>
+                <td>No Watermarks</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="partial-icon">Paid Only</span></td>
+                <td><span class="partial-icon">Paid Only</span></td>
+                <td><span class="partial-icon">Paid Only</span></td>
+                <td><span class="partial-icon">Paid Only</span></td>
+                <td><span class="partial-icon">Paid Only</span></td>
+              </tr>
+              <tr>
+                <td>AI-Powered Processing</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="cross-icon">✗</span></td>
+                <td><span class="check-icon">✓</span></td>
+              </tr>
+              <tr>
+                <td>Fast Processing (< 10s)</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="partial-icon">15s queue</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+              </tr>
+              <tr>
+                <td>Multiple Tools (15+ features)</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="partial-icon">Limited</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="partial-icon">Limited</span></td>
+              </tr>
+              <tr>
+                <td>Privacy (No Image Storage)</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="partial-icon">Cloud Storage</span></td>
+                <td><span class="partial-icon">Cloud Storage</span></td>
+                <td><span class="partial-icon">Cloud Storage</span></td>
+                <td><span class="partial-icon">Cloud Storage</span></td>
+              </tr>
+              <tr>
+                <td>Easy to Use (No Learning Curve)</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+              </tr>
+              <tr>
+                <td>Bulk Processing</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="partial-icon">Credit Limited</span></td>
+                <td><span class="partial-icon">Paid Only</span></td>
+                <td><span class="partial-icon">Paid Only</span></td>
+                <td><span class="partial-icon">Limited</span></td>
+                <td><span class="cross-icon">✗</span></td>
+              </tr>
+              <tr>
+                <td>Works in Browser</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="check-icon">✓</span></td>
+              </tr>
+              <tr>
+                <td>Commercial Use Allowed</td>
+                <td><span class="check-icon">✓</span></td>
+                <td><span class="partial-icon">Ultimate Only</span></td>
+                <td><span class="partial-icon">Paid Plans</span></td>
+                <td><span class="partial-icon">Paid Plans</span></td>
+                <td><span class="partial-icon">Paid Plans</span></td>
+                <td><span class="partial-icon">Paid Plans</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <!-- FAQ Section -->
