@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <button id="premium-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">
-              Premium Option ($0.5 only per image)
+              Premium Option ($1 only per image)
             </button>
             <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Best quality expected</div>
           </div>
@@ -505,7 +505,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error('Error:', error);
             showPremiumStatus('Error: ' + error.message, 'error');
             premiumBtn.disabled = false;
-            premiumBtn.textContent = 'Premium Option ($0.5 only per image)';
+            premiumBtn.textContent = 'Premium Option ($1 only per image)';
           }
         });
         
@@ -575,7 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
               paymentSessionId = null;
               hasProcessed = false;
               premiumBtn.disabled = false;
-              premiumBtn.textContent = 'Premium Option ($0.5 only per image)';
+              premiumBtn.textContent = 'Premium Option ($1 only per image)';
             }
           }
         }

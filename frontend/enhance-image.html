@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <button id="premium-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">
-              Premium Option ($0.5 only per image)
+              Premium Option ($1 only per image)
             </button>
             <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Best quality expected</div>
           </div>
@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <h3>Free vs Premium Enhancement</h3>
         <ul>
           <li><strong>Free Enhancement:</strong> Uses traditional image processing techniques (sharpening, contrast, brightness adjustments). Good for quick improvements. Quality may vary.</li>
-          <li><strong>Premium Enhancement ($0.5 per image):</strong> Powered by Google Gemini AI, intelligently improves clarity, reduces noise, fixes artifacts, and enhances overall image quality while maintaining natural appearance. Best quality guaranteed.</li>
+          <li><strong>Premium Enhancement ($1 per image):</strong> Powered by Google Gemini AI, intelligently improves clarity, reduces noise, fixes artifacts, and enhances overall image quality while maintaining natural appearance. Best quality guaranteed.</li>
         </ul>
 
         <h3>When to enhance an image</h3>
@@ -194,7 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <div class="faq-item" style="margin-bottom: 20px;">
           <h3>What's the difference between free and premium enhancement?</h3>
-          <p>The free option provides basic enhancement with quality not guaranteed. The premium option ($0.5 per image) uses Google Gemini AI for best quality results with advanced sharpening, contrast adjustment, and noise reduction.</p>
+          <p>The free option provides basic enhancement with quality not guaranteed. The premium option ($1 per image) uses Google Gemini AI for best quality results with advanced sharpening, contrast adjustment, and noise reduction.</p>
         </div>
         <div class="faq-item" style="margin-bottom: 20px;">
           <h3>What enhancement presets should I use?</h3>
@@ -534,7 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.error('Error:', error);
               showPremiumStatus('Error: ' + error.message, 'error');
               premiumBtn.disabled = false;
-              premiumBtn.textContent = 'Premium Option ($0.5 only per image)';
+              premiumBtn.textContent = 'Premium Option ($1 only per image)';
             }
           });
         }
@@ -612,7 +612,7 @@ document.addEventListener("DOMContentLoaded", () => {
               hasProcessed = false;
               if (premiumBtn) {
                 premiumBtn.disabled = false;
-                premiumBtn.textContent = 'Premium Option ($0.5 only per image)';
+                premiumBtn.textContent = 'Premium Option ($1 only per image)';
               }
             }
           }
