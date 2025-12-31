@@ -113,6 +113,15 @@ document.addEventListener("DOMContentLoaded", () => {
   .style-btn:hover:not(.active) {
     background: var(--border) !important;
   }
+  .animation-btn.active {
+    background: var(--accent) !important;
+    color: #001633 !important;
+    border-color: var(--accent) !important;
+    font-weight: 600 !important;
+  }
+  .animation-btn:hover:not(.active) {
+    background: var(--border) !important;
+  }
   .canvas-container {
     background: var(--card);
     border: 1px solid var(--border);
@@ -294,15 +303,15 @@ document.addEventListener("DOMContentLoaded", () => {
             
             <div class="control-group">
               <label>Animation</label>
-              <select id="animation-type" style="width: 100%; margin-bottom: 8px;">
-                <option value="none">None</option>
-                <option value="rise">Rise</option>
-                <option value="pan">Pan</option>
-                <option value="fade">Fade</option>
-                <option value="pop">Pop</option>
-                <option value="wipe">Wipe</option>
-                <option value="blur">Blur</option>
-              </select>
+              <div id="animation-buttons" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;">
+                <button type="button" class="animation-btn" data-animation="none" style="padding: 10px; background: var(--accent); color: #001633; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px;">None</button>
+                <button type="button" class="animation-btn" data-animation="rise" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 12px;">Rise</button>
+                <button type="button" class="animation-btn" data-animation="pan" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 12px;">Pan</button>
+                <button type="button" class="animation-btn" data-animation="fade" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 12px;">Fade</button>
+                <button type="button" class="animation-btn" data-animation="pop" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 12px;">Pop</button>
+                <button type="button" class="animation-btn" data-animation="wipe" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 12px;">Wipe</button>
+                <button type="button" class="animation-btn" data-animation="blur" style="padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); cursor: pointer; font-size: 12px;">Blur</button>
+              </div>
               <div style="display: flex; gap: 8px; align-items: center;">
                 <label for="animation-duration" style="flex: 0 0 80px; font-size: 12px;">Duration:</label>
                 <input type="number" id="animation-duration" min="0.5" max="5" step="0.1" value="1" style="flex: 1;" />
@@ -544,6 +553,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const underlineBtn = document.getElementById('underline-btn');
         const textUrl = document.getElementById('text-url');
         const textRotation = document.getElementById('text-rotation');
+        const animationButtons = document.querySelectorAll('.animation-btn');
+        const animationDuration = document.getElementById('animation-duration');
+        const animationLoop = document.getElementById('animation-loop');
         const emojiButton = document.getElementById('emoji-button');
         const emojiPicker = document.getElementById('emoji-picker');
         const emojiGrid = document.getElementById('emoji-grid');
@@ -551,6 +563,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const textLayersList = document.getElementById('text-layers-list');
         const downloadBtn = document.getElementById('download-btn');
         const resetBtn = document.getElementById('reset-btn');
+        
+        let currentAnimationType = 'none';
         
         let currentImage = null;
         let imageObj = null;
@@ -637,7 +651,7 @@ document.addEventListener("DOMContentLoaded", () => {
               }
               
               // Draw initial text
-              renderAllText(0);
+              renderAllText();
               startAnimation();
               
               // Scroll to editor
@@ -662,7 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
             layer.bold = isBold;
             layer.underline = isUnderline;
             layer.url = textUrl.value;
-            layer.animation = animationType.value;
+            layer.animation = currentAnimationType;
             layer.animationDuration = parseFloat(animationDuration.value) || 1;
             layer.animationLoop = animationLoop.checked;
           }
@@ -703,31 +717,57 @@ document.addEventListener("DOMContentLoaded", () => {
             const duration = layer.animationDuration || 1;
             const loop = layer.animationLoop !== false;
             
-            if (animation !== 'none' && progress !== undefined) {
+            if (animation !== 'none' && progress !== undefined && progress !== null) {
               let animProgress = progress % (duration * 1000);
-              if (!loop && progress >= duration * 1000) animProgress = duration * 1000;
-              const t = animProgress / (duration * 1000);
-              
-              switch (animation) {
-                case 'rise':
-                  y = y - (t * 50); // Move up
-                  opacity = 1 - t;
-                  break;
-                case 'pan':
-                  x = x + (t * 100 - 50); // Pan left to right
-                  break;
-                case 'fade':
-                  opacity = Math.sin(t * Math.PI); // Fade in and out
-                  break;
-                case 'pop':
-                  scale = 0.5 + (Math.sin(t * Math.PI) * 0.5); // Scale from 0.5 to 1
-                  break;
-                case 'wipe':
-                  clipX = t * 100; // Wipe from left to right
-                  break;
-                case 'blur':
-                  blur = t * 10; // Blur increases
-                  break;
+              if (!loop && progress >= duration * 1000) {
+                animProgress = duration * 1000;
+                const t = animProgress / (duration * 1000);
+                // At end of non-looping animation, use final state
+                switch (animation) {
+                  case 'rise':
+                    y = y - 50;
+                    opacity = 0;
+                    break;
+                  case 'pan':
+                    x = x + 50;
+                    break;
+                  case 'fade':
+                    opacity = 0;
+                    break;
+                  case 'pop':
+                    scale = 1;
+                    break;
+                  case 'wipe':
+                    clipX = 100;
+                    break;
+                  case 'blur':
+                    blur = 10;
+                    break;
+                }
+              } else {
+                const t = animProgress / (duration * 1000);
+                
+                switch (animation) {
+                  case 'rise':
+                    y = y - (t * 50); // Move up
+                    opacity = 1 - t;
+                    break;
+                  case 'pan':
+                    x = x + (t * 100 - 50); // Pan left to right
+                    break;
+                  case 'fade':
+                    opacity = Math.sin(t * Math.PI); // Fade in and out
+                    break;
+                  case 'pop':
+                    scale = 0.5 + (Math.sin(t * Math.PI) * 0.5); // Scale from 0.5 to 1
+                    break;
+                  case 'wipe':
+                    clipX = t * 100; // Wipe from left to right
+                    break;
+                  case 'blur':
+                    blur = t * 10; // Blur increases
+                    break;
+                }
               }
             }
             
@@ -779,9 +819,11 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // Restore context
             ctx.restore();
-            ctx.globalAlpha = 1;
-            ctx.shadowBlur = 0;
           });
+          
+          // Reset global alpha and shadow after all layers
+          ctx.globalAlpha = 1;
+          ctx.shadowBlur = 0;
           
           // Update rotation handle position for selected layer
           updateRotationHandle();
@@ -879,7 +921,7 @@ document.addEventListener("DOMContentLoaded", () => {
           textLayers.push(newLayer);
           selectLayer(textLayers.length - 1);
           updateTextLayersList();
-          renderAllText(0);
+          renderAllText();
           startAnimation();
         }
         
@@ -895,7 +937,21 @@ document.addEventListener("DOMContentLoaded", () => {
             textUrl.value = layer.url || '';
             isBold = layer.bold;
             isUnderline = layer.underline;
-            if (animationType) animationType.value = layer.animation || 'none';
+            currentAnimationType = layer.animation || 'none';
+            // Update animation button states
+            animationButtons.forEach(btn => {
+              if (btn.dataset.animation === currentAnimationType) {
+                btn.classList.add('active');
+                btn.style.background = 'var(--accent)';
+                btn.style.color = '#001633';
+                btn.style.borderColor = 'var(--accent)';
+              } else {
+                btn.classList.remove('active');
+                btn.style.background = 'var(--bg)';
+                btn.style.color = 'var(--fg)';
+                btn.style.borderColor = 'var(--border)';
+              }
+            });
             if (animationDuration) animationDuration.value = layer.animationDuration || 1;
             if (animationLoop) animationLoop.checked = layer.animationLoop !== false;
             if (boldBtn) boldBtn.classList.toggle('active', isBold);
@@ -1264,10 +1320,28 @@ document.addEventListener("DOMContentLoaded", () => {
           downloadGifBtn.addEventListener('click', downloadAnimatedGif);
         }
         
-        // Animation control listeners
-        if (animationType) {
-          animationType.addEventListener('change', updateText);
-        }
+        // Animation button listeners
+        animationButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            currentAnimationType = btn.dataset.animation;
+            // Update button states
+            animationButtons.forEach(b => {
+              if (b === btn) {
+                b.classList.add('active');
+                b.style.background = 'var(--accent)';
+                b.style.color = '#001633';
+                b.style.borderColor = 'var(--accent)';
+              } else {
+                b.classList.remove('active');
+                b.style.background = 'var(--bg)';
+                b.style.color = 'var(--fg)';
+                b.style.borderColor = 'var(--border)';
+              }
+            });
+            updateText();
+          });
+        });
+        
         if (animationDuration) {
           animationDuration.addEventListener('input', updateText);
         }
