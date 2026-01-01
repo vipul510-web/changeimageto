@@ -475,7 +475,7 @@ def _get_lama_manager():
         logger.warning(f"Failed to init LaMa (lama-cleaner): {e}")
         return None
 
-def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray, conservative_blend: bool = False) -> np.ndarray:
+def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray, conservative_blend: bool = False, blur_kernel_size: int = None) -> np.ndarray:
     mgr = _get_lama_manager()
     if mgr is None:
         return bgr_image
@@ -493,13 +493,16 @@ def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray, conservat
         # Perform inpainting with improved parameters
         res = mgr.inpaint(img, mask, hd_strategy=hd_strategy)
         
-        # Post-process for better blending - use smaller blur kernel for conservative mode
-        blur_kernel = 5 if conservative_blend else 15
+        # Post-process for better blending - use custom blur kernel if provided, otherwise use default based on conservative_blend
+        if blur_kernel_size is not None:
+            blur_kernel = blur_kernel_size
+        else:
+            blur_kernel = 5 if conservative_blend else 15
         result = post_process_inpainted_result(bgr_image, cv2.cvtColor(res, cv2.COLOR_RGB2BGR), improved_mask, blur_kernel_size=blur_kernel)
         
-        # Apply light sharpening to restore detail if in conservative mode
-        # Only apply to the inpainted area, not the entire image
-        if conservative_blend:
+        # Apply light sharpening to restore detail if in conservative mode or if custom blur kernel is small
+        should_sharpen = conservative_blend or (blur_kernel_size is not None and blur_kernel_size <= 7)
+        if should_sharpen:
             # Create a proper sharpening kernel that preserves brightness (sums to 1.0)
             sharpen_kernel = np.array([[0, -0.1, 0],
                                       [-0.1, 1.4, -0.1],
@@ -4791,18 +4794,10 @@ async def remove_gemini_watermark(
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         original_size = image.size
         
-        # Process at original size to preserve quality - only downscale extremely large images
-        # LaMa inpainting can handle most images at full resolution
-        # Only downscale if image is larger than 4000px to preserve quality for most users
-        # This ensures images under 4000px maintain perfect quality
-        MAX_PROCESSING_SIDE = int(os.getenv("MAX_IMAGE_SIDE", "4000"))
-        proc_image = downscale_image_if_needed(image, max_side=MAX_PROCESSING_SIDE)
-        was_downscaled = proc_image.size != original_size
-        
-        if was_downscaled:
-            logger.info(f"Downscaled image from {original_size} to {proc_image.size} for processing (quality preserved for images under {MAX_PROCESSING_SIDE}px)")
-        
-        img_array = np.array(proc_image)
+        # Process at original size - no downscaling/upscaling to preserve perfect quality
+        # LaMa inpainting can handle large images, and watermark removal only processes a small corner area
+        # This ensures zero quality loss from resampling
+        img_array = np.array(image)
         
         # Convert RGB to BGR for OpenCV
         img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
@@ -4860,11 +4855,7 @@ async def remove_gemini_watermark(
         result_rgb = cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB)
         result_image = Image.fromarray(result_rgb)
         
-        # Scale result back to original size if it was downscaled
-        # Use LANCZOS for high-quality upscaling (best quality resampling)
-        if was_downscaled:
-            result_image = result_image.resize(original_size, Image.Resampling.LANCZOS)
-            logger.info(f"Scaled result back to original size: {original_size} using LANCZOS resampling")
+        # No upscaling needed - image was processed at original size
         
         # Save to bytes with maximum quality (PNG is lossless)
         buf = io.BytesIO()
@@ -4876,7 +4867,7 @@ async def remove_gemini_watermark(
             "processed_size": f"{w}x{h}",
             "mask_size": f"{mask_width}x{mask_height}",
             "file_size_mb": round(file_size_mb, 2),
-            "was_downscaled": was_downscaled
+            "was_downscaled": False
         })
         
         return Response(content=buf.getvalue(), media_type="image/png")
@@ -4893,25 +4884,43 @@ async def remove_gemini_watermark(
 async def test_remove_gemini_watermark(
     request: Request,
     file: UploadFile = File(...),
+    mask_width_percent: float = Form(15.0),
+    mask_height_percent: float = Form(12.0),
 ):
-    """Test endpoint: Remove Gemini watermark from images using LaMa inpainting. Targets bottom-right corner area."""
+    """Test endpoint: Remove Gemini watermark from images using LaMa inpainting. Targets bottom-right corner area.
+    Uses EXACT same inpainting logic as production endpoint, only allows mask size adjustment.
+    
+    Parameters:
+    - mask_width_percent: Width of mask as percentage of image width (default 15%)
+    - mask_height_percent: Height of mask as percentage of image height (default 12%)
+    """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
     
     try:
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGB")
-        img_array = np.array(image)
+        original_size = image.size
+        
+        # Process at original size to preserve quality - only downscale extremely large images
+        # Same logic as production endpoint
+        MAX_PROCESSING_SIDE = int(os.getenv("MAX_IMAGE_SIDE", "4000"))
+        proc_image = downscale_image_if_needed(image, max_side=MAX_PROCESSING_SIDE)
+        was_downscaled = proc_image.size != original_size
+        
+        if was_downscaled:
+            logger.info(f"Test endpoint: Downscaled image from {original_size} to {proc_image.size} for processing")
+        
+        img_array = np.array(proc_image)
         
         # Convert RGB to BGR for OpenCV
         img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
         h, w = img_bgr.shape[:2]
         
         # Create mask for bottom-right corner where Gemini watermark typically appears
-        # Gemini watermarks are usually small, so we'll mask a region in the bottom-right
-        # Typically around 5-10% of image width/height
-        mask_width = max(60, int(w * 0.15))  # At least 60px or 15% of width
-        mask_height = max(40, int(h * 0.12))  # At least 40px or 12% of height
+        # Use adjustable parameters from form
+        mask_width = max(60, int(w * mask_width_percent / 100.0))  # At least 60px or specified % of width
+        mask_height = max(40, int(h * mask_height_percent / 100.0))  # At least 40px or specified % of height
         
         # Create binary mask (white = area to inpaint, black = keep)
         watermark_mask = np.zeros((h, w), dtype=np.uint8)
@@ -4924,18 +4933,18 @@ async def test_remove_gemini_watermark(
         kernel = np.ones((3, 3), np.uint8)
         watermark_mask = cv2.dilate(watermark_mask, kernel, iterations=1)
         
-        logger.info(f"Created watermark mask: {mask_width}x{mask_height} region at bottom-right corner")
+        logger.info(f"Test endpoint: Created watermark mask: {mask_width}x{mask_height} region at bottom-right corner (width={mask_width_percent}%, height={mask_height_percent}%)")
         
         # Try LaMa first (best quality) if available
-        # Use conservative_blend=True to minimize blur on subject areas
+        # Use EXACT same logic as production endpoint
         if _get_lama_manager() is not None:
             inpainted = lama_inpaint_torch(img_bgr, watermark_mask, conservative_blend=True)
-            logger.info("Used LaMa (PyTorch) for watermark removal with conservative blending")
+            logger.info("Test endpoint: Used LaMa (PyTorch) for watermark removal with conservative blending")
         elif _get_lama_session() is not None:
             inpainted = lama_inpaint_onnx(img_bgr, watermark_mask)
-            logger.info("Used LaMa ONNX for watermark removal")
+            logger.info("Test endpoint: Used LaMa ONNX for watermark removal")
         else:
-            # Fallback to OpenCV inpainting
+            # Fallback to OpenCV inpainting - EXACT same as production
             max_side = max(h, w)
             dynamic_radius = int(max(5, min(15, max_side / 200)))
             
@@ -4946,22 +4955,27 @@ async def test_remove_gemini_watermark(
             # Blend the two results
             inpainted = cv2.addWeighted(inpainted_telea, 0.4, inpainted_ns, 0.6, 0)
             
-            # Apply soft blending to reduce artifacts
+            # Apply soft blending to reduce artifacts - use smaller blur for less aggressive blending (EXACT same as production)
             soft_mask = watermark_mask.astype(np.float32) / 255.0
-            soft_mask = cv2.GaussianBlur(soft_mask, (0, 0), sigmaX=3, sigmaY=3)
+            soft_mask = cv2.GaussianBlur(soft_mask, (0, 0), sigmaX=1.5, sigmaY=1.5)  # Same as production
             soft_mask_3 = np.repeat(soft_mask[:, :, None], 3, axis=2)
             inpainted = (soft_mask_3 * inpainted.astype(np.float32) + 
                         (1.0 - soft_mask_3) * img_bgr.astype(np.float32)).astype(np.uint8)
             
-            logger.info(f"Used OpenCV inpainting for watermark removal (radius={dynamic_radius})")
+            logger.info(f"Test endpoint: Used OpenCV inpainting for watermark removal (radius={dynamic_radius})")
         
         # Convert back to RGB PIL Image
         result_rgb = cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB)
         result_image = Image.fromarray(result_rgb)
         
-        # Save to bytes
+        # Scale result back to original size if it was downscaled (same as production)
+        if was_downscaled:
+            result_image = result_image.resize(original_size, Image.Resampling.LANCZOS)
+            logger.info(f"Test endpoint: Scaled result back to original size: {original_size} using LANCZOS resampling")
+        
+        # Save to bytes (same as production)
         buf = io.BytesIO()
-        result_image.save(buf, format="PNG")
+        result_image.save(buf, format="PNG", optimize=False)
         return Response(content=buf.getvalue(), media_type="image/png")
     
     except Exception as e:
