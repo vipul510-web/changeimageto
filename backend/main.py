@@ -316,11 +316,11 @@ def improve_mask_quality(binary_mask: np.ndarray) -> np.ndarray:
         logger.warning(f"Mask improvement failed: {e}")
         return binary_mask
 
-def post_process_inpainted_result(original: np.ndarray, inpainted: np.ndarray, mask: np.ndarray) -> np.ndarray:
+def post_process_inpainted_result(original: np.ndarray, inpainted: np.ndarray, mask: np.ndarray, blur_kernel_size: int = 15) -> np.ndarray:
     """Post-process inpainting result for better blending."""
     try:
-        # Create a soft mask for blending
-        soft_mask = cv2.GaussianBlur(mask, (15, 15), 0) / 255.0
+        # Create a soft mask for blending - use smaller kernel for less aggressive blending
+        soft_mask = cv2.GaussianBlur(mask, (blur_kernel_size, blur_kernel_size), 0) / 255.0
         
         # Blend the inpainted result with original at edges
         result = inpainted.copy()
@@ -328,6 +328,11 @@ def post_process_inpainted_result(original: np.ndarray, inpainted: np.ndarray, m
         # For edge pixels, blend with original to reduce artifacts
         edge_mask = cv2.Canny(mask, 50, 150)
         edge_dilated = cv2.dilate(edge_mask, np.ones((3, 3), np.uint8), iterations=1)
+        
+        # Smooth blending at edges - only within mask region
+        # Create a strict mask to ensure we only blend where mask exists
+        strict_mask = (mask > 0).astype(np.uint8)
+        edge_dilated = cv2.bitwise_and(edge_dilated, strict_mask)
         
         # Smooth blending at edges
         for c in range(3):  # For each color channel
@@ -470,7 +475,7 @@ def _get_lama_manager():
         logger.warning(f"Failed to init LaMa (lama-cleaner): {e}")
         return None
 
-def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray) -> np.ndarray:
+def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray, conservative_blend: bool = False) -> np.ndarray:
     mgr = _get_lama_manager()
     if mgr is None:
         return bgr_image
@@ -488,8 +493,17 @@ def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray) -> np.nda
         # Perform inpainting with improved parameters
         res = mgr.inpaint(img, mask, hd_strategy=hd_strategy)
         
-        # Post-process for better blending
-        result = post_process_inpainted_result(bgr_image, cv2.cvtColor(res, cv2.COLOR_RGB2BGR), improved_mask)
+        # Post-process for better blending - use smaller blur kernel for conservative mode
+        blur_kernel = 5 if conservative_blend else 15
+        result = post_process_inpainted_result(bgr_image, cv2.cvtColor(res, cv2.COLOR_RGB2BGR), improved_mask, blur_kernel_size=blur_kernel)
+        
+        # Apply light sharpening to restore detail if in conservative mode
+        if conservative_blend:
+            # Create sharpening kernel
+            sharpen_kernel = np.array([[-1, -1, -1],
+                                      [-1,  9, -1],
+                                      [-1, -1, -1]]) * 0.1  # Light sharpening
+            result = cv2.filter2D(result, -1, sharpen_kernel)
         
         return result
     except Exception as e:
@@ -4809,9 +4823,10 @@ async def remove_gemini_watermark(
         logger.info(f"Created watermark mask: {mask_width}x{mask_height} region at bottom-right corner")
         
         # Try LaMa first (best quality) if available
+        # Use conservative_blend=True to minimize blur on subject areas
         if _get_lama_manager() is not None:
-            inpainted = lama_inpaint_torch(img_bgr, watermark_mask)
-            logger.info("Used LaMa (PyTorch) for watermark removal")
+            inpainted = lama_inpaint_torch(img_bgr, watermark_mask, conservative_blend=True)
+            logger.info("Used LaMa (PyTorch) for watermark removal with conservative blending")
         elif _get_lama_session() is not None:
             inpainted = lama_inpaint_onnx(img_bgr, watermark_mask)
             logger.info("Used LaMa ONNX for watermark removal")
@@ -4827,9 +4842,9 @@ async def remove_gemini_watermark(
             # Blend the two results
             inpainted = cv2.addWeighted(inpainted_telea, 0.4, inpainted_ns, 0.6, 0)
             
-            # Apply soft blending to reduce artifacts
+            # Apply soft blending to reduce artifacts - use smaller blur for less aggressive blending
             soft_mask = watermark_mask.astype(np.float32) / 255.0
-            soft_mask = cv2.GaussianBlur(soft_mask, (0, 0), sigmaX=3, sigmaY=3)
+            soft_mask = cv2.GaussianBlur(soft_mask, (0, 0), sigmaX=1.5, sigmaY=1.5)  # Reduced from 3 to 1.5
             soft_mask_3 = np.repeat(soft_mask[:, :, None], 3, axis=2)
             inpainted = (soft_mask_3 * inpainted.astype(np.float32) + 
                         (1.0 - soft_mask_3) * img_bgr.astype(np.float32)).astype(np.uint8)
@@ -4845,6 +4860,16 @@ async def remove_gemini_watermark(
         if was_downscaled:
             result_image = result_image.resize(original_size, Image.Resampling.LANCZOS)
             logger.info(f"Scaled result back to original size: {original_size} using LANCZOS resampling")
+        
+        # Apply light sharpening to restore detail after inpainting
+        # Convert to numpy array for sharpening
+        img_array = np.array(result_image)
+        # Create sharpening kernel (light sharpening to restore detail)
+        sharpen_kernel = np.array([[-0.5, -0.5, -0.5],
+                                  [-0.5,  5.0, -0.5],
+                                  [-0.5, -0.5, -0.5]]) * 0.15  # Light sharpening
+        img_array = cv2.filter2D(img_array, -1, sharpen_kernel)
+        result_image = Image.fromarray(np.clip(img_array, 0, 255).astype(np.uint8))
         
         # Save to bytes with maximum quality (PNG is lossless)
         buf = io.BytesIO()
@@ -4907,9 +4932,10 @@ async def test_remove_gemini_watermark(
         logger.info(f"Created watermark mask: {mask_width}x{mask_height} region at bottom-right corner")
         
         # Try LaMa first (best quality) if available
+        # Use conservative_blend=True to minimize blur on subject areas
         if _get_lama_manager() is not None:
-            inpainted = lama_inpaint_torch(img_bgr, watermark_mask)
-            logger.info("Used LaMa (PyTorch) for watermark removal")
+            inpainted = lama_inpaint_torch(img_bgr, watermark_mask, conservative_blend=True)
+            logger.info("Used LaMa (PyTorch) for watermark removal with conservative blending")
         elif _get_lama_session() is not None:
             inpainted = lama_inpaint_onnx(img_bgr, watermark_mask)
             logger.info("Used LaMa ONNX for watermark removal")
