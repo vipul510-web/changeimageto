@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TEST: Remove Gemini Watermark Online | Free AI Watermark Remover</title>
+    <meta name="description" content="TEST PAGE: Remove Gemini watermarks from images online for free using AI-powered LaMa inpainting. Erase watermarks from Gemini-generated images instantly. No login required, no watermark added." />
+    <meta name="keywords" content="remove gemini watermark, remove watermark from image, watermark remover, gemini image watermark, free watermark remover" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="./logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">TEST: Remove Gemini Watermark Online - Free AI Tool</h1>
+        <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
+      </div>
+      <p>TEST PAGE: Remove watermarks from Gemini-generated images using AI-powered LaMa inpainting. Clean images instantly with no login required and no watermark added.</p>
+    </header>
+
+    <main class="container main">
+      <form id="upload-form">
+        <div class="uploader" id="dropzone">
+          <input type="file" id="file-input" accept="image/*" />
+          <div class="uploader-instructions">
+            <strong>Drop image here</strong>
+            <span>or click to browse</span>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 12px; color: var(--muted); font-size: 0.9rem;">
+          Maximum file size: 10MB. Large images will be automatically optimized for processing.
+        </div>
+        
+        <div id="file-size-error" style="display: none; text-align: center; margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444;">
+          <strong>File too large:</strong> Maximum file size is 10MB. Please compress or resize your image first using our <a href="/compress-image-online.html" style="color: #ef4444; text-decoration: underline;">compression tool</a>.
+        </div>
+        
+        <div id="file-type-error" style="display: none; text-align: center; margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444;">
+          <strong>Invalid file type:</strong> Please upload an image file (JPG, PNG, WebP, etc.). Video files are not supported.
+        </div>
+
+        <button id="process-btn" type="submit" disabled>Remove Watermark</button>
+      </form>
+
+      <section class="preview" id="preview-section" hidden>
+        <div class="preview-grid">
+          <div>
+            <h3>Original (with watermark)</h3>
+            <img id="original-img" alt="Original preview with Gemini watermark" />
+          </div>
+          <div>
+            <h3>Watermark Removed</h3>
+            <p id="process-prompt" class="prompt">Press "Remove Watermark" to process.</p>
+            <div id="result-wrapper" hidden>
+              <div class="checkerboard">
+                <img id="result-img" alt="Image with watermark removed" />
+              </div>
+              <div class="actions">
+                <a id="download-link" download="watermark-removed.png" class="btn">Download PNG</a>
+                <button id="reset-btn" class="btn secondary" type="button">Try Another Image</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./script.js?v=20251220-1" defer></script>
+    <script>
+      (function() {
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+        const API_BASE = 'http://127.0.0.1:8000'; // Local test endpoint
+        const fileInput = document.getElementById('file-input');
+        const processBtn = document.getElementById('process-btn');
+        const fileSizeError = document.getElementById('file-size-error');
+        const fileTypeError = document.getElementById('file-type-error');
+        const dropzone = document.getElementById('dropzone');
+        const uploadForm = document.getElementById('upload-form');
+        const previewSection = document.getElementById('preview-section');
+        const originalImg = document.getElementById('original-img');
+        const resultImg = document.getElementById('result-img');
+        const resultWrapper = document.getElementById('result-wrapper');
+        const processPrompt = document.getElementById('process-prompt');
+        const downloadLink = document.getElementById('download-link');
+        const resetBtn = document.getElementById('reset-btn');
+        
+        function isValidImageType(file) {
+          if (!file) return false;
+          const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/svg+xml'];
+          return validTypes.includes(file.type.toLowerCase());
+        }
+        
+        function validateFile(file) {
+          // Hide all errors first
+          if (fileSizeError) fileSizeError.style.display = 'none';
+          if (fileTypeError) fileTypeError.style.display = 'none';
+          
+          if (!file) {
+            if (processBtn) processBtn.disabled = true;
+            return false;
+          }
+          
+          // Check file type first
+          if (!isValidImageType(file)) {
+            if (fileTypeError) fileTypeError.style.display = 'block';
+            if (processBtn) processBtn.disabled = true;
+            // Clear the file input
+            if (fileInput) fileInput.value = '';
+            return false;
+          }
+          
+          // Check file size
+          if (file.size > MAX_FILE_SIZE) {
+            if (fileSizeError) fileSizeError.style.display = 'block';
+            if (processBtn) processBtn.disabled = true;
+            return false;
+          }
+          
+          // File is valid
+          if (processBtn) processBtn.disabled = false;
+          return true;
+        }
+        
+        // Handle file input change
+        if (fileInput) {
+          fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && validateFile(file)) {
+              // Show preview
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                originalImg.src = e.target.result;
+                previewSection.hidden = false;
+                resultWrapper.hidden = true;
+                processPrompt.hidden = false;
+              };
+              reader.readAsDataURL(file);
+            }
+          });
+        }
+        
+        // Handle drag and drop
+        if (dropzone) {
+          dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--accent)';
+          });
+          
+          dropzone.addEventListener('dragleave', () => {
+            dropzone.style.borderColor = 'var(--border)';
+          });
+          
+          dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--border)';
+            const file = e.dataTransfer.files[0];
+            if (file) {
+              // Validate file type
+              if (!isValidImageType(file)) {
+                validateFile(file);
+                return;
+              }
+              
+              // Set the file input
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              if (fileInput) {
+                fileInput.files = dataTransfer.files;
+                // Trigger change event
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+              }
+              validateFile(file);
+            }
+          });
+        }
+        
+        // Handle form submission
+        if (uploadForm) {
+          uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = fileInput?.files[0];
+            if (!validateFile(file)) {
+              return false;
+            }
+            
+            // Disable button and show processing
+            processBtn.disabled = true;
+            processBtn.textContent = 'Processing...';
+            resultWrapper.hidden = true;
+            processPrompt.textContent = 'Processing image...';
+            processPrompt.hidden = false;
+            
+            try {
+              const formData = new FormData();
+              formData.append('file', file);
+              
+              const response = await fetch(`${API_BASE}/api/test-remove-gemini-watermark`, {
+                method: 'POST',
+                body: formData
+              });
+              
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+              }
+              
+              const blob = await response.blob();
+              const url = URL.createObjectURL(blob);
+              
+              // Show result
+              resultImg.src = url;
+              resultWrapper.hidden = false;
+              processPrompt.hidden = true;
+              downloadLink.href = url;
+              downloadLink.download = `watermark-removed-${Date.now()}.png`;
+              
+            } catch (error) {
+              console.error('Error:', error);
+              processPrompt.textContent = `Error: ${error.message}`;
+              processPrompt.hidden = false;
+            } finally {
+              processBtn.disabled = false;
+              processBtn.textContent = 'Remove Watermark';
+            }
+          });
+        }
+        
+        // Handle reset button
+        if (resetBtn) {
+          resetBtn.addEventListener('click', () => {
+            if (fileInput) fileInput.value = '';
+            if (processBtn) processBtn.disabled = true;
+            previewSection.hidden = true;
+            resultWrapper.hidden = true;
+            processPrompt.hidden = false;
+            processPrompt.textContent = 'Press "Remove Watermark" to process.';
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
+

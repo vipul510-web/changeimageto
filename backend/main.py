@@ -369,6 +369,56 @@ def post_process_inpainted_result(original: np.ndarray, inpainted: np.ndarray, m
         logger.warning(f"Post-processing failed: {e}")
         return inpainted
 
+def post_process_inpainted_result_no_blur(original: np.ndarray, inpainted: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """Post-process inpainting result for better blending WITHOUT Gaussian blur on mask."""
+    try:
+        # Blend the inpainted result with original at edges - NO Gaussian blur on mask
+        result = inpainted.copy()
+        
+        # For edge pixels, blend with original to reduce artifacts
+        edge_mask = cv2.Canny(mask, 50, 150)
+        edge_dilated = cv2.dilate(edge_mask, np.ones((3, 3), np.uint8), iterations=1)
+        
+        # Smooth blending at edges - only within mask region
+        # Create a strict mask to ensure we only blend where mask exists
+        strict_mask = (mask > 0).astype(np.uint8)
+        edge_dilated = cv2.bitwise_and(edge_dilated, strict_mask)
+        
+        # Smooth blending at edges
+        for c in range(3):  # For each color channel
+            result[:, :, c] = np.where(
+                edge_dilated > 0,
+                original[:, :, c] * 0.3 + inpainted[:, :, c] * 0.7,
+                inpainted[:, :, c]
+            )
+        
+        # Final color matching with surrounding areas
+        # Get border pixels from original image
+        border_pixels = []
+        h, w = mask.shape
+        for i in range(h):
+            for j in range(w):
+                if mask[i, j] > 0 and (
+                    i == 0 or i == h-1 or j == 0 or j == w-1 or
+                    mask[i-1, j] == 0 or mask[i+1, j] == 0 or
+                    mask[i, j-1] == 0 or mask[i, j+1] == 0
+                ):
+                    border_pixels.append((i, j))
+        
+        if border_pixels:
+            # Calculate average color of border area in original
+            border_colors = [original[y, x] for y, x in border_pixels]
+            avg_border_color = np.mean(border_colors, axis=0)
+            
+            # Adjust inpainted area colors to match
+            for y, x in border_pixels:
+                result[y, x] = 0.8 * result[y, x] + 0.2 * avg_border_color
+        
+        return result.astype(np.uint8)
+    except Exception as e:
+        logger.warning(f"Post-processing failed: {e}")
+        return inpainted
+
 # -----------------------------
 # LaMa ONNX integration (optional)
 # -----------------------------
@@ -498,7 +548,14 @@ def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray, conservat
             blur_kernel = blur_kernel_size
         else:
             blur_kernel = 5 if conservative_blend else 15
-        result = post_process_inpainted_result(bgr_image, cv2.cvtColor(res, cv2.COLOR_RGB2BGR), improved_mask, blur_kernel_size=blur_kernel)
+        
+        # For conservative mode (watermark removal), skip Gaussian blur on mask to prevent foreground blur
+        # Use post-processing without the blur step
+        if conservative_blend:
+            # Skip the Gaussian blur step - use strict mask boundaries only
+            result = post_process_inpainted_result_no_blur(bgr_image, cv2.cvtColor(res, cv2.COLOR_RGB2BGR), improved_mask)
+        else:
+            result = post_process_inpainted_result(bgr_image, cv2.cvtColor(res, cv2.COLOR_RGB2BGR), improved_mask, blur_kernel_size=blur_kernel)
         
         # Apply light sharpening to restore detail if in conservative mode or if custom blur kernel is small
         should_sharpen = conservative_blend or (blur_kernel_size is not None and blur_kernel_size <= 7)
@@ -4902,16 +4959,8 @@ async def test_remove_gemini_watermark(
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         original_size = image.size
         
-        # Process at original size to preserve quality - only downscale extremely large images
-        # Same logic as production endpoint
-        MAX_PROCESSING_SIDE = int(os.getenv("MAX_IMAGE_SIDE", "4000"))
-        proc_image = downscale_image_if_needed(image, max_side=MAX_PROCESSING_SIDE)
-        was_downscaled = proc_image.size != original_size
-        
-        if was_downscaled:
-            logger.info(f"Test endpoint: Downscaled image from {original_size} to {proc_image.size} for processing")
-        
-        img_array = np.array(proc_image)
+        # Process at original size - no downscaling/upscaling to preserve perfect quality (EXACT same as production)
+        img_array = np.array(image)
         
         # Convert RGB to BGR for OpenCV
         img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
@@ -4968,10 +5017,7 @@ async def test_remove_gemini_watermark(
         result_rgb = cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB)
         result_image = Image.fromarray(result_rgb)
         
-        # Scale result back to original size if it was downscaled (same as production)
-        if was_downscaled:
-            result_image = result_image.resize(original_size, Image.Resampling.LANCZOS)
-            logger.info(f"Test endpoint: Scaled result back to original size: {original_size} using LANCZOS resampling")
+        # No upscaling needed - image was processed at original size (EXACT same as production)
         
         # Save to bytes (same as production)
         buf = io.BytesIO()
