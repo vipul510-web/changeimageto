@@ -498,12 +498,17 @@ def lama_inpaint_torch(bgr_image: np.ndarray, binary_mask: np.ndarray, conservat
         result = post_process_inpainted_result(bgr_image, cv2.cvtColor(res, cv2.COLOR_RGB2BGR), improved_mask, blur_kernel_size=blur_kernel)
         
         # Apply light sharpening to restore detail if in conservative mode
+        # Only apply to the inpainted area, not the entire image
         if conservative_blend:
-            # Create sharpening kernel
-            sharpen_kernel = np.array([[-1, -1, -1],
-                                      [-1,  9, -1],
-                                      [-1, -1, -1]]) * 0.1  # Light sharpening
-            result = cv2.filter2D(result, -1, sharpen_kernel)
+            # Create a proper sharpening kernel that preserves brightness (sums to 1.0)
+            sharpen_kernel = np.array([[0, -0.1, 0],
+                                      [-0.1, 1.4, -0.1],
+                                      [0, -0.1, 0]])  # Sums to 1.0, preserves brightness
+            # Only sharpen the masked area
+            mask_3d = (improved_mask > 0).astype(np.float32)[:, :, np.newaxis]
+            sharpened = cv2.filter2D(result, -1, sharpen_kernel)
+            # Blend: sharpened in mask area, original elsewhere
+            result = (mask_3d * sharpened + (1.0 - mask_3d) * result).astype(np.uint8)
         
         return result
     except Exception as e:
@@ -4860,16 +4865,6 @@ async def remove_gemini_watermark(
         if was_downscaled:
             result_image = result_image.resize(original_size, Image.Resampling.LANCZOS)
             logger.info(f"Scaled result back to original size: {original_size} using LANCZOS resampling")
-        
-        # Apply light sharpening to restore detail after inpainting
-        # Convert to numpy array for sharpening
-        img_array = np.array(result_image)
-        # Create sharpening kernel (light sharpening to restore detail)
-        sharpen_kernel = np.array([[-0.5, -0.5, -0.5],
-                                  [-0.5,  5.0, -0.5],
-                                  [-0.5, -0.5, -0.5]]) * 0.15  # Light sharpening
-        img_array = cv2.filter2D(img_array, -1, sharpen_kernel)
-        result_image = Image.fromarray(np.clip(img_array, 0, 255).astype(np.uint8))
         
         # Save to bytes with maximum quality (PNG is lossless)
         buf = io.BytesIO()
