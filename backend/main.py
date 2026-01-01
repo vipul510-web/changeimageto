@@ -4772,13 +4772,16 @@ async def remove_gemini_watermark(
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         original_size = image.size
         
-        # Downscale large images to reduce memory and processing time
-        # LaMa inpainting is memory-intensive, so we limit to 1600px max side
-        proc_image = downscale_image_if_needed(image, max_side=int(os.getenv("MAX_IMAGE_SIDE", "1600")))
+        # Process at original size to preserve quality - only downscale extremely large images
+        # LaMa inpainting can handle most images at full resolution
+        # Only downscale if image is larger than 4000px to preserve quality for most users
+        # This ensures images under 4000px maintain perfect quality
+        MAX_PROCESSING_SIDE = int(os.getenv("MAX_IMAGE_SIDE", "4000"))
+        proc_image = downscale_image_if_needed(image, max_side=MAX_PROCESSING_SIDE)
         was_downscaled = proc_image.size != original_size
         
         if was_downscaled:
-            logger.info(f"Downscaled image from {original_size} to {proc_image.size} for processing")
+            logger.info(f"Downscaled image from {original_size} to {proc_image.size} for processing (quality preserved for images under {MAX_PROCESSING_SIDE}px)")
         
         img_array = np.array(proc_image)
         
@@ -4838,13 +4841,15 @@ async def remove_gemini_watermark(
         result_image = Image.fromarray(result_rgb)
         
         # Scale result back to original size if it was downscaled
+        # Use LANCZOS for high-quality upscaling (best quality resampling)
         if was_downscaled:
-            result_image = result_image.resize(original_size, Image.LANCZOS)
-            logger.info(f"Scaled result back to original size: {original_size}")
+            result_image = result_image.resize(original_size, Image.Resampling.LANCZOS)
+            logger.info(f"Scaled result back to original size: {original_size} using LANCZOS resampling")
         
-        # Save to bytes
+        # Save to bytes with maximum quality (PNG is lossless)
         buf = io.BytesIO()
-        result_image.save(buf, format="PNG")
+        # Use optimize=False to ensure fastest encoding, quality is already lossless for PNG
+        result_image.save(buf, format="PNG", optimize=False)
         
         log_user_action("gemini_watermark_removal_success", {
             "original_size": f"{original_size[0]}x{original_size[1]}",
