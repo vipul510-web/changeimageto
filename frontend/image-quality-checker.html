@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bulk Image Quality Checker - Detect Blurry, Noisy & Pixelated Photos Online</title>
-    <meta name="description" content="Free bulk image quality checker. Detect blurry, noisy, pixelated, overexposed photos instantly. Perfect for ecommerce, marketing teams. Analyze up to 50 images at once.">
+    <title>Free Image Quality Checker Online - Detect Blurry, Noisy & Pixelated Photos Online</title>
+    <meta name="description" content="Check image quality online for free. Detect blurry, noisy, pixelated, overexposed photos instantly. Perfect for ecommerce, marketing teams. Analyze up to 50 images at once.">
     <meta name="keywords" content="image quality checker, bulk photo analysis, blur detection, noisy image detector, pixelated image checker, photo quality assessment, ecommerce image quality, marketing photo checker">
     <link rel="canonical" href="https://www.changeimageto.com/image-quality-checker.html" />
 
@@ -86,10 +86,10 @@ document.addEventListener("DOMContentLoaded", () => {
     <header class="container header">
       <a href="/" class="logo-link"><img src="/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
       <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
-        <h1 style="margin:0">Bulk Image Quality Checker</h1>
+        <h1 style="margin:0">Image Quality Checker Online - Free AI Tool</h1>
         <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
       </div>
-      <p>Analyze up to 50 images for blur, noise, pixelation, and exposure issues. Perfect for ecommerce and marketing teams.</p>
+      <p>Analyze up to 50 images for blur, noise, pixelation, resolution and exposure issues. Perfect for ecommerce and marketing teams.</p>
     </header>
 
     <main class="container main">
@@ -343,6 +343,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <script src="./script.js?v=20251220-1" defer></script>
     <script>
+      // Determine API base URL (production vs local)
+      const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+      const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
+      
       document.addEventListener('DOMContentLoaded', function() {
         // Image quality checker functionality
         const qualityUploadArea = document.getElementById('qualityUploadArea');
@@ -455,7 +459,7 @@ document.addEventListener("DOMContentLoaded", () => {
           qualityCheckBtn.querySelector('.btn-loading').style.display = 'inline';
 
           try {
-            const response = await fetch('/api/bulk-quality-check', {
+            const response = await fetch(`${apiBase}/api/bulk-quality-check`, {
               method: 'POST',
               body: formData
             });
