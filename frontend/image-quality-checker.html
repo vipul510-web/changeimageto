@@ -344,6 +344,10 @@ document.addEventListener("DOMContentLoaded", () => {
     <script src="./script.js?v=20251220-1" defer></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
+        // Determine API base URL (production vs local) - same pattern as compress pages
+        const isLocalFrontend = (['127.0.0.1','localhost'].includes(window.location.hostname)) && window.location.port === '8080';
+        const apiBase = window.API_BASE || (isLocalFrontend ? 'http://127.0.0.1:8000' : 'https://bgremover-backend-121350814881.us-central1.run.app');
+        
         // Image quality checker functionality
         const qualityUploadArea = document.getElementById('qualityUploadArea');
         const qualityFileInput = document.getElementById('qualityFileInput');
@@ -455,7 +459,7 @@ document.addEventListener("DOMContentLoaded", () => {
           qualityCheckBtn.querySelector('.btn-loading').style.display = 'inline';
 
           try {
-            const response = await fetch('/api/bulk-quality-check', {
+            const response = await fetch(apiBase + '/api/bulk-quality-check', {
               method: 'POST',
               body: formData
             });
