@@ -738,6 +738,10 @@ def render_article_html(title: str, slug: str, body_sections: list) -> str:
               <li><a href="/remove-people-from-photo.html">Remove People / Objects</a></li>
               <li><a href="/remove-text-from-image.html">Remove Text / Watermark</a></li>
               <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
+              <li><a href="/bulk-resize-images-online.html">Bulk Resize Images Online</a></li>
+              <li><a href="/bulk-resize-images-without-losing-quality.html">Bulk Resize Without Losing Quality</a></li>
+              <li><a href="/bulk-resize-images-for-ecommerce.html">Bulk Resize for E-commerce</a></li>
+              <li><a href="/bulk-resize-images-for-social-media.html">Bulk Resize for Social Media</a></li>
               <li><a href="/image-quality-checker.html">Image Quality Checker</a></li>
               <li><a href="/real-estate-photo-enhancement.html">Real Estate Photo Enhancement</a></li>
             </ul>

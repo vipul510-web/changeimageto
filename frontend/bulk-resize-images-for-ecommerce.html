@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bulk Resize Images for E-commerce - Free Product Photo Resizer</title>
+    <meta name="description" content="Resize product images in bulk for your e-commerce store. Standardize product photo dimensions, optimize for faster loading, and maintain consistent image sizes across your online store. Free bulk image resizer for e-commerce." />
+    <meta name="keywords" content="bulk resize images for ecommerce, resize product images, ecommerce image resizer, product photo resizer, bulk resize product photos, resize images for online store" />
+    <link rel="canonical" href="https://www.changeimageto.com/bulk-resize-images-for-ecommerce.html" />
+    <link rel="preload" as="style" href="/styles.css?v=20250916-3" />
+    <link rel="stylesheet" href="/styles.css?v=20250916-3" />
+
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "Bulk Resize Images for E-commerce",
+      "description": "Free tool to resize product images in bulk for e-commerce stores. Standardize dimensions, optimize for web, and maintain consistent product photo sizes.",
+      "url": "https://www.changeimageto.com/bulk-resize-images-for-ecommerce.html",
+      "provider": {
+        "@type": "Organization",
+        "name": "ChangeImageTo.com"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link">
+        <img src="/logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" />
+      </a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Bulk Resize Images for E-commerce</h1>
+        <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
+      </div>
+      <p>Resize product images in bulk for your e-commerce store. Standardize product photo dimensions, optimize for faster page loading, and maintain consistent image sizes. Upload up to 50 product images and download all resized images in a ZIP file.</p>
+    </header>
+
+    <main class="container main">
+      <div class="upload-section">
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7,10 12,15 17,10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <h3>Drop images here or click to browse</h3>
+            <p>Upload up to 50 images (JPG, PNG, WebP)</p>
+            <p class="file-limit">Max 10MB per file</p>
+          </div>
+          <input type="file" id="fileInput" multiple accept="image/*" style="display:none" />
+        </div>
+        
+        <div class="file-list" id="fileList" style="display:none">
+          <h3>Selected Files:</h3>
+          <ul id="fileItems"></ul>
+        </div>
+      </div>
+
+      <div class="controls-section">
+        <div class="control-group">
+          <label for="width">Width (pixels):</label>
+          <input type="number" id="width" value="800" min="1" max="4000" />
+        </div>
+        
+        <div class="control-group">
+          <label for="height">Height (pixels):</label>
+          <input type="number" id="height" value="600" min="1" max="4000" />
+        </div>
+        
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="maintainAspect" checked />
+            Maintain aspect ratio
+          </label>
+        </div>
+        
+        <div class="control-group">
+          <label for="quality">Quality:</label>
+          <input type="range" id="quality" min="1" max="100" value="90" />
+          <span id="qualityValue">90%</span>
+        </div>
+      </div>
+
+      <div class="action-section">
+        <button id="previewBtn" class="btn btn-secondary" disabled>
+          Preview First Image
+        </button>
+        <button id="resizeBtn" class="btn btn-primary" disabled>
+          <span class="btn-text">Resize Images</span>
+          <span class="btn-loading" style="display:none">Processing...</span>
+        </button>
+        <button id="clearBtn" class="btn btn-secondary" style="display:none">Clear All</button>
+      </div>
+
+      <div class="preview-section" id="previewSection" style="display:none">
+        <h3>Preview</h3>
+        <div class="preview-info">
+          <p>Target dimensions: <span id="previewDimensions"></span></p>
+          <p>This shows how the first image will look after resizing:</p>
+        </div>
+        <div class="preview-container">
+          <canvas id="previewCanvas"></canvas>
+        </div>
+        <button id="closePreview" class="btn btn-secondary">Close Preview</button>
+      </div>
+
+      <div class="result-section" id="resultSection" style="display:none">
+        <h3>Processing Complete!</h3>
+        <div class="result-info">
+          <p id="resultText"></p>
+          <a id="downloadBtn" class="btn btn-success" download="resized_images.zip">
+            Download ZIP File
+          </a>
+        </div>
+      </div>
+
+      <div class="error-section" id="errorSection" style="display:none">
+        <h3>Error</h3>
+        <p id="errorText"></p>
+      </div>
+    </main>
+
+    <section class="container seo-content">
+      <h2>Bulk Resize Product Images for Your E-commerce Store</h2>
+      <p>Streamline your e-commerce image workflow by resizing product photos in bulk. Our free bulk image resizer helps you standardize product image dimensions across your entire online store, ensuring consistent presentation, faster page loading, and better user experience. Perfect for Shopify, WooCommerce, Amazon, eBay, and all major e-commerce platforms.</p>
+      
+      <h3>Why E-commerce Stores Need Consistent Image Sizes</h3>
+      <ul>
+        <li><strong>Professional Appearance:</strong> Uniform product image dimensions create a polished, professional storefront that builds customer trust</li>
+        <li><strong>Faster Page Loading:</strong> Optimized image sizes reduce page load times, improving SEO and reducing bounce rates</li>
+        <li><strong>Better Mobile Experience:</strong> Properly sized images load faster on mobile devices, where most e-commerce traffic occurs</li>
+        <li><strong>Platform Requirements:</strong> Many e-commerce platforms (Shopify, WooCommerce, Amazon) have specific image dimension requirements</li>
+        <li><strong>Reduced Storage Costs:</strong> Smaller, optimized images reduce hosting and CDN costs</li>
+        <li><strong>Improved SEO:</strong> Faster-loading pages with optimized images rank higher in search results</li>
+      </ul>
+
+      <h3>Recommended Image Sizes for E-commerce</h3>
+      <p>Different e-commerce platforms have different requirements. Here are common standards:</p>
+      <ul>
+        <li><strong>Shopify:</strong> 2048×2048px for main product images, 1024×1024px for thumbnails</li>
+        <li><strong>WooCommerce:</strong> 1200×1200px for main images, 300×300px for thumbnails</li>
+        <li><strong>Amazon:</strong> 1000×1000px minimum, 2000×2000px recommended for main images</li>
+        <li><strong>eBay:</strong> 1600×1600px recommended, minimum 500×500px</li>
+        <li><strong>Etsy:</strong> 2000×2000px for main images, 570×570px for thumbnails</li>
+        <li><strong>General Web Stores:</strong> 1200×1200px to 2000×2000px works well for most platforms</li>
+      </ul>
+
+      <h3>How to Resize Product Images for E-commerce</h3>
+      <ol>
+        <li><strong>Upload Product Images:</strong> Drag and drop up to 50 product photos into the upload area</li>
+        <li><strong>Set Standard Dimensions:</strong> Enter your platform's recommended dimensions (e.g., 2000×2000px for Shopify)</li>
+        <li><strong>Maintain Aspect Ratio:</strong> Keep the "Maintain aspect ratio" option checked to prevent distortion</li>
+        <li><strong>Set Quality:</strong> Use 85-90% quality for optimal balance between file size and image clarity</li>
+        <li><strong>Preview:</strong> Use the preview feature to ensure images look good before processing the entire batch</li>
+        <li><strong>Process and Download:</strong> Click "Resize Images" and download all standardized product photos in a ZIP file</li>
+      </ol>
+
+      <h3>Benefits of Bulk Resizing for E-commerce</h3>
+      <ul>
+        <li><strong>Time Savings:</strong> Process dozens of product images in seconds instead of hours</li>
+        <li><strong>Consistency:</strong> Ensure all product images have identical dimensions for a uniform store appearance</li>
+        <li><strong>SEO Optimization:</strong> Faster-loading pages improve search engine rankings and user experience</li>
+        <li><strong>Cost Reduction:</strong> Smaller images reduce bandwidth and storage costs</li>
+        <li><strong>Platform Compliance:</strong> Meet specific dimension requirements for different e-commerce platforms</li>
+        <li><strong>Scalability:</strong> Easily process hundreds of products as your store grows</li>
+      </ul>
+
+      <h3>E-commerce Image Optimization Tips</h3>
+      <ul>
+        <li><strong>Use Square Format:</strong> Most e-commerce platforms work best with square (1:1) aspect ratio images</li>
+        <li><strong>Maintain High Quality:</strong> Use 85-95% quality to ensure product details are visible</li>
+        <li><strong>Standardize Dimensions:</strong> Use the same dimensions for all main product images</li>
+        <li><strong>Optimize File Names:</strong> Use descriptive, SEO-friendly file names before uploading</li>
+        <li><strong>Test on Mobile:</strong> Always check how resized images look on mobile devices</li>
+        <li><strong>Batch Process:</strong> Process all products in a category at once for consistency</li>
+      </ul>
+
+      <h3>Related Tools</h3>
+      <p>Looking for more e-commerce image tools? Check out our comprehensive suite of free online image tools:</p>
+      <ul>
+        <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a> - Our main bulk resizing tool with advanced features</li>
+        <li><a href="/bulk-resize-images-online.html">Bulk Resize Images Online</a> - Resize images online without software</li>
+        <li><a href="/bulk-resize-images-without-losing-quality.html">Bulk Resize Images Without Losing Quality</a> - Preserve image quality during resizing</li>
+        <li><a href="/remove-background-from-image.html">Remove Background from Image</a> - Create clean product photos with transparent backgrounds</li>
+        <li><a href="/compress-image-online.html">Compress Image Online</a> - Further reduce file sizes for faster loading</li>
+        <li><a href="/enhance-image.html">Enhance Image</a> - Improve product photo quality and clarity</li>
+      </ul>
+    </section>
+
+    <section class="container faq-section">
+      <h2>Frequently Asked Questions</h2>
+      
+      <details>
+        <summary>Is it safe to resize images online?</summary>
+        <p>Yes, our online image resizer is completely safe. Images are processed securely on our servers and automatically deleted immediately after processing. We don't store, share, or access your images for any purpose other than resizing them.</p>
+      </details>
+      
+      <details>
+        <summary>Do I need to create an account to resize images online?</summary>
+        <p>No, you don't need to create an account or provide any personal information. Simply upload your images and start resizing - it's completely free and requires no registration.</p>
+      </details>
+      
+      <details>
+        <summary>Can I resize images online from my phone or tablet?</summary>
+        <p>Yes! Our online image resizer works on any device with a web browser, including smartphones and tablets. You can resize images online from anywhere, on any device.</p>
+      </details>
+      
+      <details>
+        <summary>How many images can I resize at once online?</summary>
+        <p>You can upload and resize up to 50 images in a single batch. Each individual image can be up to 10MB in size. There's no limit on how many batches you can process.</p>
+      </details>
+      
+      <details>
+        <summary>What are the best image dimensions for e-commerce stores?</summary>
+        <p>Most e-commerce platforms work best with square images (1:1 aspect ratio). Recommended sizes: Shopify (2048×2048px), WooCommerce (1200×1200px), Amazon (2000×2000px), eBay (1600×1600px). Always check your specific platform's requirements, but 1200×1200px to 2000×2000px is a safe range for most stores.</p>
+      </details>
+      
+      <details>
+        <summary>How do I resize product images for my online store?</summary>
+        <p>Upload your product images (up to 50 at once), set your desired dimensions (we recommend square format like 2000×2000px), maintain aspect ratio to prevent distortion, set quality to 85-90%, and process. Download all resized images in a ZIP file and upload them to your e-commerce platform.</p>
+      </details>
+      
+      <details>
+        <summary>What happens to my images after resizing?</summary>
+        <p>Your original images are never modified. We create new resized versions that you download. All images (original uploads and processed files) are automatically deleted from our servers immediately after processing.</p>
+      </details>
+      
+      <details>
+        <summary>Can I resize images to different sizes in one batch?</summary>
+        <p>All images in a batch will be resized to the same dimensions you specify. If you need different sizes, process them in separate batches with different dimension settings.</p>
+      </details>
+      
+      <details>
+        <summary>Is there a file size limit for online image resizing?</summary>
+        <p>Each individual image can be up to 10MB. There's no limit on the total batch size, but larger files will take longer to process. For best performance, we recommend keeping individual files under 5MB when possible.</p>
+      </details>
+    </section>
+
+    <nav class="seo-links">
+      <a href="/bulk-image-resizer.html">Bulk Image Resizer</a>
+      <a href="/bulk-resize-images-online.html">Bulk Resize Images Online</a>
+      <a href="/bulk-resize-images-without-losing-quality.html">Bulk Resize Images Without Losing Quality</a>
+      <a href="/bulk-resize-images-for-social-media.html">Bulk Resize Images for Social Media</a>
+      <a href="/remove-background-from-image.html">Remove Background from Image</a>
+      <a href="/compress-image-online.html">Compress Image Online</a>
+      <a href="/enhance-image.html">Enhance Image</a>
+    </nav>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/change-color-of-image.html">Change Image Colors</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+              <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
+              <li><a href="/bulk-resize-images-online.html">Bulk Resize Images Online</a></li>
+              <li><a href="/image-quality-checker.html">Image Quality Checker</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Latest Blog Posts</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/remove-background-from-image.html">Remove Background from Image</a></li>
+              <li><a href="/blog/upscale-image.html">Upscale Image Quality</a></li>
+              <li><a href="/blog/change-image-background-color.html">Change Image Background Color</a></li>
+              <li><a href="/blog/how-to-resize-images-without-losing-quality.html">How to Resize Images Without Losing Quality</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+            <div class="footer-bottom-links">
+              <a href="/privacy-policy.html">Privacy</a>
+              <a href="#terms">Terms</a>
+              <a href="#cookies">Cookies</a>
+              <a href="#security">Security</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="/script.js?v=20251220-1" defer></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileItems = document.getElementById('fileItems');
+        const resizeBtn = document.getElementById('resizeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultSection = document.getElementById('resultSection');
+        const errorSection = document.getElementById('errorSection');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const qualitySlider = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const maintainAspect = document.getElementById('maintainAspect');
+        const widthInput = document.getElementById('width');
+        const heightInput = document.getElementById('height');
+        const previewBtn = document.getElementById('previewBtn');
+        const previewSection = document.getElementById('previewSection');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const previewDimensions = document.getElementById('previewDimensions');
+        const closePreview = document.getElementById('closePreview');
+
+        let selectedFiles = [];
+        let zipBlob = null;
+
+        qualitySlider.addEventListener('input', function() {
+          qualityValue.textContent = this.value + '%';
+        });
+
+        let aspectRatio = 800 / 600;
+        let uploadedImageDimensions = null;
+        
+        maintainAspect.addEventListener('change', function() {
+          if (this.checked) {
+            heightInput.disabled = false;
+            if (uploadedImageDimensions) {
+              aspectRatio = uploadedImageDimensions.width / uploadedImageDimensions.height;
+              updateDimensionsToMatchAspectRatio();
+            } else {
+              aspectRatio = widthInput.value / heightInput.value;
+            }
+          } else {
+            heightInput.disabled = false;
+          }
+        });
+
+        widthInput.addEventListener('input', function() {
+          if (maintainAspect.checked) {
+            heightInput.value = Math.round(this.value / aspectRatio);
+          }
+        });
+
+        heightInput.addEventListener('input', function() {
+          if (maintainAspect.checked) {
+            widthInput.value = Math.round(this.value * aspectRatio);
+          }
+        });
+
+        function updateDimensionsToMatchAspectRatio() {
+          if (!uploadedImageDimensions) return;
+          const targetWidth = 800;
+          const newHeight = Math.round(targetWidth / aspectRatio);
+          widthInput.value = targetWidth;
+          heightInput.value = newHeight;
+        }
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+          uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragover');
+          handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+          handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+          const newFiles = Array.from(files).filter(file => {
+            return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
+          });
+
+          if (selectedFiles.length + newFiles.length > 50) {
+            alert('Maximum 50 images allowed. Please select fewer images.');
+            return;
+          }
+
+          newFiles.forEach((file, index) => {
+            detectImageDimensions(file, selectedFiles.length + index);
+          });
+
+          selectedFiles = [...selectedFiles, ...newFiles];
+          updateFileList();
+          updateButtons();
+        }
+
+        function detectImageDimensions(file, fileIndex) {
+          const img = new Image();
+          img.onload = function() {
+            file.originalWidth = this.naturalWidth;
+            file.originalHeight = this.naturalHeight;
+            file.originalAspectRatio = (this.naturalWidth / this.naturalHeight).toFixed(2);
+            updateFileList();
+          };
+          img.src = URL.createObjectURL(file);
+        }
+
+        function updateFileList() {
+          if (selectedFiles.length === 0) {
+            fileList.style.display = 'none';
+            return;
+          }
+
+          fileList.style.display = 'block';
+          fileItems.innerHTML = '';
+
+          selectedFiles.forEach((file, index) => {
+            const li = document.createElement('li');
+            const dimensionsText = file.originalWidth && file.originalHeight 
+              ? ` (${file.originalWidth}×${file.originalHeight}, ratio: ${file.originalAspectRatio})`
+              : ' (detecting...)';
+            
+            li.innerHTML = `
+              <div class="file-info">
+                <span class="file-name">${file.name}</span>
+                <span class="file-details">${(file.size / 1024 / 1024).toFixed(1)}MB${dimensionsText}</span>
+              </div>
+              <button class="remove-file" data-index="${index}">×</button>
+            `;
+            fileItems.appendChild(li);
+          });
+
+          document.querySelectorAll('.remove-file').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const index = parseInt(e.target.dataset.index);
+              selectedFiles.splice(index, 1);
+              updateFileList();
+              updateButtons();
+            });
+          });
+        }
+
+        function updateButtons() {
+          resizeBtn.disabled = selectedFiles.length === 0;
+          previewBtn.disabled = selectedFiles.length === 0;
+          clearBtn.style.display = selectedFiles.length > 0 ? 'inline-block' : 'none';
+        }
+
+        previewBtn.addEventListener('click', () => {
+          if (selectedFiles.length === 0) return;
+          showPreview();
+        });
+
+        closePreview.addEventListener('click', () => {
+          previewSection.style.display = 'none';
+        });
+
+        function showPreview() {
+          const firstFile = selectedFiles[0];
+          if (!firstFile.originalWidth || !firstFile.originalHeight) {
+            alert('Image dimensions not loaded yet. Please wait a moment and try again.');
+            return;
+          }
+
+          const targetWidth = parseInt(widthInput.value);
+          const targetHeight = parseInt(heightInput.value);
+          
+          previewDimensions.textContent = `${targetWidth} × ${targetHeight}`;
+          
+          const ctx = previewCanvas.getContext('2d');
+          previewCanvas.width = Math.min(targetWidth, 400);
+          previewCanvas.height = Math.min(targetHeight, 400);
+          
+          const scale = Math.min(previewCanvas.width / targetWidth, previewCanvas.height / targetHeight);
+          const previewWidth = targetWidth * scale;
+          const previewHeight = targetHeight * scale;
+          
+          const offsetX = (previewCanvas.width - previewWidth) / 2;
+          const offsetY = (previewCanvas.height - previewHeight) / 2;
+          
+          const img = new Image();
+          img.onload = function() {
+            ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+            ctx.drawImage(
+              img,
+              0, 0, img.width, img.height,
+              offsetX, offsetY, previewWidth, previewHeight
+            );
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(offsetX, offsetY, previewWidth, previewHeight);
+          };
+          img.src = URL.createObjectURL(firstFile);
+          
+          previewSection.style.display = 'block';
+        }
+
+        clearBtn.addEventListener('click', () => {
+          selectedFiles = [];
+          fileInput.value = '';
+          uploadedImageDimensions = null;
+          aspectRatio = 800 / 600;
+          widthInput.value = 800;
+          heightInput.value = 600;
+          updateFileList();
+          updateButtons();
+          hideResults();
+          previewSection.style.display = 'none';
+        });
+
+        resizeBtn.addEventListener('click', async () => {
+          if (selectedFiles.length === 0) return;
+
+          const formData = new FormData();
+          selectedFiles.forEach(file => formData.append('files', file));
+          formData.append('width', widthInput.value);
+          formData.append('height', heightInput.value);
+          formData.append('maintain_aspect', maintainAspect.checked);
+          formData.append('quality', qualitySlider.value);
+
+          resizeBtn.disabled = true;
+          resizeBtn.querySelector('.btn-text').style.display = 'none';
+          resizeBtn.querySelector('.btn-loading').style.display = 'inline';
+
+          try {
+            const response = await fetch('/api/bulk-resize', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(errorText || 'Processing failed');
+            }
+
+            zipBlob = await response.blob();
+            showResult(selectedFiles.length);
+            downloadBtn.href = URL.createObjectURL(zipBlob);
+
+          } catch (error) {
+            showError(error.message);
+          } finally {
+            resizeBtn.disabled = false;
+            resizeBtn.querySelector('.btn-text').style.display = 'inline';
+            resizeBtn.querySelector('.btn-loading').style.display = 'none';
+          }
+        });
+
+        function showResult(count) {
+          hideResults();
+          resultSection.style.display = 'block';
+          document.getElementById('resultText').textContent = 
+            `Successfully processed ${count} image${count !== 1 ? 's' : ''}. Click download to get your ZIP file.`;
+        }
+
+        function showError(message) {
+          hideResults();
+          errorSection.style.display = 'block';
+          document.getElementById('errorText').textContent = message;
+        }
+
+        function hideResults() {
+          resultSection.style.display = 'none';
+          errorSection.style.display = 'none';
+        }
+      });
+    </script>
+
+    <style>
+      .upload-section {
+        margin-bottom: 2rem;
+      }
+
+      .upload-area {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f9f9f9;
+      }
+
+      .upload-area:hover,
+      .upload-area.dragover {
+        border-color: #007bff;
+        background: #f0f8ff;
+      }
+
+      .upload-content svg {
+        color: #666;
+        margin-bottom: 1rem;
+      }
+
+      .upload-content h3 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+      }
+
+      .upload-content p {
+        margin: 0.25rem 0;
+        color: #666;
+      }
+
+      .file-limit {
+        font-size: 0.9rem;
+        color: #999;
+      }
+
+      .file-list {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .file-list h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+      }
+
+      .file-list ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .file-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background: white;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        color: #333;
+      }
+
+      .file-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .file-name {
+        color: #333;
+        font-weight: 500;
+        font-size: 0.95rem;
+      }
+
+      .file-details {
+        color: #666;
+        font-size: 0.85rem;
+      }
+
+      .remove-file {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .controls-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .control-group label {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .control-group input[type="number"] {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+
+      .control-group input[type="range"] {
+        width: 100%;
+      }
+
+      .control-group input[type="checkbox"] {
+        margin-right: 0.5rem;
+      }
+
+      .action-section {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .btn {
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin: 0 0.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: #007bff;
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: #0056b3;
+      }
+
+      .btn-primary:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #545b62;
+      }
+
+      .btn-success {
+        background: #28a745;
+        color: white;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .btn-success:hover {
+        background: #1e7e34;
+      }
+
+      .result-section,
+      .error-section {
+        text-align: center;
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+
+      .result-section {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+
+      .error-section {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+
+      .preview-section {
+        margin-top: 2rem;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+      }
+
+      .preview-section h3 {
+        margin-top: 0;
+        color: #333;
+      }
+
+      .preview-info {
+        margin-bottom: 1rem;
+      }
+
+      .preview-info p {
+        margin: 0.5rem 0;
+        color: #666;
+      }
+
+      .preview-container {
+        text-align: center;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: white;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+
+      .preview-container canvas {
+        max-width: 100%;
+        border: 1px solid #eee;
+        border-radius: 4px;
+      }
+
+      .result-info p {
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+      }
+
+      .seo-content {
+        margin-top: 3rem;
+        line-height: 1.6;
+      }
+
+      .seo-content h2 {
+        color: #333;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+
+      .seo-content h3 {
+        color: #555;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .seo-content ul,
+      .seo-content ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .seo-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .faq-section {
+        margin-top: 3rem;
+      }
+
+      .faq-section details {
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 1rem;
+      }
+
+      .faq-section summary {
+        font-weight: 600;
+        cursor: pointer;
+        color: #333;
+      }
+
+      .faq-section summary:hover {
+        color: #007bff;
+      }
+
+      .faq-section p {
+        margin-top: 0.75rem;
+        margin-bottom: 0;
+        color: #666;
+      }
+
+      @media (max-width: 768px) {
+        .controls-section {
+          grid-template-columns: 1fr;
+        }
+        
+        .upload-area {
+          padding: 2rem 1rem;
+        }
+        
+        .btn {
+          display: block;
+          width: 100%;
+          margin: 0.5rem 0;
+        }
+      }
+      .comprehensive-footer{background:var(--card);border-top:1px solid var(--border);margin-top:60px;padding:48px 0 24px}
+      .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+      .footer-brand{max-width:300px}
+      .footer-description{color:var(--muted);line-height:1.6;margin-bottom:24px;font-size:14px}
+      .footer-section h3{color:var(--fg);font-size:16px;font-weight:600;margin:0 0 20px}
+      .footer-links{list-style:none;padding:0;margin:0}
+      .footer-links li{margin-bottom:12px}
+      .footer-links a{color:var(--muted);text-decoration:none;font-size:14px;transition:color 0.2s ease}
+      .footer-links a:hover{color:var(--accent)}
+      .footer-bottom{border-top:1px solid var(--border);padding-top:24px}
+      .footer-bottom-content{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+      .footer-copyright{color:var(--muted);font-size:14px;margin:0}
+      .footer-bottom-links{display:flex;gap:24px}
+      .footer-bottom-links a{color:var(--muted);text-decoration:none;font-size:14px;transition:color 0.2s ease}
+      .footer-bottom-links a:hover{color:var(--accent)}
+      @media(max-width:1024px){.footer-grid{grid-template-columns:1fr 1fr 1fr;gap:32px}}
+      @media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:24px}.comprehensive-footer{padding:32px 0 20px}.footer-bottom-content{flex-direction:column;text-align:center;gap:12px}.footer-bottom-links{justify-content:center}}
+      @media(max-width:480px){.footer-grid{grid-template-columns:1fr;gap:20px}}
+    </style>
+  </body>
+</html>
+
