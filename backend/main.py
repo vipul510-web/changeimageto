@@ -5449,48 +5449,46 @@ async def edit_text_in_image(
     text_to_replace: str = Form(...),
     payment_session_id: Optional[str] = Form(None),
 ):
-    """Edit text in images using Google's Gemini gemini-3-pro-image-preview model. Requires payment verification."""
+    """Edit text in images using Google's Gemini gemini-3-pro-image-preview model. Free to use."""
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
     
     if not text_to_find or not text_to_replace:
         raise HTTPException(status_code=400, detail="Both text_to_find and text_to_replace are required")
     
-    # Verify payment session and prevent reuse
-    if not payment_session_id:
-        raise HTTPException(status_code=400, detail="Payment session ID is required")
-    
-    # Check if this payment session has already been used
-    if payment_session_id in _USED_PAYMENT_SESSIONS:
-        raise HTTPException(
-            status_code=403, 
-            detail="This payment session has already been used. Please make a new payment to process another image."
-        )
-    
-    # Verify payment is actually successful
-    try:
-        import dodopayments
-        dodo_api_key = os.getenv("DODO_PAYMENTS_API_KEY")
-        if dodo_api_key:
-            # Use same environment as checkout creation (test_mode for local, live_mode for production)
-            is_production = os.getenv("K_SERVICE") is not None
-            dodo_env = "live_mode" if is_production else "test_mode"
-            
-            client = dodopayments.DodoPayments(
-                bearer_token=dodo_api_key.strip(),
-                environment=dodo_env
+    # Payment verification is optional - if payment_session_id is provided, verify it
+    if payment_session_id:
+        # Check if this payment session has already been used
+        if payment_session_id in _USED_PAYMENT_SESSIONS:
+            raise HTTPException(
+                status_code=403, 
+                detail="This payment session has already been used. Please make a new payment to process another image."
             )
-            checkout_session = client.checkout_sessions.retrieve(payment_session_id)
-            payment_status = getattr(checkout_session, 'payment_status', None)
-            if not payment_status or payment_status.lower() not in ['succeeded', 'completed', 'paid']:
-                raise HTTPException(status_code=403, detail="Payment not verified or incomplete")
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.warning(f"Could not verify payment status (proceeding anyway): {str(e)}")
-    
-    # Mark payment session as used
-    _USED_PAYMENT_SESSIONS.add(payment_session_id)
+        
+        # Verify payment is actually successful
+        try:
+            import dodopayments
+            dodo_api_key = os.getenv("DODO_PAYMENTS_API_KEY")
+            if dodo_api_key:
+                # Use same environment as checkout creation (test_mode for local, live_mode for production)
+                is_production = os.getenv("K_SERVICE") is not None
+                dodo_env = "live_mode" if is_production else "test_mode"
+                
+                client = dodopayments.DodoPayments(
+                    bearer_token=dodo_api_key.strip(),
+                    environment=dodo_env
+                )
+                checkout_session = client.checkout_sessions.retrieve(payment_session_id)
+                payment_status = getattr(checkout_session, 'payment_status', None)
+                if not payment_status or payment_status.lower() not in ['succeeded', 'completed', 'paid']:
+                    raise HTTPException(status_code=403, detail="Payment not verified or incomplete")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"Could not verify payment status (proceeding anyway): {str(e)}")
+        
+        # Mark payment session as used
+        _USED_PAYMENT_SESSIONS.add(payment_session_id)
     
     # Try both environment variable names for compatibility
     google_api_key = os.getenv("GOOGLE_GENAI_API_KEY") or os.getenv("GEMINI_API_KEY")

@@ -194,7 +194,6 @@ function getPageType() {
     if (path === '/grayscale-background.html') return 'grayscale_background';
     if (path === '/enhance-image.html') return 'enhance_image';
   if (path === '/remove-text-from-image.html') return 'remove_text';
-  if (path === '/edit-text-in-image.html') return 'edit_text';
   if (path === '/remove-people-from-photo.html') return 'remove_people';
   if (path === '/remove-gemini-watermark.html') return 'remove_gemini_watermark';
   if (path === '/convert-image-to-pdf.html') return 'image_to_pdf';
@@ -214,11 +213,10 @@ function updateCtaText(){
   const isRemoveTextPage = window.location.pathname === '/remove-text-from-image.html';
   const isRemovePeoplePage = window.location.pathname === '/remove-people-from-photo.html';
   const isChristmasBgPage = window.location.pathname === '/add-christmas-background.html';
-  const isEditTextPage = window.location.pathname === '/edit-text-in-image.html';
+  const isEditTextPage = false;
   const isRemoveGeminiWatermarkPage = window.location.pathname === '/remove-gemini-watermark.html';
   const isDenoisePage = false;
   
-  // Don't update button text on edit-text-in-image page - it has its own payment flow
   if (isEditTextPage) {
     return;
   }
@@ -723,24 +721,24 @@ if (form) form.addEventListener('submit', async (e) => {
         const objectUrl = URL.createObjectURL(blob);
         if (resultImg) resultImg.src = objectUrl;
         if (downloadLink) {
-          downloadLink.href = objectUrl;
-          // Set a sensible filename based on page type
-          if (pageType === 'upscale_image') {
-            downloadLink.download = `upscaled-${Date.now()}.png`;
-          } else if (pageType === 'color_change') {
-            downloadLink.download = `color-changed-${Date.now()}.png`;
-          } else if (pageType === 'blur_background') {
-            downloadLink.download = `blur-background-${Date.now()}.png`;
+        downloadLink.href = objectUrl;
+        // Set a sensible filename based on page type
+        if (pageType === 'upscale_image') {
+          downloadLink.download = `upscaled-${Date.now()}.png`;
+        } else if (pageType === 'color_change') {
+          downloadLink.download = `color-changed-${Date.now()}.png`;
+        } else if (pageType === 'blur_background') {
+          downloadLink.download = `blur-background-${Date.now()}.png`;
           } else if (pageType === 'grayscale_background') {
             downloadLink.download = `grayscale-background-${Date.now()}.png`;
-          } else if (pageType === 'enhance_image') {
-            downloadLink.download = `enhanced-${Date.now()}.png`;
-          } else if (pageType === 'remove_text') {
-            downloadLink.download = `text-removed-${Date.now()}.png`;
+        } else if (pageType === 'enhance_image') {
+          downloadLink.download = `enhanced-${Date.now()}.png`;
+        } else if (pageType === 'remove_text') {
+          downloadLink.download = `text-removed-${Date.now()}.png`;
           } else if (pageType === 'edit_text') {
             downloadLink.download = `text-edited-${Date.now()}.png`;
-          } else {
-            downloadLink.download = `bg-removed-${Date.now()}.png`;
+        } else {
+          downloadLink.download = `bg-removed-${Date.now()}.png`;
           }
         }
         
@@ -1160,8 +1158,8 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
   currentFile = null;
   if (fileInput) fileInput.value = '';
   if (originalImg) {
-    originalImg.src = '';
-    originalImg.style.display = 'none';
+  originalImg.src = '';
+  originalImg.style.display = 'none';
   }
   if (resultImg) resultImg.src = '';
   
@@ -1582,9 +1580,9 @@ if (resetBtn) resetBtn.addEventListener('click', () => {
         var coloredUrl = URL.createObjectURL(blob);
         if (resultImg) resultImg.src = coloredUrl;
         if (downloadLink) {
-          downloadLink.href = coloredUrl;
-          var hex = color.replace('#','');
-          downloadLink.download = 'bg-' + hex + '-' + Date.now() + '.png';
+        downloadLink.href = coloredUrl;
+        var hex = color.replace('#','');
+        downloadLink.download = 'bg-' + hex + '-' + Date.now() + '.png';
         }
       }catch(err){ console.warn('Color composite failed', err); }
     }, 0);

@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Edit Text in Image Online | AI Text Editor - Change Text in Photos</title>
-    <meta name="description" content="Edit text in images online using AI. Change, replace, or modify text in photos instantly. Professional text editing tool powered by Google Gemini. $1 per image." />
+    <meta name="description" content="Edit text in images online using AI. Change, replace, or modify text in photos instantly. Professional text editing tool powered by Google Gemini. Free to use." />
     <meta name="keywords" content="edit text in image, change text in image, replace text in image, edit text in photo, modify text in image, text editor for images" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="canonical" href="https://www.changeimageto.com/edit-text-in-image.html" />
 
     <meta property="og:title" content="Edit Text in Image Online" />
@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <h1 style="margin:0">Edit Text in Image Online</h1>
         <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a></nav>
       </div>
-      <p>Edit and change text in images using AI. Upload an image, specify the text to find and replace, and get professional results. Powered by Google Gemini AI. $1 per image.</p>
+      <p>Edit and change text in images using AI. Upload an image, specify the text to find and replace, and get professional results. Powered by Google Gemini AI. Free to use.</p>
     </header>
 
     <main class="container main">
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-top: 16px;">
           <button id="process-btn" type="button" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: not-allowed; font-size: 14px; opacity: 0.6;">
-            Change Text $1 per image
+            Change Text
           </button>
         </div>
       </form>
@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <div>
             <h3>Text Edited</h3>
-            <p id="process-prompt" class="prompt">Complete payment to process.</p>
+            <p id="process-prompt" class="prompt">Press "Change Text" to process.</p>
             <div id="result-wrapper" hidden>
               <div class="checkerboard">
                 <img id="result-img" alt="Text edited result" />
@@ -119,8 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <ol>
           <li>Upload your image using the uploader above.</li>
           <li>Enter the text you want to find and the replacement text in the fields below the image.</li>
-          <li>Click <strong>Change Text $1 per image</strong> to create a payment checkout (button will be enabled once all fields are filled).</li>
-          <li>Complete the payment and return to this page.</li>
+          <li>Click <strong>Change Text</strong> to process your image (button will be enabled once all fields are filled).</li>
           <li>Your image will be automatically processed with the text edited.</li>
           <li>Download your edited image instantly.</li>
         </ol>
@@ -156,11 +155,11 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="faq-list" style="margin-top: 20px;">
         <div class="faq-item" style="margin-bottom: 20px;">
           <h3>How do I edit text in an image?</h3>
-          <p>Upload your image, enter the text you want to find and the replacement text, then click "Change Text $1 per image" to complete payment and process your image. Our AI will automatically locate and replace the text while maintaining the original font style and appearance.</p>
+          <p>Upload your image, enter the text you want to find and the replacement text, then click "Change Text" to process your image. Our AI will automatically locate and replace the text while maintaining the original font style and appearance.</p>
         </div>
         <div class="faq-item" style="margin-bottom: 20px;">
-          <h3>How much does it cost to edit text in an image?</h3>
-          <p>Text editing costs $1 per image. Payment is required before processing, and each payment session can be used for one image.</p>
+          <h3>Is text editing free to use?</h3>
+          <p>Yes, our text editing tool is completely free to use. No payment required, no watermarks, and no login needed.</p>
         </div>
         <div class="faq-item" style="margin-bottom: 20px;">
           <h3>Will the edited text match the original style?</h3>
@@ -331,7 +330,7 @@ document.addEventListener("DOMContentLoaded", () => {
     </style>
     
     <script>
-      // Edit text in image with payment functionality
+      // Edit text in image - free functionality
       (function() {
         const processBtn = document.getElementById('process-btn');
         const fileInput = document.getElementById('file-input');
@@ -348,8 +347,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const resetBtn = document.getElementById('reset-btn');
         
         let currentFile = null;
-        let paymentSessionId = null;
-        let hasProcessed = false;
         
         // Determine API base URL (production vs local)
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -406,9 +403,6 @@ document.addEventListener("DOMContentLoaded", () => {
             setOriginalPreview(file);
             hideStatus();
             validateForm();
-            // Reset payment state when new file is uploaded
-            paymentSessionId = null;
-            hasProcessed = false;
           }
         });
         
@@ -434,59 +428,10 @@ document.addEventListener("DOMContentLoaded", () => {
             setOriginalPreview(file);
             hideStatus();
             validateForm();
-            // Reset payment state when new file is uploaded
-            paymentSessionId = null;
-            hasProcessed = false;
           }
         });
         
-        // Store file and text data before payment redirect
-        function storePendingData(file, textToFind, textToReplace) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            sessionStorage.setItem('editTextPendingImageData', e.target.result);
-            sessionStorage.setItem('editTextPendingImageName', file.name);
-            sessionStorage.setItem('editTextPendingImageType', file.type);
-            sessionStorage.setItem('editTextPendingTextToFind', textToFind);
-            sessionStorage.setItem('editTextPendingTextToReplace', textToReplace);
-          };
-          reader.readAsDataURL(file);
-        }
-        
-        // Restore file and text data after payment redirect
-        function restorePendingData() {
-          const imageData = sessionStorage.getItem('editTextPendingImageData');
-          const imageName = sessionStorage.getItem('editTextPendingImageName');
-          const imageType = sessionStorage.getItem('editTextPendingImageType');
-          const textToFind = sessionStorage.getItem('editTextPendingTextToFind');
-          const textToReplace = sessionStorage.getItem('editTextPendingTextToReplace');
-          
-          if (imageData && imageName && imageType && textToFind && textToReplace) {
-            fetch(imageData)
-              .then(res => res.blob())
-              .then(blob => {
-                const file = new File([blob], imageName, { type: imageType });
-                currentFile = file;
-                textToFindInput.value = textToFind;
-                textToReplaceInput.value = textToReplace;
-                originalImg.src = imageData;
-                if (previewSection) previewSection.hidden = false;
-                
-                // Auto-process after data restoration
-                if (paymentSessionId) {
-                  setTimeout(() => {
-                    processImage();
-                  }, 500);
-                }
-              })
-              .catch(err => {
-                console.error('Error restoring file:', err);
-                showStatus('Error restoring image. Please upload again.', 'error');
-              });
-          }
-        }
-        
-        // Handle process button click - create payment
+        // Handle process button click - process directly
         processBtn.addEventListener('click', async () => {
           if (!currentFile) return;
           if (!textToFindInput.value.trim() || !textToReplaceInput.value.trim()) {
@@ -516,61 +461,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           
           processBtn.disabled = true;
-          processBtn.textContent = 'Creating checkout...';
-          showStatus('Creating payment checkout...', 'info');
-          
-          // Store data before redirect
-          storePendingData(currentFile, textToFindInput.value.trim(), textToReplaceInput.value.trim());
-          
-          try {
-            const returnUrl = window.location.href.split('?')[0];
-            const checkoutResponse = await fetch(`${API_BASE}/api/create-payment-checkout`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                return_url: returnUrl
-              })
-            });
-            
-            if (!checkoutResponse.ok) {
-              const errorText = await checkoutResponse.text();
-              throw new Error(`HTTP ${checkoutResponse.status}: ${errorText}`);
-            }
-            
-            const checkoutData = await checkoutResponse.json();
-            paymentSessionId = checkoutData.session_id;
-            
-            // Redirect to checkout
-            window.location.href = checkoutData.checkout_url;
-            
-          } catch (error) {
-            console.error('Error:', error);
-            showStatus('Error: ' + error.message, 'error');
-            processBtn.disabled = false;
-            processBtn.textContent = 'Change Text $1 per image';
-          }
-        });
-        
-        // Process image with Google Gemini after payment
-        async function processImage() {
-          if (!currentFile || !paymentSessionId) {
-            showStatus('Please complete payment first', 'error');
-            return;
-          }
-          
-          if (hasProcessed) {
-            showStatus('This payment has already been used. Please pay again to process another image.', 'error');
-            return;
-          }
-          
-          if (!textToFindInput.value.trim() || !textToReplaceInput.value.trim()) {
-            showStatus('Please enter both text to find and text to replace', 'error');
-            return;
-          }
-          
-          processBtn.disabled = true;
           processBtn.textContent = 'Processing...';
           showStatus(`Editing text: "${textToFindInput.value}" → "${textToReplaceInput.value}" using Google Gemini...`, 'info');
           
@@ -579,7 +469,6 @@ document.addEventListener("DOMContentLoaded", () => {
             formData.append('file', currentFile);
             formData.append('text_to_find', textToFindInput.value.trim());
             formData.append('text_to_replace', textToReplaceInput.value.trim());
-            formData.append('payment_session_id', paymentSessionId);
             
             const response = await fetch(`${API_BASE}/api/edit-text-in-image`, {
               method: 'POST',
@@ -604,30 +493,22 @@ document.addEventListener("DOMContentLoaded", () => {
             downloadLink.download = `text-edited-${Date.now()}.png`;
             
             showStatus('Text edited successfully!', 'success');
-            hasProcessed = true;
             processBtn.disabled = true;
             processBtn.textContent = 'Processing Complete';
             
           } catch (error) {
             console.error('Error:', error);
             showStatus('Error: ' + error.message, 'error');
-            
-            // Reset state if payment session error
-            if (error.message.includes('already been used') || error.message.includes('403')) {
-              paymentSessionId = null;
-              hasProcessed = false;
-              processBtn.disabled = false;
-              processBtn.textContent = 'Change Text $1 per image';
-            }
+            processBtn.disabled = false;
+            processBtn.textContent = 'Change Text';
+            validateForm();
           }
-        }
+        });
         
         // Reset button handler
         if (resetBtn) {
           resetBtn.addEventListener('click', () => {
             currentFile = null;
-            paymentSessionId = null;
-            hasProcessed = false;
             fileInput.value = '';
             textToFindInput.value = '';
             textToReplaceInput.value = '';
@@ -638,22 +519,6 @@ document.addEventListener("DOMContentLoaded", () => {
             validateForm();
           });
         }
-        
-        // Check for payment success on page load (returning from checkout)
-        window.addEventListener('load', () => {
-          const urlParams = new URLSearchParams(window.location.search);
-          const sessionId = urlParams.get('session_id');
-          
-          if (sessionId) {
-            paymentSessionId = sessionId;
-            showStatus('Payment verified! Restoring your image...', 'success');
-            
-            restorePendingData();
-            
-            // Clean URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        });
       })();
     </script>
   </body>
