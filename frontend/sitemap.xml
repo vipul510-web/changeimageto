@@ -316,6 +316,26 @@
             <priority>0.7</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/blog/how-to-blur-image-background.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/best-background-blur-tools.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/blur-background-vs-remove-background.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blog/how-to-create-bokeh-effect.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.7</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/blog/index.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.7</priority>
@@ -374,6 +394,36 @@
             <loc>https://www.changeimageto.com/blog-admin.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.5</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blur-background.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blur-background-online.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blur-background-without-app.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blur-background-for-portrait.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blur-background-for-product-photos.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
+        </url>
+        <url>
+            <loc>https://www.changeimageto.com/blur-background-for-social-media.html</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.9</priority>
         </url>
         <url>
             <loc>https://www.changeimageto.com/blur-background-for-portraits.html</loc>
