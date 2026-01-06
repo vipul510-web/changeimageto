@@ -3,14 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Test Remove Gemini Watermark</title>
+    <title>Test Remove Gemini Watermark (Enhanced)</title>
     <style>
       :root{--bg:#0b0f13;--fg:#eaf0f6;--muted:#9aa7b2;--accent:#6aa7ff;--card:#12171d;--border:#1e2630}
       *{box-sizing:border-box}
       body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6;padding:24px}
-      .container{max-width:1200px;margin:0 auto}
+      .container{max-width:1400px;margin:0 auto}
       h1{margin:0 0 8px}
       p{margin:0;color:var(--muted);margin-bottom:16px}
+      .controls{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px}
+      .control-group{margin-bottom:16px}
+      .control-group label{display:block;margin-bottom:8px;color:var(--fg);font-weight:500}
+      .control-group input[type="range"]{width:100%;margin-bottom:4px}
+      .control-group .value{color:var(--accent);font-weight:600}
+      .control-group small{display:block;color:var(--muted);font-size:0.85em;margin-top:4px}
       .uploader{position:relative;border:2px dashed var(--border);border-radius:12px;padding:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--card);margin:24px 0}
       .uploader input{position:absolute;inset:0;opacity:0;cursor:pointer;display:block;width:100%;height:100%}
       .uploader-instructions{display:flex;flex-direction:column;align-items:center;color:var(--muted)}
@@ -18,18 +24,42 @@
       button[disabled]{opacity:.5;cursor:not-allowed}
       .preview{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
       @media(max-width:768px){.preview{grid-template-columns:1fr}}
-      .checkerboard{padding:0;min-height:auto;display:block}
+      .checkerboard{padding:0;min-height:auto;display:block;position:relative}
       .preview img{max-width:100%;height:auto;border-radius:8px;display:block}
+      .mask-overlay{position:absolute;border:2px solid #ff0000;background:rgba(255,0,0,0.2);pointer-events:none;z-index:10}
       .status{margin-top:16px;padding:12px;border-radius:8px;background:var(--card);color:var(--muted)}
       .status.error{background:#3a1f1f;color:#ff6b6b}
       .status.success{background:#1f3a1f;color:#6bff6b}
       .status.info{background:#1f3a3a;color:#6bffff}
+      .info-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:16px}
+      .info-box h4{margin:0 0 8px;color:var(--accent)}
+      .info-box code{background:var(--bg);padding:2px 6px;border-radius:4px;font-size:0.9em}
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Test Remove Gemini Watermark</h1>
-      <p>Upload a Gemini-generated image to remove the watermark from the bottom-right corner using LaMa AI inpainting</p>
+      <h1>Test Remove Gemini Watermark (Enhanced)</h1>
+      <p>Upload a Gemini-generated image to test watermark removal with adjustable parameters</p>
+
+      <div class="controls">
+        <h3 style="margin-top:0">Mask Parameters</h3>
+        <div class="control-group">
+          <label>Mask Width (% of image width): <span class="value" id="mask-width-value">15</span>%</label>
+          <input type="range" id="mask-width" min="5" max="30" value="15" step="1" />
+          <small>Controls the width of the watermark mask area (bottom-right corner)</small>
+        </div>
+        <div class="control-group">
+          <label>Mask Height (% of image height): <span class="value" id="mask-height-value">12</span>%</label>
+          <input type="range" id="mask-height" min="5" max="25" value="12" step="1" />
+          <small>Controls the height of the watermark mask area</small>
+        </div>
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="show-mask" checked />
+            Show mask overlay on original image
+          </label>
+        </div>
+      </div>
 
       <form id="upload-form">
         <div class="uploader" id="dropzone">
@@ -45,11 +75,22 @@
       
       <div id="status" class="status" style="display:none;"></div>
 
+      <div class="info-box">
+        <h4>Current Logic Explanation:</h4>
+        <ul style="margin:8px 0;padding-left:20px">
+          <li><strong>Mask Area:</strong> Bottom-right corner = <code>width × mask_width%</code> × <code>height × mask_height%</code> (min 60px × 40px)</li>
+          <li><strong>Mask Dilation:</strong> Mask is dilated by 1 iteration (3×3 kernel) to capture watermark edges</li>
+          <li><strong>Blur Logic:</strong> Uses production's conservative blending (blur kernel = 5) to minimize blur on subjects</li>
+          <li><strong>Note:</strong> This test endpoint uses EXACT same inpainting logic as production - only mask size is adjustable</li>
+        </ul>
+      </div>
+
       <section class="preview" id="preview-section" style="display:none;">
         <div>
           <h3>Original (with watermark)</h3>
-          <div class="checkerboard">
+          <div class="checkerboard" id="original-container">
             <img id="original-img" alt="Original preview" style="display:none;" />
+            <div id="mask-overlay" class="mask-overlay" style="display:none;"></div>
           </div>
         </div>
         <div id="result-container" style="display:none;">
@@ -75,8 +116,67 @@
       const statusDiv = document.getElementById('status');
       const downloadLink = document.getElementById('download-link');
       const resultContainer = document.getElementById('result-container');
+      const originalContainer = document.getElementById('original-container');
+      const maskOverlay = document.getElementById('mask-overlay');
+      
+      const maskWidthSlider = document.getElementById('mask-width');
+      const maskHeightSlider = document.getElementById('mask-height');
+      const showMaskCheckbox = document.getElementById('show-mask');
+      
+      const maskWidthValue = document.getElementById('mask-width-value');
+      const maskHeightValue = document.getElementById('mask-height-value');
 
       let currentFile = null;
+      let imageDimensions = { width: 0, height: 0 };
+
+      // Update slider value displays
+      maskWidthSlider.addEventListener('input', (e) => {
+        maskWidthValue.textContent = e.target.value;
+        updateMaskOverlay();
+      });
+      maskHeightSlider.addEventListener('input', (e) => {
+        maskHeightValue.textContent = e.target.value;
+        updateMaskOverlay();
+      });
+      showMaskCheckbox.addEventListener('change', () => {
+        updateMaskOverlay();
+      });
+
+      function updateMaskOverlay() {
+        if (!imageDimensions.width || !imageDimensions.height) return;
+        
+        const showMask = showMaskCheckbox.checked;
+        maskOverlay.style.display = showMask ? 'block' : 'none';
+        
+        if (!showMask) return;
+        
+        const imgElement = originalImg;
+        if (!imgElement.complete) return;
+        
+        // Calculate mask dimensions
+        const maskWidthPercent = parseInt(maskWidthSlider.value) / 100;
+        const maskHeightPercent = parseInt(maskHeightSlider.value) / 100;
+        
+        const maskWidth = Math.max(60, imageDimensions.width * maskWidthPercent);
+        const maskHeight = Math.max(40, imageDimensions.height * maskHeightPercent);
+        
+        // Get displayed image dimensions
+        const displayedWidth = imgElement.offsetWidth;
+        const displayedHeight = imgElement.offsetHeight;
+        const scaleX = displayedWidth / imageDimensions.width;
+        const scaleY = displayedHeight / imageDimensions.height;
+        
+        // Position overlay at bottom-right
+        const overlayWidth = maskWidth * scaleX;
+        const overlayHeight = maskHeight * scaleY;
+        const overlayLeft = displayedWidth - overlayWidth;
+        const overlayTop = displayedHeight - overlayHeight;
+        
+        maskOverlay.style.width = overlayWidth + 'px';
+        maskOverlay.style.height = overlayHeight + 'px';
+        maskOverlay.style.left = overlayLeft + 'px';
+        maskOverlay.style.top = overlayTop + 'px';
+      }
 
       function showStatus(message, type = 'info') {
         statusDiv.textContent = message;
@@ -96,6 +196,13 @@
           originalImg.style.display = 'block';
           previewSection.style.display = 'grid';
           resultContainer.style.display = 'none';
+          
+          // Get image dimensions
+          originalImg.onload = () => {
+            imageDimensions.width = originalImg.naturalWidth;
+            imageDimensions.height = originalImg.naturalHeight;
+            updateMaskOverlay();
+          };
         };
         reader.onerror = () => {
           showStatus('Error reading file', 'error');
@@ -137,6 +244,9 @@
         }
       });
 
+      // Update mask overlay on window resize
+      window.addEventListener('resize', updateMaskOverlay);
+
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!currentFile) return;
@@ -151,6 +261,8 @@
           
           const formData = new FormData();
           formData.append('file', currentFile);
+          formData.append('mask_width_percent', maskWidthSlider.value);
+          formData.append('mask_height_percent', maskHeightSlider.value);
           
           const response = await fetch(`${API_BASE}/api/test-remove-gemini-watermark`, {
             method: 'POST',
@@ -187,4 +299,3 @@
     </script>
   </body>
 </html>
-

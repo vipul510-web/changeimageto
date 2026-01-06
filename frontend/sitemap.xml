@@ -421,6 +421,11 @@
             <priority>0.5</priority>
         </url>
         <url>
+            <loc>https://www.changeimageto.com/api.html</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.8</priority>
+        </url>
+        <url>
             <loc>https://www.changeimageto.com/add-christmas-background.html</loc>
             <changefreq>monthly</changefreq>
             <priority>0.5</priority>
