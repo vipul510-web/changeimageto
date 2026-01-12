@@ -330,8 +330,13 @@ document.addEventListener("DOMContentLoaded", () => {
               'Keywords': '',
             };
 
-            // Try to extract EXIF data if available
-            if (file.type.startsWith('image/') && (file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+            // Try to extract EXIF data if available (check both MIME type and extension)
+            const isJpegFile = file.type === 'image/jpeg' || 
+                              file.type === 'image/jpg' ||
+                              file.name.toLowerCase().endsWith('.jpg') ||
+                              file.name.toLowerCase().endsWith('.jpeg');
+            
+            if (file.type.startsWith('image/') && isJpegFile) {
               try {
                 const exifData = await exifr.parse(file, {
                   iptc: true,
@@ -397,7 +402,13 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
           // Only process JPEG files (piexifjs works with JPEG)
-          if (!currentFile.type.match(/^image\/(jpeg|jpg)$/i)) {
+          // Check both MIME type and file extension
+          const isJpeg = currentFile.type === 'image/jpeg' || 
+                        currentFile.type === 'image/jpg' ||
+                        currentFile.name.toLowerCase().endsWith('.jpg') ||
+                        currentFile.name.toLowerCase().endsWith('.jpeg');
+          
+          if (!isJpeg) {
             alert('Metadata editing is currently only supported for JPEG/JPG images. Please use a JPEG file.');
             return;
           }
