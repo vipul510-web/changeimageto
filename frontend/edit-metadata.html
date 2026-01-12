@@ -38,6 +38,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
     <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+    
+    <!-- Load exifr library for reading EXIF data -->
+    <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
+    <!-- Load piexifjs library for writing EXIF data -->
+    <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.0/piexif.js"></script>
   
 <!-- Google AI Overview tracking -->
 <script>
@@ -315,9 +320,9 @@ document.addEventListener("DOMContentLoaded", () => {
           processPrompt.hidden = false;
           processPrompt.textContent = 'Loading metadata...';
 
-          // Simulate metadata loading (in production, this would extract actual EXIF data)
-          setTimeout(() => {
-            const editableFields = {
+          // Extract existing metadata from the image
+          try {
+            let editableFields = {
               'Title': '',
               'Description': '',
               'Copyright': '',
@@ -325,8 +330,43 @@ document.addEventListener("DOMContentLoaded", () => {
               'Keywords': '',
             };
 
+            // Try to extract EXIF data if available
+            if (file.type.startsWith('image/') && (file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+              try {
+                const exifData = await exifr.parse(file, {
+                  iptc: true,
+                  xmp: true,
+                  translateKeys: true,
+                  translateValues: true,
+                  reviveValues: true,
+                  sanitize: true,
+                  mergeOutput: true
+                });
+
+                if (exifData) {
+                  // Map EXIF fields to editable fields
+                  if (exifData.ImageDescription) editableFields['Description'] = exifData.ImageDescription;
+                  if (exifData.Copyright) editableFields['Copyright'] = exifData.Copyright;
+                  if (exifData.Artist) editableFields['Artist'] = exifData.Artist;
+                  if (exifData.XPTitle) editableFields['Title'] = exifData.XPTitle;
+                  if (exifData.Keywords) editableFields['Keywords'] = Array.isArray(exifData.Keywords) ? exifData.Keywords.join(', ') : exifData.Keywords;
+                  
+                  // Also check IPTC/XMP fields
+                  if (exifData['Iptc.Application2.Headline']) editableFields['Title'] = exifData['Iptc.Application2.Headline'];
+                  if (exifData['Iptc.Application2.Caption']) editableFields['Description'] = exifData['Iptc.Application2.Caption'];
+                  if (exifData['Iptc.Application2.Keywords']) editableFields['Keywords'] = Array.isArray(exifData['Iptc.Application2.Keywords']) ? exifData['Iptc.Application2.Keywords'].join(', ') : exifData['Iptc.Application2.Keywords'];
+                }
+              } catch (err) {
+                console.log('EXIF extraction error:', err);
+                // Continue with empty fields if extraction fails
+              }
+            }
+
             displayMetadataForm(editableFields);
-          }, 500);
+          } catch (error) {
+            processPrompt.textContent = 'Error loading metadata. Please try again.';
+            console.error('Metadata loading error:', error);
+          }
         });
 
         function displayMetadataForm(fields) {
@@ -351,23 +391,70 @@ document.addEventListener("DOMContentLoaded", () => {
           const formData = new FormData(editForm);
           const metadata = {};
           for (const [key, value] of formData.entries()) {
-            metadata[key] = value;
+            if (value && value.trim()) {
+              metadata[key] = value.trim();
+            }
           }
 
-          // In production, this would use a library like piexifjs or exif-js to write metadata
-          // For now, we'll create a download link
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            // Create a blob with the image (metadata would be written here in production)
-            const blob = new Blob([e.target.result], { type: currentFile.type });
+          // Only process JPEG files (piexifjs works with JPEG)
+          if (!currentFile.type.match(/^image\/(jpeg|jpg)$/i)) {
+            alert('Metadata editing is currently only supported for JPEG/JPG images. Please use a JPEG file.');
+            return;
+          }
+
+          try {
+            // Read the image file
+            const arrayBuffer = await currentFile.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const binaryString = String.fromCharCode.apply(null, uint8Array);
+            
+            // Get existing EXIF data or create new
+            let exifObj = {};
+            try {
+              exifObj = piexif.load(binaryString);
+            } catch (err) {
+              // If no EXIF data exists, create empty structure
+              exifObj = {"0th": {}, "Exif": {}, "GPS": {}, "Interop": {}, "1st": {}, "thumbnail": null};
+            }
+
+            // Update EXIF data with user's edits
+            if (metadata.title) {
+              exifObj["0th"][piexif.ImageIFD.ImageDescription] = metadata.title;
+            }
+            if (metadata.description) {
+              exifObj["0th"][piexif.ImageIFD.ImageDescription] = metadata.description;
+            }
+            if (metadata.artist) {
+              exifObj["0th"][piexif.ImageIFD.Artist] = metadata.artist;
+            }
+            if (metadata.copyright) {
+              exifObj["0th"][piexif.ImageIFD.Copyright] = metadata.copyright;
+            }
+
+            // Convert EXIF object back to binary string
+            const exifBytes = piexif.dump(exifObj);
+            
+            // Insert EXIF data into image
+            const newBinary = piexif.insert(exifBytes, binaryString);
+            
+            // Convert back to blob
+            const newArrayBuffer = new ArrayBuffer(newBinary.length);
+            const newUint8Array = new Uint8Array(newArrayBuffer);
+            for (let i = 0; i < newBinary.length; i++) {
+              newUint8Array[i] = newBinary.charCodeAt(i);
+            }
+            
+            const blob = new Blob([newArrayBuffer], { type: 'image/jpeg' });
             const url = URL.createObjectURL(blob);
             downloadLink.href = url;
-            downloadLink.download = currentFile.name;
+            downloadLink.download = currentFile.name.replace(/\.[^/.]+$/, '') + '-edited.jpg';
             
             resultWrapper.hidden = false;
             metadataForm.hidden = true;
-          };
-          reader.readAsArrayBuffer(currentFile);
+          } catch (error) {
+            console.error('Error writing metadata:', error);
+            alert('Error saving metadata. Please try again. Note: Only JPEG files are supported for metadata editing.');
+          }
         });
 
         function escapeHtml(text) {
