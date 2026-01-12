@@ -38,6 +38,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
     <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+    
+    <!-- Load exifr library for EXIF data extraction -->
+    <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
   
 <!-- Google AI Overview tracking -->
 <script>
@@ -304,8 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
           processPrompt.textContent = 'Processing metadata...';
 
           try {
-            // Extract metadata using exifr or similar library
-            // For now, we'll use a simple approach with File API
+            // Start with basic file information
             const metadata = {
               'File Name': file.name,
               'File Size': formatFileSize(file.size),
@@ -313,32 +315,98 @@ document.addEventListener("DOMContentLoaded", () => {
               'Last Modified': new Date(file.lastModified).toLocaleString(),
             };
 
-            // Try to extract EXIF if it's an image
+            // Extract EXIF data if it's an image
             if (file.type.startsWith('image/')) {
               try {
-                // Load exifr dynamically if available, otherwise show basic info
-                const image = new Image();
-                const url = URL.createObjectURL(file);
-                image.onload = async () => {
-                  try {
-                    // Try to use exifr if available
-                    if (typeof exifr !== 'undefined') {
-                      const exifData = await exifr.parse(file);
-                      Object.assign(metadata, exifData);
-                    }
-                  } catch (err) {
-                    console.log('EXIF extraction not available');
+                // Use exifr library to extract EXIF data
+                const exifData = await exifr.parse(file, {
+                  // Extract all available data
+                  iptc: true,
+                  xmp: true,
+                  icc: true,
+                  jfif: true,
+                  ihdr: true,
+                  translateKeys: true,
+                  translateValues: true,
+                  reviveValues: true,
+                  sanitize: true,
+                  mergeOutput: true
+                });
+
+                if (exifData) {
+                  // Format and organize the metadata
+                  if (exifData.Make || exifData.Model) {
+                    metadata['Camera'] = [exifData.Make, exifData.Model].filter(Boolean).join(' ');
                   }
-                  displayMetadata(metadata);
-                  URL.revokeObjectURL(url);
-                };
-                image.src = url;
+                  if (exifData.DateTimeOriginal) {
+                    metadata['Date Taken'] = exifData.DateTimeOriginal;
+                  }
+                  if (exifData.ModifyDate) {
+                    metadata['Date Modified'] = exifData.ModifyDate;
+                  }
+                  if (exifData.ImageWidth && exifData.ImageHeight) {
+                    metadata['Dimensions'] = `${exifData.ImageWidth} × ${exifData.ImageHeight} pixels`;
+                  }
+                  if (exifData.ISO) {
+                    metadata['ISO'] = exifData.ISO;
+                  }
+                  if (exifData.FNumber) {
+                    metadata['Aperture'] = `f/${exifData.FNumber}`;
+                  }
+                  if (exifData.ExposureTime) {
+                    metadata['Shutter Speed'] = exifData.ExposureTime + 's';
+                  }
+                  if (exifData.FocalLength) {
+                    metadata['Focal Length'] = exifData.FocalLength + 'mm';
+                  }
+                  if (exifData.Flash) {
+                    metadata['Flash'] = exifData.Flash;
+                  }
+                  if (exifData.Orientation) {
+                    metadata['Orientation'] = exifData.Orientation;
+                  }
+                  if (exifData.ColorSpace) {
+                    metadata['Color Space'] = exifData.ColorSpace;
+                  }
+                  if (exifData.GPSLatitude && exifData.GPSLongitude) {
+                    metadata['GPS Location'] = `${exifData.GPSLatitude}, ${exifData.GPSLongitude}`;
+                    if (exifData.GPSAltitude) {
+                      metadata['GPS Altitude'] = exifData.GPSAltitude + 'm';
+                    }
+                  }
+                  if (exifData.Software) {
+                    metadata['Software'] = exifData.Software;
+                  }
+                  if (exifData.Artist) {
+                    metadata['Artist'] = exifData.Artist;
+                  }
+                  if (exifData.Copyright) {
+                    metadata['Copyright'] = exifData.Copyright;
+                  }
+                  if (exifData.ImageDescription) {
+                    metadata['Description'] = exifData.ImageDescription;
+                  }
+                  
+                  // Add any other EXIF fields that might be present
+                  for (const [key, value] of Object.entries(exifData)) {
+                    if (!metadata[key] && value !== null && value !== undefined && 
+                        !['Make', 'Model', 'DateTimeOriginal', 'ModifyDate', 'ImageWidth', 
+                          'ImageHeight', 'ISO', 'FNumber', 'ExposureTime', 'FocalLength', 
+                          'Flash', 'Orientation', 'ColorSpace', 'GPSLatitude', 'GPSLongitude', 
+                          'GPSAltitude', 'Software', 'Artist', 'Copyright', 'ImageDescription'].includes(key)) {
+                      // Format key name for display
+                      const displayKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                      metadata[displayKey] = value;
+                    }
+                  }
+                }
               } catch (err) {
-                displayMetadata(metadata);
+                console.log('EXIF extraction error:', err);
+                // Continue with basic metadata if EXIF extraction fails
               }
-            } else {
-              displayMetadata(metadata);
             }
+            
+            displayMetadata(metadata);
           } catch (error) {
             processPrompt.textContent = 'Error processing metadata. Please try again.';
             console.error('Metadata extraction error:', error);

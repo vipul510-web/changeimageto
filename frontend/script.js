@@ -275,6 +275,9 @@ function updatePromptText(){
   // Don't update prompt text on pages with inline scripts
   if (window.location.pathname === '/convert-image-to-pdf.html' || 
       window.location.pathname === '/convert-image-to-text.html' ||
+      window.location.pathname === '/view-metadata.html' ||
+      window.location.pathname === '/edit-metadata.html' ||
+      window.location.pathname === '/remove-metadata.html' ||
       isRemoveGeminiWatermarkPage) {
     return;
   }
