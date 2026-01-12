@@ -323,11 +323,27 @@ document.addEventListener("DOMContentLoaded", () => {
           // Extract existing metadata from the image
           try {
             let editableFields = {
+              // Basic info
               'Title': '',
               'Description': '',
               'Copyright': '',
               'Artist': '',
               'Keywords': '',
+              // Camera info
+              'Camera Make': '',
+              'Camera Model': '',
+              // Camera settings
+              'ISO': '',
+              'Aperture (f-stop)': '',
+              'Shutter Speed (seconds)': '',
+              'Focal Length (mm)': '',
+              'Flash': '',
+              // Date/Time
+              'Date Taken': '',
+              // GPS (optional)
+              'GPS Latitude': '',
+              'GPS Longitude': '',
+              'GPS Altitude (meters)': '',
             };
 
             // Try to extract EXIF data if available (check both MIME type and extension)
@@ -349,12 +365,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if (exifData) {
-                  // Map EXIF fields to editable fields
+                  // Basic fields
                   if (exifData.ImageDescription) editableFields['Description'] = exifData.ImageDescription;
                   if (exifData.Copyright) editableFields['Copyright'] = exifData.Copyright;
                   if (exifData.Artist) editableFields['Artist'] = exifData.Artist;
                   if (exifData.XPTitle) editableFields['Title'] = exifData.XPTitle;
                   if (exifData.Keywords) editableFields['Keywords'] = Array.isArray(exifData.Keywords) ? exifData.Keywords.join(', ') : exifData.Keywords;
+                  
+                  // Camera info
+                  if (exifData.Make) editableFields['Camera Make'] = exifData.Make;
+                  if (exifData.Model) editableFields['Camera Model'] = exifData.Model;
+                  
+                  // Camera settings
+                  if (exifData.ISO) editableFields['ISO'] = String(exifData.ISO);
+                  if (exifData.FNumber) editableFields['Aperture (f-stop)'] = String(exifData.FNumber);
+                  if (exifData.ExposureTime) editableFields['Shutter Speed (seconds)'] = String(exifData.ExposureTime);
+                  if (exifData.FocalLength) editableFields['Focal Length (mm)'] = String(exifData.FocalLength);
+                  if (exifData.Flash !== undefined) editableFields['Flash'] = String(exifData.Flash);
+                  
+                  // Date/Time
+                  if (exifData.DateTimeOriginal) editableFields['Date Taken'] = exifData.DateTimeOriginal;
+                  
+                  // GPS
+                  if (exifData.GPSLatitude) editableFields['GPS Latitude'] = String(exifData.GPSLatitude);
+                  if (exifData.GPSLongitude) editableFields['GPS Longitude'] = String(exifData.GPSLongitude);
+                  if (exifData.GPSAltitude) editableFields['GPS Altitude (meters)'] = String(exifData.GPSAltitude);
                   
                   // Also check IPTC/XMP fields
                   if (exifData['Iptc.Application2.Headline']) editableFields['Title'] = exifData['Iptc.Application2.Headline'];
@@ -378,15 +413,77 @@ document.addEventListener("DOMContentLoaded", () => {
           processPrompt.hidden = true;
           metadataForm.hidden = false;
 
-          let html = '';
-          for (const [key, value] of Object.entries(fields)) {
-            html += `<div style="margin-bottom: 16px;">
-              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--fg, #eaf0f6);">${escapeHtml(key)}</label>
-              <input type="text" name="${escapeHtml(key.toLowerCase())}" value="${escapeHtml(value)}" 
-                style="width: 100%; padding: 10px; background: var(--bg, #0b0f13); border: 1px solid var(--border, #1e2630); border-radius: 6px; color: var(--fg, #eaf0f6); font-family: inherit;" />
-            </div>`;
+          // Group fields into sections
+          const basicFields = ['Title', 'Description', 'Copyright', 'Artist', 'Keywords'];
+          const cameraFields = ['Camera Make', 'Camera Model', 'ISO', 'Aperture (f-stop)', 'Shutter Speed (seconds)', 'Focal Length (mm)', 'Flash'];
+          const dateFields = ['Date Taken'];
+          const gpsFields = ['GPS Latitude', 'GPS Longitude', 'GPS Altitude (meters)'];
+
+          let html = '<div style="display: flex; flex-direction: column; gap: 24px;">';
+          
+          // Basic Information Section
+          html += '<div><h4 style="margin: 0 0 12px; color: var(--fg, #eaf0f6); font-size: 16px; font-weight: 600;">Basic Information</h4>';
+          for (const key of basicFields) {
+            if (fields.hasOwnProperty(key)) {
+              html += createFieldInput(key, fields[key]);
+            }
           }
+          html += '</div>';
+          
+          // Camera Information Section
+          html += '<div><h4 style="margin: 0 0 12px; color: var(--fg, #eaf0f6); font-size: 16px; font-weight: 600;">Camera Information</h4>';
+          for (const key of cameraFields) {
+            if (fields.hasOwnProperty(key)) {
+              html += createFieldInput(key, fields[key]);
+            }
+          }
+          html += '</div>';
+          
+          // Date/Time Section
+          html += '<div><h4 style="margin: 0 0 12px; color: var(--fg, #eaf0f6); font-size: 16px; font-weight: 600;">Date & Time</h4>';
+          for (const key of dateFields) {
+            if (fields.hasOwnProperty(key)) {
+              html += createFieldInput(key, fields[key], 'datetime-local');
+            }
+          }
+          html += '</div>';
+          
+          // GPS Section
+          html += '<div><h4 style="margin: 0 0 12px; color: var(--fg, #eaf0f6); font-size: 16px; font-weight: 600;">GPS Location (Optional)</h4>';
+          for (const key of gpsFields) {
+            if (fields.hasOwnProperty(key)) {
+              html += createFieldInput(key, fields[key], 'number');
+            }
+          }
+          html += '</div>';
+          
+          html += '</div>';
           metadataFields.innerHTML = html;
+        }
+
+        function createFieldInput(key, value, inputType = 'text') {
+          const fieldName = key.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+          const placeholder = getPlaceholder(key);
+          return `<div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--fg, #eaf0f6);">${escapeHtml(key)}</label>
+            <input type="${inputType}" name="${fieldName}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}"
+              style="width: 100%; padding: 10px; background: var(--bg, #0b0f13); border: 1px solid var(--border, #1e2630); border-radius: 6px; color: var(--fg, #eaf0f6); font-family: inherit;" />
+          </div>`;
+        }
+
+        function getPlaceholder(key) {
+          const placeholders = {
+            'ISO': 'e.g., 100, 400, 1600',
+            'Aperture (f-stop)': 'e.g., 2.8, 5.6, 11',
+            'Shutter Speed (seconds)': 'e.g., 1/60, 1/250, 2',
+            'Focal Length (mm)': 'e.g., 24, 50, 200',
+            'Flash': '0 = No flash, 1 = Flash fired',
+            'GPS Latitude': 'e.g., 37.7749',
+            'GPS Longitude': 'e.g., -122.4194',
+            'GPS Altitude (meters)': 'e.g., 100',
+            'Date Taken': 'YYYY-MM-DD HH:MM:SS'
+          };
+          return placeholders[key] || '';
         }
 
         // Save edited metadata
@@ -429,6 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // Update EXIF data with user's edits
+            // Basic fields (0th IFD)
             if (metadata.title) {
               exifObj["0th"][piexif.ImageIFD.ImageDescription] = metadata.title;
             }
@@ -440,6 +538,76 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (metadata.copyright) {
               exifObj["0th"][piexif.ImageIFD.Copyright] = metadata.copyright;
+            }
+            if (metadata.camera_make) {
+              exifObj["0th"][piexif.ImageIFD.Make] = metadata.camera_make;
+            }
+            if (metadata.camera_model) {
+              exifObj["0th"][piexif.ImageIFD.Model] = metadata.camera_model;
+            }
+            
+            // Camera settings (Exif IFD)
+            if (!exifObj["Exif"]) exifObj["Exif"] = {};
+            if (metadata.iso) {
+              exifObj["Exif"][piexif.ExifIFD.ISOSpeedRatings] = [parseInt(metadata.iso) || 0];
+            }
+            if (metadata.aperture__f_stop_) {
+              const fNumber = parseFloat(metadata.aperture__f_stop_);
+              if (!isNaN(fNumber)) {
+                exifObj["Exif"][piexif.ExifIFD.FNumber] = [Math.round(fNumber * 10), 10];
+              }
+            }
+            if (metadata.shutter_speed__seconds_) {
+              const exposureTime = parseFloat(metadata.shutter_speed__seconds_);
+              if (!isNaN(exposureTime)) {
+                exifObj["Exif"][piexif.ExifIFD.ExposureTime] = [Math.round(exposureTime * 1000), 1000];
+              }
+            }
+            if (metadata.focal_length__mm_) {
+              const focalLength = parseFloat(metadata.focal_length__mm_);
+              if (!isNaN(focalLength)) {
+                exifObj["Exif"][piexif.ExifIFD.FocalLength] = [Math.round(focalLength * 10), 10];
+              }
+            }
+            if (metadata.flash !== undefined && metadata.flash !== '') {
+              exifObj["Exif"][piexif.ExifIFD.Flash] = parseInt(metadata.flash) || 0;
+            }
+            
+            // Date/Time
+            if (metadata.date_taken) {
+              // Convert date to EXIF format: YYYY:MM:DD HH:MM:SS
+              const date = new Date(metadata.date_taken);
+              if (!isNaN(date.getTime())) {
+                const dateStr = date.toISOString().replace(/T/, ' ').replace(/\..+/, '').replace(/-/g, ':');
+                exifObj["Exif"][piexif.ExifIFD.DateTimeOriginal] = dateStr;
+                exifObj["0th"][piexif.ImageIFD.DateTime] = dateStr;
+              }
+            }
+            
+            // GPS data
+            if (metadata.gps_latitude || metadata.gps_longitude) {
+              if (!exifObj["GPS"]) exifObj["GPS"] = {};
+              if (metadata.gps_latitude) {
+                const lat = parseFloat(metadata.gps_latitude);
+                if (!isNaN(lat)) {
+                  exifObj["GPS"][piexif.GPSIFD.GPSLatitude] = [[Math.abs(Math.floor(lat)), 1], [Math.abs((lat % 1) * 60), 1], [0, 1]];
+                  exifObj["GPS"][piexif.GPSIFD.GPSLatitudeRef] = lat >= 0 ? "N" : "S";
+                }
+              }
+              if (metadata.gps_longitude) {
+                const lon = parseFloat(metadata.gps_longitude);
+                if (!isNaN(lon)) {
+                  exifObj["GPS"][piexif.GPSIFD.GPSLongitude] = [[Math.abs(Math.floor(lon)), 1], [Math.abs((lon % 1) * 60), 1], [0, 1]];
+                  exifObj["GPS"][piexif.GPSIFD.GPSLongitudeRef] = lon >= 0 ? "E" : "W";
+                }
+              }
+              if (metadata.gps_altitude__meters_) {
+                const alt = parseFloat(metadata.gps_altitude__meters_);
+                if (!isNaN(alt)) {
+                  exifObj["GPS"][piexif.GPSIFD.GPSAltitude] = [Math.abs(Math.round(alt * 10)), 10];
+                  exifObj["GPS"][piexif.GPSIFD.GPSAltitudeRef] = alt >= 0 ? 0 : 1;
+                }
+              }
             }
 
             // Convert EXIF object back to binary string
