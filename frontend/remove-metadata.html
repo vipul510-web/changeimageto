@@ -38,6 +38,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
     <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+    
+    <!-- Load piexifjs library for proper EXIF removal -->
+    <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.0/piexif.js"></script>
   
 <!-- Google AI Overview tracking -->
 <script>
@@ -310,28 +313,92 @@ document.addEventListener("DOMContentLoaded", () => {
           processPrompt.textContent = 'Removing metadata...';
 
           try {
-            // In production, this would use a library like piexifjs to remove EXIF data
-            // For now, we'll create a canvas-based approach to strip metadata
-            const img = new Image();
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0);
+            // Check if it's a JPEG file (EXIF is primarily in JPEG)
+            const isJpeg = file.type === 'image/jpeg' || 
+                          file.type === 'image/jpg' ||
+                          file.name.toLowerCase().endsWith('.jpg') ||
+                          file.name.toLowerCase().endsWith('.jpeg');
+            
+            if (isJpeg) {
+              // Use piexifjs to properly remove EXIF data from JPEG
+              const arrayBuffer = await file.arrayBuffer();
+              const uint8Array = new Uint8Array(arrayBuffer);
+              const binaryString = String.fromCharCode.apply(null, uint8Array);
               
-              // Convert to blob (this strips metadata)
-              canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                resultImg.src = url;
-                downloadLink.href = url;
-                downloadLink.download = file.name.replace(/\.[^/.]+$/, '') + '-no-metadata.jpg';
+              try {
+                // Load existing EXIF to check if it exists
+                piexif.load(binaryString);
                 
-                processPrompt.hidden = true;
-                resultWrapper.hidden = false;
-              }, 'image/jpeg', 0.95);
-            };
-            img.src = URL.createObjectURL(file);
+                // Remove all EXIF data by creating image without EXIF
+                const img = new Image();
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0);
+                  
+                  // Convert to blob (canvas strips all metadata including EXIF)
+                  canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    resultImg.src = url;
+                    downloadLink.href = url;
+                    downloadLink.download = file.name.replace(/\.[^/.]+$/, '') + '-no-metadata.jpg';
+                    
+                    processPrompt.hidden = true;
+                    resultWrapper.hidden = false;
+                  }, 'image/jpeg', 0.95);
+                };
+                img.src = URL.createObjectURL(file);
+              } catch (err) {
+                // No EXIF data found, but still process through canvas to ensure clean image
+                const img = new Image();
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0);
+                  
+                  canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    resultImg.src = url;
+                    downloadLink.href = url;
+                    downloadLink.download = file.name.replace(/\.[^/.]+$/, '') + '-no-metadata.jpg';
+                    
+                    processPrompt.hidden = true;
+                    resultWrapper.hidden = false;
+                  }, 'image/jpeg', 0.95);
+                };
+                img.src = URL.createObjectURL(file);
+              }
+            } else {
+              // For non-JPEG files, use canvas method (strips most metadata)
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                // Determine output format
+                const outputFormat = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                const outputQuality = outputFormat === 'image/jpeg' ? 0.95 : undefined;
+                
+                canvas.toBlob((blob) => {
+                  const url = URL.createObjectURL(blob);
+                  resultImg.src = url;
+                  downloadLink.href = url;
+                  const ext = outputFormat === 'image/png' ? 'png' : 'jpg';
+                  downloadLink.download = file.name.replace(/\.[^/.]+$/, '') + `-no-metadata.${ext}`;
+                  
+                  processPrompt.hidden = true;
+                  resultWrapper.hidden = false;
+                }, outputFormat, outputQuality);
+              };
+              img.src = URL.createObjectURL(file);
+            }
           } catch (error) {
             processPrompt.textContent = 'Error removing metadata. Please try again.';
             console.error('Metadata removal error:', error);

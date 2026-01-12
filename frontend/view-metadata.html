@@ -334,66 +334,117 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if (exifData) {
-                  // Format and organize the metadata
-                  if (exifData.Make || exifData.Model) {
-                    metadata['Camera'] = [exifData.Make, exifData.Model].filter(Boolean).join(' ');
-                  }
-                  if (exifData.DateTimeOriginal) {
-                    metadata['Date Taken'] = exifData.DateTimeOriginal;
-                  }
-                  if (exifData.ModifyDate) {
-                    metadata['Date Modified'] = exifData.ModifyDate;
-                  }
+                  // Organize metadata into sections
+                  
+                  // Basic Information
+                  if (exifData.ImageDescription) metadata['Description'] = exifData.ImageDescription;
+                  if (exifData.Artist) metadata['Artist'] = exifData.Artist;
+                  if (exifData.Copyright) metadata['Copyright'] = exifData.Copyright;
+                  if (exifData.Software) metadata['Software'] = exifData.Software;
+                  
+                  // Camera Information
+                  if (exifData.Make) metadata['Camera Make'] = exifData.Make;
+                  if (exifData.Model) metadata['Camera Model'] = exifData.Model;
+                  if (exifData.LensModel) metadata['Lens Model'] = exifData.LensModel;
+                  if (exifData.LensMake) metadata['Lens Make'] = exifData.LensMake;
+                  if (exifData.SerialNumber) metadata['Camera Serial Number'] = exifData.SerialNumber;
+                  
+                  // Image Properties
                   if (exifData.ImageWidth && exifData.ImageHeight) {
                     metadata['Dimensions'] = `${exifData.ImageWidth} × ${exifData.ImageHeight} pixels`;
                   }
-                  if (exifData.ISO) {
-                    metadata['ISO'] = exifData.ISO;
-                  }
-                  if (exifData.FNumber) {
-                    metadata['Aperture'] = `f/${exifData.FNumber}`;
-                  }
-                  if (exifData.ExposureTime) {
-                    metadata['Shutter Speed'] = exifData.ExposureTime + 's';
-                  }
-                  if (exifData.FocalLength) {
-                    metadata['Focal Length'] = exifData.FocalLength + 'mm';
-                  }
-                  if (exifData.Flash) {
-                    metadata['Flash'] = exifData.Flash;
-                  }
                   if (exifData.Orientation) {
-                    metadata['Orientation'] = exifData.Orientation;
+                    const orientations = {1: 'Normal', 3: 'Upside down', 6: 'Rotated 90° CW', 8: 'Rotated 90° CCW'};
+                    metadata['Orientation'] = orientations[exifData.Orientation] || exifData.Orientation;
                   }
                   if (exifData.ColorSpace) {
-                    metadata['Color Space'] = exifData.ColorSpace;
+                    const colorSpaces = {1: 'sRGB', 65535: 'Uncalibrated'};
+                    metadata['Color Space'] = colorSpaces[exifData.ColorSpace] || exifData.ColorSpace;
                   }
+                  if (exifData.ResolutionUnit) metadata['Resolution Unit'] = exifData.ResolutionUnit;
+                  if (exifData.XResolution) metadata['X Resolution'] = exifData.XResolution;
+                  if (exifData.YResolution) metadata['Y Resolution'] = exifData.YResolution;
+                  
+                  // Camera Settings
+                  if (exifData.ISO) metadata['ISO'] = exifData.ISO;
+                  if (exifData.FNumber) metadata['Aperture (f-stop)'] = `f/${exifData.FNumber}`;
+                  if (exifData.ExposureTime) {
+                    const expTime = exifData.ExposureTime;
+                    metadata['Shutter Speed'] = expTime < 1 ? `1/${Math.round(1/expTime)}s` : `${expTime}s`;
+                  }
+                  if (exifData.FocalLength) metadata['Focal Length'] = `${exifData.FocalLength}mm`;
+                  if (exifData.FocalLengthIn35mmFilm) metadata['Focal Length (35mm equiv)'] = `${exifData.FocalLengthIn35mmFilm}mm`;
+                  if (exifData.Flash !== undefined) {
+                    const flashModes = {
+                      0: 'No flash',
+                      1: 'Flash fired',
+                      5: 'Flash fired, return not detected',
+                      7: 'Flash fired, return detected'
+                    };
+                    metadata['Flash'] = flashModes[exifData.Flash] || `Flash mode ${exifData.Flash}`;
+                  }
+                  if (exifData.ExposureMode) {
+                    const modes = {0: 'Auto', 1: 'Manual', 2: 'Auto bracket'};
+                    metadata['Exposure Mode'] = modes[exifData.ExposureMode] || exifData.ExposureMode;
+                  }
+                  if (exifData.ExposureProgram) {
+                    const programs = {
+                      0: 'Not defined',
+                      1: 'Manual',
+                      2: 'Program AE',
+                      3: 'Aperture-priority AE',
+                      4: 'Shutter speed priority AE',
+                      5: 'Creative (slow speed)',
+                      6: 'Action (high speed)',
+                      7: 'Portrait',
+                      8: 'Landscape'
+                    };
+                    metadata['Exposure Program'] = programs[exifData.ExposureProgram] || exifData.ExposureProgram;
+                  }
+                  if (exifData.MeteringMode) {
+                    const modes = {
+                      0: 'Unknown',
+                      1: 'Average',
+                      2: 'Center-weighted average',
+                      3: 'Spot',
+                      4: 'Multi-spot',
+                      5: 'Multi-segment',
+                      6: 'Partial'
+                    };
+                    metadata['Metering Mode'] = modes[exifData.MeteringMode] || exifData.MeteringMode;
+                  }
+                  if (exifData.WhiteBalance) {
+                    metadata['White Balance'] = exifData.WhiteBalance === 0 ? 'Auto' : 'Manual';
+                  }
+                  if (exifData.ExposureBiasValue) metadata['Exposure Bias'] = `${exifData.ExposureBiasValue} EV`;
+                  
+                  // Date & Time
+                  if (exifData.DateTimeOriginal) metadata['Date Taken'] = exifData.DateTimeOriginal;
+                  if (exifData.ModifyDate) metadata['Date Modified'] = exifData.ModifyDate;
+                  if (exifData.CreateDate) metadata['Date Created'] = exifData.CreateDate;
+                  
+                  // GPS Location
                   if (exifData.GPSLatitude && exifData.GPSLongitude) {
                     metadata['GPS Location'] = `${exifData.GPSLatitude}, ${exifData.GPSLongitude}`;
-                    if (exifData.GPSAltitude) {
-                      metadata['GPS Altitude'] = exifData.GPSAltitude + 'm';
-                    }
-                  }
-                  if (exifData.Software) {
-                    metadata['Software'] = exifData.Software;
-                  }
-                  if (exifData.Artist) {
-                    metadata['Artist'] = exifData.Artist;
-                  }
-                  if (exifData.Copyright) {
-                    metadata['Copyright'] = exifData.Copyright;
-                  }
-                  if (exifData.ImageDescription) {
-                    metadata['Description'] = exifData.ImageDescription;
+                    if (exifData.GPSAltitude) metadata['GPS Altitude'] = `${exifData.GPSAltitude}m`;
+                    if (exifData.GPSHeading) metadata['GPS Heading'] = `${exifData.GPSHeading}°`;
+                    if (exifData.GPSSpeed) metadata['GPS Speed'] = `${exifData.GPSSpeed} km/h`;
                   }
                   
                   // Add any other EXIF fields that might be present
+                  const processedKeys = new Set([
+                    'ImageDescription', 'Artist', 'Copyright', 'Software', 'Make', 'Model', 
+                    'LensModel', 'LensMake', 'SerialNumber', 'ImageWidth', 'ImageHeight', 
+                    'Orientation', 'ColorSpace', 'ResolutionUnit', 'XResolution', 'YResolution',
+                    'ISO', 'FNumber', 'ExposureTime', 'FocalLength', 'FocalLengthIn35mmFilm',
+                    'Flash', 'ExposureMode', 'ExposureProgram', 'MeteringMode', 'WhiteBalance',
+                    'ExposureBiasValue', 'DateTimeOriginal', 'ModifyDate', 'CreateDate',
+                    'GPSLatitude', 'GPSLongitude', 'GPSAltitude', 'GPSHeading', 'GPSSpeed'
+                  ]);
+                  
                   for (const [key, value] of Object.entries(exifData)) {
-                    if (!metadata[key] && value !== null && value !== undefined && 
-                        !['Make', 'Model', 'DateTimeOriginal', 'ModifyDate', 'ImageWidth', 
-                          'ImageHeight', 'ISO', 'FNumber', 'ExposureTime', 'FocalLength', 
-                          'Flash', 'Orientation', 'ColorSpace', 'GPSLatitude', 'GPSLongitude', 
-                          'GPSAltitude', 'Software', 'Artist', 'Copyright', 'ImageDescription'].includes(key)) {
+                    if (!processedKeys.has(key) && value !== null && value !== undefined && 
+                        typeof value !== 'object' && !Array.isArray(value)) {
                       // Format key name for display
                       const displayKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
                       metadata[displayKey] = value;
@@ -417,16 +468,63 @@ document.addEventListener("DOMContentLoaded", () => {
           processPrompt.hidden = true;
           metadataContent.hidden = false;
           
-          let html = '<table style="width: 100%; border-collapse: collapse;">';
+          // Organize metadata into sections
+          const sections = {
+            'Basic Information': ['File Name', 'File Size', 'File Type', 'Last Modified', 'Description', 'Artist', 'Copyright', 'Software'],
+            'Camera Information': ['Camera Make', 'Camera Model', 'Lens Model', 'Lens Make', 'Camera Serial Number'],
+            'Image Properties': ['Dimensions', 'Orientation', 'Color Space', 'Resolution Unit', 'X Resolution', 'Y Resolution'],
+            'Camera Settings': ['ISO', 'Aperture (f-stop)', 'Shutter Speed', 'Focal Length', 'Focal Length (35mm equiv)', 'Flash', 'Exposure Mode', 'Exposure Program', 'Metering Mode', 'White Balance', 'Exposure Bias'],
+            'Date & Time': ['Date Taken', 'Date Modified', 'Date Created'],
+            'GPS Location': ['GPS Location', 'GPS Altitude', 'GPS Heading', 'GPS Speed'],
+            'Other': []
+          };
+          
+          // Categorize all fields
+          const categorized = {};
+          const otherFields = [];
+          
           for (const [key, value] of Object.entries(data)) {
-            if (value !== null && value !== undefined) {
+            if (value === null || value === undefined) continue;
+            
+            let found = false;
+            for (const [sectionName, sectionFields] of Object.entries(sections)) {
+              if (sectionFields.includes(key)) {
+                if (!categorized[sectionName]) categorized[sectionName] = {};
+                categorized[sectionName][key] = value;
+                found = true;
+                break;
+              }
+            }
+            if (!found && sectionName !== 'Other') {
+              otherFields.push([key, value]);
+            }
+          }
+          
+          // Add other fields
+          if (otherFields.length > 0) {
+            categorized['Other'] = Object.fromEntries(otherFields);
+          }
+          
+          // Build HTML with sections
+          let html = '';
+          for (const [sectionName, sectionData] of Object.entries(categorized)) {
+            if (Object.keys(sectionData).length === 0) continue;
+            
+            html += `<div style="margin-bottom: 24px;">
+              <h4 style="margin: 0 0 12px; color: var(--accent, #6aa7ff); font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--border, #1e2630); padding-bottom: 8px;">${escapeHtml(sectionName)}</h4>
+              <table style="width: 100%; border-collapse: collapse;">
+            `;
+            
+            for (const [key, value] of Object.entries(sectionData)) {
               html += `<tr style="border-bottom: 1px solid var(--border, #1e2630);">
-                <td style="padding: 8px 0; font-weight: 600; color: var(--fg, #eaf0f6);">${escapeHtml(key)}</td>
+                <td style="padding: 8px 0; font-weight: 600; color: var(--fg, #eaf0f6); width: 40%;">${escapeHtml(key)}</td>
                 <td style="padding: 8px 0; color: var(--muted, #9aa7b2);">${escapeHtml(String(value))}</td>
               </tr>`;
             }
+            
+            html += `</table></div>`;
           }
-          html += '</table>';
+          
           metadataContent.innerHTML = html;
         }
 
