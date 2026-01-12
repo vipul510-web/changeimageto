@@ -221,9 +221,12 @@ function updateCtaText(){
     return;
   }
   
-  // Don't update button text on convert-image-to-pdf, convert-image-to-text, or remove-gemini-watermark pages - they have their own inline scripts
+  // Don't update button text on convert-image-to-pdf, convert-image-to-text, metadata pages, or remove-gemini-watermark pages - they have their own inline scripts
   if (window.location.pathname === '/convert-image-to-pdf.html' || 
       window.location.pathname === '/convert-image-to-text.html' ||
+      window.location.pathname === '/view-metadata.html' ||
+      window.location.pathname === '/edit-metadata.html' ||
+      window.location.pathname === '/remove-metadata.html' ||
       isRemoveGeminiWatermarkPage) {
     return;
   }
