@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image Metadata Tools - View, Edit & Remove Metadata Online | Free</title>
+    <meta name="description" content="Free online tools to view, edit, and remove metadata from images. Manage EXIF data, GPS coordinates, camera settings, and more. No login required." />
+    <meta name="keywords" content="image metadata, view metadata, edit metadata, remove metadata, EXIF data, image metadata viewer, metadata editor, remove EXIF data" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.changeimageto.com/metadata-of-images.html" />
+
+    <meta property="og:title" content="Image Metadata Tools - View, Edit & Remove Metadata" />
+    <meta property="og:description" content="Free tools to manage image metadata. View, edit, and remove EXIF data from photos." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.changeimageto.com/metadata-of-images.html" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Image Metadata Tools",
+      "description": "Free online tools to view, edit, and remove metadata from images",
+      "url": "https://www.changeimageto.com/metadata-of-images.html",
+      "mainEntity": {
+        "@type": "ItemList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "View Metadata",
+            "url": "https://www.changeimageto.com/view-metadata.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Edit Metadata",
+            "url": "https://www.changeimageto.com/edit-metadata.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Remove Metadata",
+            "url": "https://www.changeimageto.com/remove-metadata.html"
+          }
+        ]
+      }
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+  
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
+
+<style>
+.metadata-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin: 40px 0;
+}
+
+.metadata-card {
+  background: var(--card, #12171d);
+  border: 1px solid var(--border, #1e2630);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metadata-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(106, 167, 255, 0.15);
+  border-color: var(--accent, #6aa7ff);
+}
+
+.metadata-card-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, var(--accent, #6aa7ff), #4f46e5);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.metadata-card h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--fg, #eaf0f6);
+}
+
+.metadata-card p {
+  color: var(--muted, #9aa7b2);
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.metadata-card .btn {
+  display: inline-block;
+  background: var(--accent, #6aa7ff);
+  color: #001633;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.metadata-card .btn:hover {
+  background: #4f46e5;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.metadata-card .stretched-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 16px;
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+  text-decoration: none;
+}
+
+.metadata-card .btn {
+  position: relative;
+  z-index: 2;
+}
+
+.new-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--accent, #6aa7ff);
+  color: #001633;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 3;
+}
+
+.lock-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 20px;
+  height: 20px;
+  color: var(--muted, #9aa7b2);
+  z-index: 3;
+}
+
+@media (max-width: 768px) {
+  .metadata-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .metadata-card {
+    padding: 24px;
+  }
+}
+</style>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="./logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Image Metadata Tools</h1>
+        <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a> <a href="/api.html" aria-label="API Access" style="margin-left:16px">API</a></nav>
+      </div>
+      <p>View, edit, and remove metadata from images. Manage EXIF data, GPS coordinates, camera settings, and more. Free, no login required.</p>
+    </header>
+
+    <main class="container main">
+      <section class="metadata-cards">
+        <div class="metadata-card">
+          <a class="stretched-link" href="/view-metadata.html" aria-label="View Metadata">View Metadata</a>
+          <div class="metadata-card-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+          <h3>View Metadata</h3>
+          <p>View hidden metadata in images, videos, and other files. See EXIF data, camera settings, GPS coordinates, and more.</p>
+          <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <a href="/view-metadata.html" class="btn">View Metadata</a>
+        </div>
+
+        <div class="metadata-card">
+          <a class="stretched-link" href="/edit-metadata.html" aria-label="Edit Metadata">Edit Metadata</a>
+          <div class="metadata-card-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </div>
+          <h3>Edit Metadata</h3>
+          <p>Edit metadata fields in files like PDFs, images, or documents. Update EXIF data, add descriptions, and modify file information.</p>
+          <span class="new-badge">NEW!</span>
+          <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <a href="/edit-metadata.html" class="btn">Edit Metadata</a>
+        </div>
+
+        <div class="metadata-card">
+          <a class="stretched-link" href="/remove-metadata.html" aria-label="Remove Metadata">Remove Metadata</a>
+          <div class="metadata-card-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+            </svg>
+          </div>
+          <h3>Metadata Remover</h3>
+          <p>Remove metadata from photos, PDFs, videos, or other files. Strip EXIF data, GPS coordinates, and personal information for privacy.</p>
+          <span class="new-badge">NEW!</span>
+          <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <a href="/remove-metadata.html" class="btn">Remove Metadata</a>
+        </div>
+      </section>
+
+      <section class="seo">
+        <h2>What is Image Metadata?</h2>
+        <p>Image metadata, also known as EXIF (Exchangeable Image File Format) data, is hidden information embedded in image files. This data includes details about how, when, and where a photo was taken, camera settings, device information, and sometimes even GPS coordinates.</p>
+        
+        <h3>Types of Metadata in Images</h3>
+        <ul>
+          <li><strong>Camera Settings:</strong> ISO, aperture, shutter speed, focal length, flash settings</li>
+          <li><strong>Date & Time:</strong> When the photo was taken or modified</li>
+          <li><strong>Location Data:</strong> GPS coordinates showing where the photo was taken</li>
+          <li><strong>Device Information:</strong> Camera make and model, software used</li>
+          <li><strong>Copyright:</strong> Photographer name, copyright notices</li>
+          <li><strong>Image Properties:</strong> Dimensions, color space, orientation</li>
+        </ul>
+
+        <h3>Why Manage Image Metadata?</h3>
+        <ul>
+          <li><strong>Privacy Protection:</strong> Remove GPS coordinates and location data before sharing photos online</li>
+          <li><strong>File Size Reduction:</strong> Removing metadata can slightly reduce file size</li>
+          <li><strong>Professional Use:</strong> Add copyright information and descriptions to your images</li>
+          <li><strong>Organization:</strong> View metadata to organize and catalog your photo library</li>
+          <li><strong>Security:</strong> Strip sensitive information before uploading images to public platforms</li>
+        </ul>
+
+        <h3>How to Use Our Metadata Tools</h3>
+        <ol>
+          <li><strong>View Metadata:</strong> Upload an image to see all embedded metadata information</li>
+          <li><strong>Edit Metadata:</strong> Modify existing metadata fields or add new information to your images</li>
+          <li><strong>Remove Metadata:</strong> Strip all metadata from images for privacy and security</li>
+        </ol>
+
+        <h3>Supported File Formats</h3>
+        <p>Our metadata tools support common image formats including:</p>
+        <ul>
+          <li>JPEG/JPG files</li>
+          <li>PNG images</li>
+          <li>TIFF files</li>
+          <li>HEIC/HEIF images</li>
+          <li>WebP files</li>
+          <li>RAW camera formats (view only)</li>
+        </ul>
+
+        <h3>Privacy & Security</h3>
+        <p>All metadata operations are performed securely in your browser or on our servers. Images are processed temporarily and deleted immediately after processing. We never store your images or metadata information.</p>
+      </section>
+    </main>
+
+    <nav class="seo-links">
+      <a href="/view-metadata.html">View Metadata</a>
+      <a href="/edit-metadata.html">Edit Metadata</a>
+      <a href="/remove-metadata.html">Remove Metadata</a>
+      <a href="/remove-background-from-image.html">Remove Background from Image</a>
+      <a href="/change-image-background.html">Change image background</a>
+      <a href="/blur-background.html">Blur Background</a>
+      <a href="/upscale-image.html">AI Image Upscaler</a>
+      <a href="/enhance-image.html">Enhance Image</a>
+    </nav>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/blur-background.html">Blur Background</a></li>
+              <li><a href="/view-metadata.html">View Metadata</a></li>
+              <li><a href="/edit-metadata.html">Edit Metadata</a></li>
+              <li><a href="/remove-metadata.html">Remove Metadata</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./script.js?v=20251220-1" defer></script>
+  </body>
+</html>

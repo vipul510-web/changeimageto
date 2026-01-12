@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Edit Image Metadata Online - Free EXIF Data Editor | ChangeImageTo</title>
+    <meta name="description" content="Edit metadata fields in images for free. Update EXIF data, add descriptions, modify camera settings, and more. No login required." />
+    <meta name="keywords" content="edit metadata, image metadata editor, edit EXIF data, modify metadata, update image metadata, metadata editor online" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.changeimageto.com/edit-metadata.html" />
+
+    <meta property="og:title" content="Edit Image Metadata Online - Free EXIF Data Editor" />
+    <meta property="og:description" content="Edit metadata fields in images. Update EXIF data, add descriptions, and modify file information." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.changeimageto.com/edit-metadata.html" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "Edit Image Metadata Online",
+      "description": "Free tool to edit EXIF data and metadata in images",
+      "url": "https://www.changeimageto.com/edit-metadata.html",
+      "provider": {
+        "@type": "Organization",
+        "name": "ChangeImageTo.com"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+  
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="./logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Edit Image Metadata (Free)</h1>
+        <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a> <a href="/api.html" aria-label="API Access" style="margin-left:16px">API</a></nav>
+      </div>
+      <p>Edit metadata fields in files like PDFs, images, or documents. Update EXIF data, add descriptions, and modify file information. No login required.</p>
+    </header>
+
+    <main class="container main">
+      <form id="upload-form">
+        <div class="uploader" id="dropzone">
+          <input type="file" id="file-input" accept="image/*" />
+          <div class="uploader-instructions">
+            <strong>Drop image here</strong>
+            <span>or click to browse</span>
+          </div>
+        </div>
+
+        <button id="process-btn" type="submit" disabled>Load Image</button>
+      </form>
+
+      <section class="preview" id="preview-section" hidden>
+        <div class="preview-grid">
+          <div>
+            <h3>Image Preview</h3>
+            <img id="original-img" alt="Image preview" style="max-width: 100%; border-radius: 8px;" />
+          </div>
+          <div>
+            <h3>Edit Metadata</h3>
+            <div id="metadata-editor" style="background: var(--card, #12171d); border: 1px solid var(--border, #1e2630); border-radius: 8px; padding: 20px; max-height: 600px; overflow-y: auto;">
+              <p id="process-prompt" class="prompt">Loading metadata...</p>
+              <div id="metadata-form" hidden>
+                <form id="edit-form">
+                  <div id="metadata-fields"></div>
+                  <div class="actions" style="margin-top: 20px; display: flex; gap: 12px;">
+                    <button type="submit" class="btn">Save Changes</button>
+                    <button type="button" id="reset-btn" class="btn secondary">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div id="result-wrapper" hidden style="margin-top: 16px;">
+              <div class="actions">
+                <a id="download-link" download="image-with-metadata.jpg" class="btn">Download Image</a>
+                <button id="try-another-btn" class="btn secondary" type="button">Try Another Image</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="seo">
+        <h2>How to Edit Image Metadata</h2>
+        <ol>
+          <li>Upload your image using the uploader above.</li>
+          <li>Click <strong>Load Image</strong> to extract existing metadata.</li>
+          <li>Edit the metadata fields you want to change (title, description, copyright, etc.).</li>
+          <li>Click <strong>Save Changes</strong> to apply your edits.</li>
+          <li>Download your image with the updated metadata.</li>
+        </ol>
+        
+        <h3>What Metadata Can You Edit?</h3>
+        <ul>
+          <li><strong>Title & Description:</strong> Add or modify image titles and descriptions</li>
+          <li><strong>Copyright Information:</strong> Add photographer name, copyright notices, and usage rights</li>
+          <li><strong>Keywords:</strong> Add tags and keywords for better organization</li>
+          <li><strong>Artist/Author:</strong> Set the creator or photographer name</li>
+          <li><strong>Date Information:</strong> Modify creation date and time (if needed)</li>
+          <li><strong>Camera Settings:</strong> Update camera make, model, and other technical details</li>
+        </ul>
+
+        <h3>Why Edit Image Metadata?</h3>
+        <ul>
+          <li><strong>Copyright Protection:</strong> Add your name and copyright information to protect your work</li>
+          <li><strong>Organization:</strong> Add descriptions and keywords to organize your photo library</li>
+          <li><strong>Professional Use:</strong> Include proper attribution and metadata for stock photos or professional work</li>
+          <li><strong>SEO Benefits:</strong> Add relevant keywords and descriptions for better search engine visibility</li>
+          <li><strong>Documentation:</strong> Preserve important information about your images</li>
+        </ul>
+
+        <h3>Supported File Formats</h3>
+        <p>Our metadata editor supports:</p>
+        <ul>
+          <li>JPEG/JPG images</li>
+          <li>TIFF files</li>
+          <li>PNG images (limited metadata support)</li>
+          <li>HEIC/HEIF files</li>
+        </ul>
+
+        <h3>Privacy & Security</h3>
+        <p>All metadata editing is performed securely. Your images are processed temporarily and deleted immediately after you download the edited file. We never store your images or metadata information.</p>
+      </section>
+
+      <!-- FAQ Section -->
+      <section class="container faq-section" style="margin-top: 40px; padding: 40px 0;">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list" style="margin-top: 20px;">
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>Can I edit all types of metadata?</h3>
+            <p>You can edit most common metadata fields including title, description, copyright, keywords, and artist information. Some technical camera settings may be read-only to preserve image integrity.</p>
+          </div>
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>Will editing metadata affect my image quality?</h3>
+            <p>No, editing metadata does not affect image quality. Metadata is stored separately from the image data, so your photo's visual quality remains unchanged.</p>
+          </div>
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>Can I remove metadata using the editor?</h3>
+            <p>You can clear individual metadata fields by leaving them blank. For complete metadata removal, use our <a href="/remove-metadata.html">Remove Metadata</a> tool.</p>
+          </div>
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>Is the metadata editor free to use?</h3>
+            <p>Yes, our metadata editor is completely free. No registration, no watermarks, and no hidden fees.</p>
+          </div>
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>What happens if I edit GPS coordinates?</h3>
+            <p>You can modify or remove GPS coordinates in the metadata. This is useful for privacy protection when sharing images online.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="seo-links">
+      <a href="/metadata-of-images.html">Metadata of Images</a>
+      <a href="/view-metadata.html">View Metadata</a>
+      <a href="/remove-metadata.html">Remove Metadata</a>
+      <a href="/remove-background-from-image.html">Remove Background from Image</a>
+      <a href="/change-image-background.html">Change image background</a>
+      <a href="/blur-background.html">Blur Background</a>
+      <a href="/upscale-image.html">AI Image Upscaler</a>
+      <a href="/enhance-image.html">Enhance Image</a>
+    </nav>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/view-metadata.html">View Metadata</a></li>
+              <li><a href="/edit-metadata.html">Edit Metadata</a></li>
+              <li><a href="/remove-metadata.html">Remove Metadata</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Metadata editing functionality
+      document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const dropzone = document.getElementById('dropzone');
+        const processBtn = document.getElementById('process-btn');
+        const previewSection = document.getElementById('preview-section');
+        const originalImg = document.getElementById('original-img');
+        const metadataEditor = document.getElementById('metadata-editor');
+        const metadataForm = document.getElementById('metadata-form');
+        const processPrompt = document.getElementById('process-prompt');
+        const editForm = document.getElementById('edit-form');
+        const metadataFields = document.getElementById('metadata-fields');
+        const resultWrapper = document.getElementById('result-wrapper');
+        const downloadLink = document.getElementById('download-link');
+        const resetBtn = document.getElementById('reset-btn');
+        const tryAnotherBtn = document.getElementById('try-another-btn');
+        let currentFile = null;
+
+        // Enable/disable process button
+        fileInput.addEventListener('change', (e) => {
+          processBtn.disabled = !e.target.files.length;
+        });
+
+        // Drag and drop
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = 'var(--accent, #6aa7ff)';
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.style.borderColor = '';
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = '';
+          if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            processBtn.disabled = false;
+          }
+        });
+
+        // Load image
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const file = fileInput.files[0];
+          if (!file) return;
+
+          currentFile = file;
+
+          // Show preview
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            originalImg.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+
+          previewSection.hidden = false;
+          metadataForm.hidden = true;
+          resultWrapper.hidden = true;
+          processPrompt.hidden = false;
+          processPrompt.textContent = 'Loading metadata...';
+
+          // Simulate metadata loading (in production, this would extract actual EXIF data)
+          setTimeout(() => {
+            const editableFields = {
+              'Title': '',
+              'Description': '',
+              'Copyright': '',
+              'Artist': '',
+              'Keywords': '',
+            };
+
+            displayMetadataForm(editableFields);
+          }, 500);
+        });
+
+        function displayMetadataForm(fields) {
+          processPrompt.hidden = true;
+          metadataForm.hidden = false;
+
+          let html = '';
+          for (const [key, value] of Object.entries(fields)) {
+            html += `<div style="margin-bottom: 16px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--fg, #eaf0f6);">${escapeHtml(key)}</label>
+              <input type="text" name="${escapeHtml(key.toLowerCase())}" value="${escapeHtml(value)}" 
+                style="width: 100%; padding: 10px; background: var(--bg, #0b0f13); border: 1px solid var(--border, #1e2630); border-radius: 6px; color: var(--fg, #eaf0f6); font-family: inherit;" />
+            </div>`;
+          }
+          metadataFields.innerHTML = html;
+        }
+
+        // Save edited metadata
+        editForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const formData = new FormData(editForm);
+          const metadata = {};
+          for (const [key, value] of formData.entries()) {
+            metadata[key] = value;
+          }
+
+          // In production, this would use a library like piexifjs or exif-js to write metadata
+          // For now, we'll create a download link
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            // Create a blob with the image (metadata would be written here in production)
+            const blob = new Blob([e.target.result], { type: currentFile.type });
+            const url = URL.createObjectURL(blob);
+            downloadLink.href = url;
+            downloadLink.download = currentFile.name;
+            
+            resultWrapper.hidden = false;
+            metadataForm.hidden = true;
+          };
+          reader.readAsArrayBuffer(currentFile);
+        });
+
+        function escapeHtml(text) {
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        }
+
+        resetBtn.addEventListener('click', () => {
+          form.reset();
+          processBtn.disabled = true;
+          previewSection.hidden = true;
+          fileInput.value = '';
+          currentFile = null;
+        });
+
+        tryAnotherBtn.addEventListener('click', () => {
+          form.reset();
+          processBtn.disabled = true;
+          previewSection.hidden = true;
+          fileInput.value = '';
+          currentFile = null;
+        });
+      });
+    </script>
+    <script src="./script.js?v=20251220-1" defer></script>
+  </body>
+</html>

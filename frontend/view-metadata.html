@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>View Image Metadata Online - Free EXIF Data Viewer | ChangeImageTo</title>
+    <meta name="description" content="View hidden metadata in images for free. See EXIF data, camera settings, GPS coordinates, and more. No login required, instant results." />
+    <meta name="keywords" content="view metadata, image metadata viewer, EXIF viewer, view EXIF data, metadata reader, image metadata extractor, photo metadata viewer" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.changeimageto.com/view-metadata.html" />
+
+    <meta property="og:title" content="View Image Metadata Online - Free EXIF Data Viewer" />
+    <meta property="og:description" content="View hidden metadata in images. See EXIF data, camera settings, GPS coordinates instantly." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.changeimageto.com/view-metadata.html" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "View Image Metadata Online",
+      "description": "Free tool to view EXIF data and metadata from images",
+      "url": "https://www.changeimageto.com/view-metadata.html",
+      "provider": {
+        "@type": "Organization",
+        "name": "ChangeImageTo.com"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="./styles.css?v=20250916-3" />
+    <link rel="stylesheet" href="./styles.css?v=20250916-3" />
+  
+<!-- Google AI Overview tracking -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.hash.includes(":~:text")) {
+    if (typeof gtag === "function") {
+      gtag("event", "ai_overview", {
+        anchor: window.location.hash
+      });
+    } else {
+      const checkGtag = setInterval(() => {
+        if (typeof gtag === "function") {
+          clearInterval(checkGtag);
+          gtag("event", "ai_overview", {
+            anchor: window.location.hash
+          });
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkGtag), 10000);
+    }
+  }
+});
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-D3Q582VFCG');
+</script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="./logo.png?v=20250916-2" alt="ChangeImageTo" class="logo-img" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">View Image Metadata (Free)</h1>
+        <nav class="top-nav"><a href="/blog" aria-label="Read our blog">Blog</a> <a href="/api.html" aria-label="API Access" style="margin-left:16px">API</a></nav>
+      </div>
+      <p>View hidden metadata in images, videos, and other files. See EXIF data, camera settings, GPS coordinates, and more. No login required.</p>
+    </header>
+
+    <main class="container main">
+      <form id="upload-form">
+        <div class="uploader" id="dropzone">
+          <input type="file" id="file-input" accept="image/*,video/*" />
+          <div class="uploader-instructions">
+            <strong>Drop image or video here</strong>
+            <span>or click to browse</span>
+          </div>
+        </div>
+
+        <button id="process-btn" type="submit" disabled>View Metadata</button>
+      </form>
+
+      <section class="preview" id="preview-section" hidden>
+        <div class="preview-grid">
+          <div>
+            <h3>File Preview</h3>
+            <img id="original-img" alt="File preview" style="max-width: 100%; border-radius: 8px;" />
+          </div>
+          <div>
+            <h3>Metadata Information</h3>
+            <div id="metadata-display" style="background: var(--card, #12171d); border: 1px solid var(--border, #1e2630); border-radius: 8px; padding: 20px; max-height: 600px; overflow-y: auto;">
+              <p id="process-prompt" class="prompt">Processing metadata...</p>
+              <div id="metadata-content" hidden></div>
+            </div>
+            <div class="actions" style="margin-top: 16px;">
+              <button id="reset-btn" class="btn secondary" type="button">Try Another File</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="seo">
+        <h2>How to View Image Metadata</h2>
+        <ol>
+          <li>Upload your image or video file using the uploader above.</li>
+          <li>Click <strong>View Metadata</strong> to extract all embedded information.</li>
+          <li>Review the metadata displayed, including EXIF data, camera settings, GPS coordinates, and more.</li>
+          <li>Use the information to understand your file's properties or identify privacy concerns.</li>
+        </ol>
+        
+        <h3>What Metadata Can You View?</h3>
+        <ul>
+          <li><strong>Camera Information:</strong> Make, model, lens details, serial number</li>
+          <li><strong>Photo Settings:</strong> ISO, aperture (f-stop), shutter speed, focal length, flash settings</li>
+          <li><strong>Date & Time:</strong> When the photo was taken, created, or modified</li>
+          <li><strong>Location Data:</strong> GPS coordinates, altitude, direction (if available)</li>
+          <li><strong>Image Properties:</strong> Dimensions, resolution, color space, orientation</li>
+          <li><strong>Copyright:</strong> Photographer name, copyright notices, usage rights</li>
+          <li><strong>Software:</strong> Editing software used, version information</li>
+        </ul>
+
+        <h3>Why View Image Metadata?</h3>
+        <ul>
+          <li><strong>Privacy Check:</strong> See if your photos contain GPS coordinates or location data before sharing</li>
+          <li><strong>Photo Organization:</strong> Use date and camera information to organize your photo library</li>
+          <li><strong>Learning:</strong> Understand camera settings used in professional photos</li>
+          <li><strong>Verification:</strong> Check if images have been edited or modified</li>
+          <li><strong>Copyright Protection:</strong> Verify copyright information in your images</li>
+        </ul>
+
+        <h3>Supported File Formats</h3>
+        <p>Our metadata viewer supports:</p>
+        <ul>
+          <li>JPEG/JPG images</li>
+          <li>PNG files</li>
+          <li>TIFF images</li>
+          <li>HEIC/HEIF files</li>
+          <li>WebP images</li>
+          <li>RAW camera formats (CR2, NEF, ARW, etc.)</li>
+          <li>Video files (MP4, MOV, AVI)</li>
+        </ul>
+
+        <h3>Privacy & Security</h3>
+        <p>All metadata viewing is performed securely. Your files are processed temporarily and deleted immediately after analysis. We never store your images or metadata information.</p>
+      </section>
+
+      <!-- FAQ Section -->
+      <section class="container faq-section" style="margin-top: 40px; padding: 40px 0;">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list" style="margin-top: 20px;">
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>What is image metadata?</h3>
+            <p>Image metadata, also called EXIF data, is hidden information embedded in image files. It includes camera settings, date/time, GPS coordinates, and other technical details about how the photo was taken.</p>
+          </div>
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>Can I view metadata from any image?</h3>
+            <p>Most images contain some metadata, but the amount varies. Photos taken with smartphones or digital cameras typically have extensive EXIF data, while edited or converted images may have less metadata.</p>
+          </div>
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>Does viewing metadata modify my image?</h3>
+            <p>No, viewing metadata is a read-only operation. Your original image file remains completely unchanged.</p>
+          </div>
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>Can I see GPS coordinates in metadata?</h3>
+            <p>Yes, if your image contains location data, you'll see GPS coordinates, altitude, and direction information. This is especially common in photos taken with smartphones that have location services enabled.</p>
+          </div>
+          <div class="faq-item" style="margin-bottom: 20px;">
+            <h3>Is the metadata viewer free to use?</h3>
+            <p>Yes, our metadata viewer is completely free. No registration, no watermarks, and no hidden fees.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="seo-links">
+      <a href="/metadata-of-images.html">Metadata of Images</a>
+      <a href="/edit-metadata.html">Edit Metadata</a>
+      <a href="/remove-metadata.html">Remove Metadata</a>
+      <a href="/remove-background-from-image.html">Remove Background from Image</a>
+      <a href="/change-image-background.html">Change image background</a>
+      <a href="/blur-background.html">Blur Background</a>
+      <a href="/upscale-image.html">AI Image Upscaler</a>
+      <a href="/enhance-image.html">Enhance Image</a>
+    </nav>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height: 32px; margin-bottom: 16px;">
+            </div>
+            <p class="footer-description">
+              The leading platform for free online image editing. Remove backgrounds, change colors, resize images, and enhance photos instantly with AI-powered tools.
+            </p>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/remove-background-from-image.html">Remove Background</a></li>
+              <li><a href="/change-image-background.html">Change Background</a></li>
+              <li><a href="/view-metadata.html">View Metadata</a></li>
+              <li><a href="/edit-metadata.html">Edit Metadata</a></li>
+              <li><a href="/remove-metadata.html">Remove Metadata</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p class="footer-copyright">
+              © 2024 ChangeImageTo.com. All rights reserved. Built for speed and quality.
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Metadata viewing functionality
+      document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const dropzone = document.getElementById('dropzone');
+        const processBtn = document.getElementById('process-btn');
+        const previewSection = document.getElementById('preview-section');
+        const originalImg = document.getElementById('original-img');
+        const metadataDisplay = document.getElementById('metadata-display');
+        const metadataContent = document.getElementById('metadata-content');
+        const processPrompt = document.getElementById('process-prompt');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // Enable/disable process button
+        fileInput.addEventListener('change', (e) => {
+          processBtn.disabled = !e.target.files.length;
+        });
+
+        // Drag and drop
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = 'var(--accent, #6aa7ff)';
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.style.borderColor = '';
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.style.borderColor = '';
+          if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            processBtn.disabled = false;
+          }
+        });
+
+        // Process form
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const file = fileInput.files[0];
+          if (!file) return;
+
+          // Show preview
+          if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              originalImg.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+          } else {
+            originalImg.src = '';
+            originalImg.alt = 'Video file';
+          }
+
+          previewSection.hidden = false;
+          metadataContent.hidden = true;
+          processPrompt.hidden = false;
+          processPrompt.textContent = 'Processing metadata...';
+
+          try {
+            // Extract metadata using exifr or similar library
+            // For now, we'll use a simple approach with File API
+            const metadata = {
+              'File Name': file.name,
+              'File Size': formatFileSize(file.size),
+              'File Type': file.type || 'Unknown',
+              'Last Modified': new Date(file.lastModified).toLocaleString(),
+            };
+
+            // Try to extract EXIF if it's an image
+            if (file.type.startsWith('image/')) {
+              try {
+                // Load exifr dynamically if available, otherwise show basic info
+                const image = new Image();
+                const url = URL.createObjectURL(file);
+                image.onload = async () => {
+                  try {
+                    // Try to use exifr if available
+                    if (typeof exifr !== 'undefined') {
+                      const exifData = await exifr.parse(file);
+                      Object.assign(metadata, exifData);
+                    }
+                  } catch (err) {
+                    console.log('EXIF extraction not available');
+                  }
+                  displayMetadata(metadata);
+                  URL.revokeObjectURL(url);
+                };
+                image.src = url;
+              } catch (err) {
+                displayMetadata(metadata);
+              }
+            } else {
+              displayMetadata(metadata);
+            }
+          } catch (error) {
+            processPrompt.textContent = 'Error processing metadata. Please try again.';
+            console.error('Metadata extraction error:', error);
+          }
+        });
+
+        function displayMetadata(data) {
+          processPrompt.hidden = true;
+          metadataContent.hidden = false;
+          
+          let html = '<table style="width: 100%; border-collapse: collapse;">';
+          for (const [key, value] of Object.entries(data)) {
+            if (value !== null && value !== undefined) {
+              html += `<tr style="border-bottom: 1px solid var(--border, #1e2630);">
+                <td style="padding: 8px 0; font-weight: 600; color: var(--fg, #eaf0f6);">${escapeHtml(key)}</td>
+                <td style="padding: 8px 0; color: var(--muted, #9aa7b2);">${escapeHtml(String(value))}</td>
+              </tr>`;
+            }
+          }
+          html += '</table>';
+          metadataContent.innerHTML = html;
+        }
+
+        function formatFileSize(bytes) {
+          if (bytes === 0) return '0 Bytes';
+          const k = 1024;
+          const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function escapeHtml(text) {
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        }
+
+        resetBtn.addEventListener('click', () => {
+          form.reset();
+          processBtn.disabled = true;
+          previewSection.hidden = true;
+          fileInput.value = '';
+        });
+      });
+    </script>
+    <script src="./script.js?v=20251220-1" defer></script>
+  </body>
+</html>
