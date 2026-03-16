@@ -11,13 +11,23 @@ PROJECT_ROOT = AGENT_DIR.parent.parent
 
 
 def main():
-    ga4_json = os.environ.get("GA4_CREDENTIALS_JSON")
-    gsc_json = os.environ.get("GSC_CREDENTIALS_JSON")
-    if not ga4_json or not gsc_json:
-        raise SystemExit("GA4_CREDENTIALS_JSON and GSC_CREDENTIALS_JSON env vars required")
+    import json
+    ga4_json = (os.environ.get("GA4_CREDENTIALS_JSON") or "").strip()
+    gsc_json = (os.environ.get("GSC_CREDENTIALS_JSON") or "").strip()
+    if not ga4_json:
+        raise SystemExit("ERROR: GA4_CREDENTIALS_JSON secret is empty or not set. Add it in Settings → Secrets.")
+    if not gsc_json:
+        raise SystemExit("ERROR: GSC_CREDENTIALS_JSON secret is empty or not set. Add it in Settings → Secrets.")
 
-    ga4_path = PROJECT_ROOT / "gemini-test-487909-7e2ee8971cff.json"
-    gsc_path = PROJECT_ROOT / "gemini-test-487909-c351b5b6a299.json"
+    try:
+        json.loads(ga4_json)
+        json.loads(gsc_json)
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"ERROR: Invalid JSON in credentials: {e}")
+
+    root = PROJECT_ROOT.resolve()
+    ga4_path = root / "gemini-test-487909-7e2ee8971cff.json"
+    gsc_path = root / "gemini-test-487909-c351b5b6a299.json"
     ga4_path.write_text(ga4_json)
     gsc_path.write_text(gsc_json)
 
