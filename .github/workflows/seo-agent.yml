@@ -41,10 +41,18 @@ jobs:
           BLOG_CREATION_ENABLED: ${{ secrets.BLOG_CREATION_ENABLED }}
         run: python scripts/seo-agent/setup_ci.py
 
+      - name: Verify setup
+        run: |
+          test -f scripts/seo-agent/config.local.yaml || (echo "ERROR: config.local.yaml not created"; exit 1)
+          test -f gemini-test-487909-7e2ee8971cff.json || (echo "ERROR: GA4 credentials file not created"; exit 1)
+          test -f gemini-test-487909-c351b5b6a299.json || (echo "ERROR: GSC credentials file not created"; exit 1)
+          echo "Setup OK"
+
       - name: Configure git for push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Run SEO Agent
-        run: python scripts/seo-agent/run_agent.py
+        run: |
+          cd scripts/seo-agent && python -u run_ci.py
