@@ -1,0 +1,50 @@
+# SEO Agent – runs every 4 days from GitHub (no local machine needed)
+name: SEO Agent
+
+on:
+  schedule:
+    # 9am UTC on days 1, 5, 9, 13, 17, 21, 25, 29 (~every 4 days)
+    - cron: "0 9 */4 * *"
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write  # Required for git push
+
+jobs:
+  seo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/seo-agent/requirements.txt
+
+      - name: Configure credentials
+        env:
+          GA4_CREDENTIALS_JSON: ${{ secrets.GA4_CREDENTIALS_JSON }}
+          GSC_CREDENTIALS_JSON: ${{ secrets.GSC_CREDENTIALS_JSON }}
+          GA4_PROPERTY_ID: ${{ secrets.GA4_PROPERTY_ID }}
+          GSC_SITE_URL: ${{ secrets.GSC_SITE_URL }}
+          SEO_AGENT_SMTP_USER: ${{ secrets.SEO_AGENT_SMTP_USER }}
+          SEO_AGENT_SMTP_PASSWORD: ${{ secrets.SEO_AGENT_SMTP_PASSWORD }}
+          SEO_AGENT_FROM_EMAIL: ${{ secrets.SEO_AGENT_FROM_EMAIL }}
+          SEO_AGENT_TO_EMAIL: ${{ secrets.SEO_AGENT_TO_EMAIL }}
+          SERP_API_KEY: ${{ secrets.SERP_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BLOG_CREATION_ENABLED: ${{ secrets.BLOG_CREATION_ENABLED }}
+        run: python scripts/seo-agent/setup_ci.py
+
+      - name: Configure git for push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run SEO Agent
+        run: python scripts/seo-agent/run_agent.py

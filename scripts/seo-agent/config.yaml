@@ -1,0 +1,47 @@
+# SEO Agent Configuration
+# Copy to config.local.yaml and fill in your values
+
+# Credentials (paths relative to project root)
+ga4_credentials: "gemini-test-487909-7e2ee8971cff.json"
+gsc_credentials: "gemini-test-487909-c351b5b6a299.json"
+ga4_property_id: "505035310"
+gsc_site_url: "sc-domain:changeimageto.com"
+
+# Paths
+frontend_dir: "frontend"
+project_root: "."
+
+# Email (for report delivery)
+# Option 1: Gmail - use App Password (not regular password)
+# Option 2: SMTP - any SMTP server
+email:
+  enabled: true
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  smtp_user: ""  # your-email@gmail.com
+  smtp_password: ""  # App Password from Google Account
+  from_email: ""
+  to_email: ""  # Where to receive the report
+
+# Safety: max changes per run (prevents runaway edits)
+max_meta_updates: 5          # Declining keywords, etc.
+max_low_hanging_fruit: 5     # Position 31+ keywords (separate quota)
+max_internal_links_added: 3
+max_onpage_fixes: 5          # Title/meta/H1 fixes
+
+# Optional: SerpAPI key for competitor gap analysis (https://serpapi.com)
+# serp_api_key: ""  # or set SERP_API_KEY env var
+
+# Blog creation (auto-generate posts for keyword gaps)
+# blog_creation_enabled: false  # Set true to enable
+# gemini_api_key: ""  # or set GEMINI_API_KEY env var (https://aistudio.google.com/apikey)
+# gemini_model: "gemini-2.5-flash"  # override if needed (gemini-2.0-flash, gemini-1.5-flash, etc.)
+# max_blog_posts_per_run: 2
+# max_blog_gaps_reported: 10
+# blog_min_impressions: 50
+
+# Skip test pages from edits
+exclude_patterns:
+  - "test-"
+  - "blog-admin"
+  - "feedback-popup"
