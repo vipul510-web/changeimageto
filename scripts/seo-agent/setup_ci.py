@@ -35,8 +35,8 @@ def main():
     config = {
         "ga4_credentials": "gemini-test-487909-7e2ee8971cff.json",
         "gsc_credentials": "gemini-test-487909-c351b5b6a299.json",
-        "ga4_property_id": os.environ.get("GA4_PROPERTY_ID", "505035310"),
-        "gsc_site_url": os.environ.get("GSC_SITE_URL", "sc-domain:changeimageto.com"),
+        "ga4_property_id": (os.environ.get("GA4_PROPERTY_ID") or "505035310").strip(),
+        "gsc_site_url": (os.environ.get("GSC_SITE_URL") or "sc-domain:changeimageto.com").strip(),
         "frontend_dir": "frontend",
         "project_root": ".",
         "email": {
