@@ -1,9 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "frontend/**", "use": "@vercel/static" },
-    { "src": "api/**/*.js", "use": "@vercel/node" }
-  ],
+  "outputDirectory": "frontend",
   "redirects": [
     { "source": "/index.html", "destination": "/", "permanent": true }
   ],
