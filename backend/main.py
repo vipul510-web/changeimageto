@@ -2433,6 +2433,11 @@ async def blog_article(slug: str):
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url=f"/blog/{canon}.html", status_code=301)
 
+    # Serve hand-crafted static articles directly if they exist on disk
+    static_path = os.path.join(FRONTEND_DIR, "blog", f"{slug}.html")
+    if os.path.exists(static_path):
+        return FileResponse(static_path, media_type="text/html")
+
     # Always render fresh from current template/sections
     # Use proper title formatting for specific slugs
     if slug == "remove-background-from-image-android":

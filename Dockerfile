@@ -30,6 +30,9 @@ RUN python -c "from rembg import new_session; new_session('u2netp')"
 # Copy application code
 COPY backend/ ./backend/
 
+# Copy hand-crafted frontend blog articles so the backend can serve them directly
+COPY frontend/blog/ ./frontend/blog/
+
 # Set environment variables
 ENV DEFAULT_MODEL=u2netp
 ENV MAX_IMAGE_SIDE=1600
