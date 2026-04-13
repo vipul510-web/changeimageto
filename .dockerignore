@@ -29,6 +29,8 @@ yarn-error.log*
 
 # Frontend files (not needed for backend)
 frontend/
+# Re-include hand-crafted blog articles so the backend can serve them
+!frontend/blog/
 *.html
 *.css
 *.js
