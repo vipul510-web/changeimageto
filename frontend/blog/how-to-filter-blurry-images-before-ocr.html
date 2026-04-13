@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How to Filter Blurry Images Before OCR (Python Guide)</title>
+    <meta name="description" content="Blurry images are the number one cause of OCR failures. Learn how to detect and filter them in Python using Laplacian variance, and automate the check with imageguard." />
+    <meta name="keywords" content="filter blurry images python, blur detection python, opencv blur detection, image sharpness check python, OCR image preprocessing, blur detection before OCR">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/blog/how-to-filter-blurry-images-before-ocr.html" />
+    <meta property="og:title" content="How to Filter Blurry Images Before OCR (Python Guide)" />
+    <meta property="og:description" content="Detect and filter blurry images in Python before OCR processing. Step-by-step guide with code examples." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://www.changeimageto.com/blog/how-to-filter-blurry-images-before-ocr.html" />
+    <link rel="preload" as="style" href="../styles.css?v=20250921-1">
+    <link rel="stylesheet" href="../styles.css?v=20250921-1">
+    <style>
+      body, .main, main.container.main, .blog-content, .blog-content p, .blog-content li, .blog-content h2, .blog-content h3, .blog-content h4, .blog-content strong, .blog-content em { color: #ffffff; }
+      .blog-content a { color: #9ccfff; }
+      .blog-content a:hover { text-decoration: underline; }
+      .header h1 { color: #ffffff; }
+      .header p { color: var(--muted); }
+      .top-nav a { color: #ffffff; }
+      .blog-content { max-width: 800px; margin: 0 auto; line-height: 1.7; }
+      .article-meta { display: flex; gap: 16px; margin-bottom: 24px; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
+      .article-intro { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; }
+      .blog-content h2 { font-size: 1.5rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+      .blog-content h3 { font-size: 1.15rem; margin: 1.5rem 0 0.75rem; color: #9ccfff; }
+      pre { background: #0d1117; border: 1px solid #2d3748; border-radius: 8px; padding: 16px; font-size: 0.83rem; overflow-x: auto; margin: 1rem 0; }
+      code { font-family: 'Fira Code', monospace; font-size: 0.85em; }
+      p code, li code { background: #161b22; padding: 2px 6px; border-radius: 4px; color: #a5d6ff; }
+      .callout { background: #0f1a2a; border-left: 4px solid #9ccfff; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 1.5rem 0; }
+      .callout-tip { border-left-color: #56d364; background: #0a1a0a; }
+      .imageguard-cta { background: linear-gradient(135deg,#0f1117,#1a1f2e); border: 1px solid #2d3748; border-radius: 12px; padding: 24px 28px; margin: 2rem 0; }
+      .imageguard-cta h3 { color: #56d364; margin: 0 0 8px 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
+      .imageguard-cta a.btn { display: inline-flex; align-items: center; gap: 8px; background: #238636; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; margin-top: 12px; }
+      table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+      th { background: #161b22; padding: 10px 14px; text-align: left; font-weight: 600; border: 1px solid #2d3748; }
+      td { padding: 10px 14px; border: 1px solid #2d3748; }
+      .article-footer { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 32px; color: var(--muted); font-size: 14px; }
+      .article-footer a { color: var(--accent); text-decoration: none; }
+    </style>
+<script>document.addEventListener("DOMContentLoaded",()=>{if(window.location.hash.includes(":~:text")){if(typeof gtag==="function"){gtag("event","ai_overview",{anchor:window.location.hash});}else{const t=setInterval(()=>{if(typeof gtag==="function"){clearInterval(t);gtag("event","ai_overview",{anchor:window.location.hash});}},100);setTimeout(()=>clearInterval(t),10000);}}});</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-D3Q582VFCG');</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4059286158672130" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" class="logo-img" loading="eager" width="200" height="68" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">How to Filter Blurry Images Before OCR</h1>
+        <nav class="top-nav"><a href="/blog">Blog</a> <a href="/image-quality-checker.html" style="margin-left:16px">Quality Checker</a></nav>
+      </div>
+      <p>Catch out-of-focus images in Python before they reach your text extraction pipeline</p>
+    </header>
+
+    <main class="container main">
+      <article class="blog-content">
+        <div class="article-meta">
+          <span class="publish-date">Published: April 2026</span>
+          <span class="read-time">Reading time: 7 minutes</span>
+        </div>
+
+        <div class="article-intro">
+          <p>OCR engines — Tesseract, Google Vision, AWS Textract, Azure Read — all share the same weakness: they assume the input is sharp. Feed them a blurry document and you get corrupted text, missing characters, and wrong line breaks. The bad news is they don't warn you; they just return bad text with high confidence.</p>
+          <p>This guide shows you how to detect blur in Python, pick the right threshold for your documents, and wire it into your pipeline so only sharp images reach the OCR step.</p>
+        </div>
+
+        <h2>Why blur destroys OCR accuracy</h2>
+        <p>OCR engines find characters by detecting sharp transitions — the edges that make an 'A' look like an 'A' instead of a smear. Blur, by definition, reduces edge contrast. At a Laplacian variance below ~200 (raw pixel values), most OCR engines start producing errors. Below ~50, results are essentially random.</p>
+        <p>The practical sources of blur in document pipelines are:</p>
+        <ul>
+          <li>Camera shake from handheld phone scanning</li>
+          <li>Out-of-focus due to autofocus failure on flat documents</li>
+          <li>Motion blur from documents on a conveyor belt</li>
+          <li>Re-scanned faxes or photocopies of photocopies</li>
+          <li>Thumbnail-sized images that have been upscaled</li>
+        </ul>
+
+        <h2>The standard approach: Laplacian variance</h2>
+        <p>The most reliable fast blur detector is the <strong>variance of the Laplacian</strong>. The Laplacian is a second-derivative operator — it responds strongly to edges. If an image is blurry, it has few edges, so the Laplacian has low variance.</p>
+        <pre><code><span style="color:#ff7b72;">import</span> cv2
+<span style="color:#ff7b72;">import</span> numpy <span style="color:#ff7b72;">as</span> np
+
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">laplacian_variance</span>(image_path: str) -> float:
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    lap = cv2.Laplacian(img.astype(np.float64), cv2.CV_64F)
+    <span style="color:#ff7b72;">return</span> float(lap.var())
+
+score = laplacian_variance(<span style="color:#a5d6ff;">"scan.jpg"</span>)
+<span style="color:#ff7b72;">if</span> score < <span style="color:#79c0ff;">100</span>:
+    print(<span style="color:#a5d6ff;">"Too blurry for OCR"</span>)</code></pre>
+
+        <h3>Choosing the right threshold</h3>
+        <table>
+          <thead><tr><th>Laplacian Variance</th><th>Image Quality</th><th>OCR Suitability</th></tr></thead>
+          <tbody>
+            <tr><td>&gt; 500</td><td>Very sharp</td><td>Excellent</td></tr>
+            <tr><td>200 – 500</td><td>Acceptable</td><td>Good, minor errors possible</td></tr>
+            <tr><td>50 – 200</td><td>Soft</td><td>Degraded accuracy</td></tr>
+            <tr><td>&lt; 50</td><td>Blurry</td><td>Not suitable</td></tr>
+          </tbody>
+        </table>
+        <div class="callout callout-tip">
+          <strong>Tip:</strong> Raw Laplacian variance depends on image resolution. A 4K photo has a different scale than a 300 DPI scan. Always normalise by texture variance (divide by <code>np.var(gray_float) + 1e-6</code>) when comparing across different image sizes.
+        </div>
+
+        <h2>A better approach: combined sharpness score</h2>
+        <p>Raw Laplacian variance can be fooled by low-contrast images with little texture (a blank white page scores as "blurry" even though it's perfectly sharp). A more robust approach combines Laplacian variance with <strong>Tenengrad</strong> (Sobel-based gradient energy) and normalises by texture variance:</p>
+        <pre><code><span style="color:#ff7b72;">import</span> cv2
+<span style="color:#ff7b72;">import</span> numpy <span style="color:#ff7b72;">as</span> np
+
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">sharpness_score</span>(gray: np.ndarray) -> float:
+    <span style="color:#a5d6ff;">"""Return 0–100 sharpness score; below 40 is blurry."""</span>
+    gf = gray.astype(np.float64)
+    texture_var = float(np.var(gf)) + <span style="color:#79c0ff;">1e-6</span>
+
+    lap = cv2.Laplacian(gf, cv2.CV_64F)
+    lap_norm = float(lap.var()) / texture_var
+
+    sx = cv2.Sobel(gf, cv2.CV_64F, <span style="color:#79c0ff;">1</span>, <span style="color:#79c0ff;">0</span>, ksize=<span style="color:#79c0ff;">3</span>)
+    sy = cv2.Sobel(gf, cv2.CV_64F, <span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">1</span>, ksize=<span style="color:#79c0ff;">3</span>)
+    ten_norm = float(np.hypot(sx, sy).var()) / texture_var
+
+    blur_index = <span style="color:#79c0ff;">0.5</span> * lap_norm + <span style="color:#79c0ff;">0.5</span> * ten_norm
+    <span style="color:#ff7b72;">return</span> max(<span style="color:#79c0ff;">0.0</span>, min(<span style="color:#79c0ff;">100.0</span>, (blur_index / <span style="color:#79c0ff;">1.2</span>) * <span style="color:#79c0ff;">100.0</span>))</code></pre>
+
+        <h2>Wire it into your OCR pipeline</h2>
+        <p>Here's a complete example that validates sharpness, checks resolution, and only calls Tesseract when the image passes:</p>
+        <pre><code><span style="color:#ff7b72;">import</span> cv2
+<span style="color:#ff7b72;">import</span> pytesseract
+<span style="color:#ff7b72;">from</span> pathlib <span style="color:#ff7b72;">import</span> Path
+
+<span style="color:#ff7b72;">from</span> imageguard <span style="color:#ff7b72;">import</span> validate
+
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">ocr_with_validation</span>(image_path: str) -> str | None:
+    <span style="color:#8b949e;"># Validate before sending to OCR</span>
+    result = validate(
+        image_path,
+        thresholds={
+            <span style="color:#a5d6ff;">"blur_score"</span>: <span style="color:#79c0ff;">60.0</span>,       <span style="color:#8b949e;"># strict: need sharp text</span>
+            <span style="color:#a5d6ff;">"resolution_score"</span>: <span style="color:#79c0ff;">70.0</span>,  <span style="color:#8b949e;"># need enough pixels</span>
+        },
+    )
+    <span style="color:#ff7b72;">if not</span> result.ok:
+        print(f<span style="color:#a5d6ff;">"Skipping {image_path}: {result.reason} (score {result.score:.2f})"</span>)
+        <span style="color:#ff7b72;">return None</span>
+
+    img = cv2.imread(image_path)
+    text = pytesseract.image_to_string(img)
+    <span style="color:#ff7b72;">return</span> text</code></pre>
+
+        <div class="imageguard-cta">
+          <h3>imageguard — blur detection + 5 other quality signals</h3>
+          <p style="color:#a0aec0;margin:0 0 4px 0;"><a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener" style="color:#9ccfff;">imageguard</a> combines blur detection with resolution, noise, exposure, compression, and pixelation checks into a single <code style="background:#0d1117;padding:2px 6px;border-radius:4px;">validate()</code> call. Open-source, no API keys, no cloud dependency.</p>
+          <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener" class="btn">View on GitHub →</a>
+        </div>
+
+        <h2>Handling depth-of-field images</h2>
+        <p>One edge case: product photos and portraits often have intentional background blur (bokeh). A naive Laplacian check will flag these as blurry even though the subject is sharp. The fix is to compare the centre region's sharpness against the edge regions. If the centre is 2× sharper than the edges, it's almost certainly intentional DOF — not a focus problem.</p>
+
+        <h2>Batch filtering a folder of documents</h2>
+        <pre><code><span style="color:#ff7b72;">from</span> pathlib <span style="color:#ff7b72;">import</span> Path
+<span style="color:#ff7b72;">from</span> imageguard <span style="color:#ff7b72;">import</span> validate
+
+doc_folder = Path(<span style="color:#a5d6ff;">"scans/"</span>)
+sharp, blurry = [], []
+
+<span style="color:#ff7b72;">for</span> p <span style="color:#ff7b72;">in</span> doc_folder.glob(<span style="color:#a5d6ff;">"*.jpg"</span>):
+    r = validate(p, thresholds={<span style="color:#a5d6ff;">"blur_score"</span>: <span style="color:#79c0ff;">60.0</span>})
+    (sharp <span style="color:#ff7b72;">if</span> r.ok <span style="color:#ff7b72;">else</span> blurry).append((p, r.score))
+
+print(f<span style="color:#a5d6ff;">"Sharp: {len(sharp)} | Blurry (rejected): {len(blurry)}"</span>)</code></pre>
+
+        <p>You can also use the <a href="/image-quality-checker.html">free online image quality checker</a> to inspect individual documents without writing any code.</p>
+
+        <div class="article-footer">
+          <p><strong>Last updated:</strong> April 2026</p>
+          <p><strong>Tags:</strong> <a href="/blog">OCR</a>, <a href="/blog">Blur Detection</a>, <a href="/blog">Python</a>, <a href="/blog">Image Preprocessing</a></p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="footer-logo"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height:32px;margin-bottom:16px;"></div>
+            <p class="footer-description">Free online image editing tools — remove backgrounds, enhance photos, resize, and more.</p>
+          </div>
+          <div class="footer-section">
+            <h3 class="footer-heading">Image Tools</h3>
+            <ul class="footer-links">
+              <li><a href="/image-quality-checker.html">Image Quality Checker</a></li>
+              <li><a href="/enhance-image.html">Enhance Image</a></li>
+              <li><a href="/upscale-image.html">Upscale Image</a></li>
+              <li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3 class="footer-heading">Developer Articles</h3>
+            <ul class="footer-links">
+              <li><a href="/blog/why-ai-pipelines-fail-on-bad-images.html">Why AI Pipelines Fail on Bad Images</a></li>
+              <li><a href="/blog/image-validation-for-machine-learning-datasets.html">Image Validation for ML Datasets</a></li>
+              <li><a href="/blog/python-image-quality-check.html">Python Image Quality Check</a></li>
+              <li><a href="/blog/automate-image-quality-checks-cicd.html">Image Quality in CI/CD</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3 class="footer-heading">Company</h3>
+            <ul class="footer-links">
+              <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/about.html">About</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom"><div class="footer-bottom-content"><p class="footer-copyright">© 2026 ChangeImageTo.com. All rights reserved.</p></div></div>
+      </div>
+    </footer>
+  </body>
+</html>

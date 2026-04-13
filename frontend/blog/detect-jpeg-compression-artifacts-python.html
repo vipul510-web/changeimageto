@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How to Detect JPEG Compression Artifacts in Python</title>
+    <meta name="description" content="Learn how to detect JPEG compression artifacts programmatically in Python using OpenCV and FFT analysis. Includes code, thresholds, and a ready-to-use open-source library." />
+    <meta name="keywords" content="detect jpeg compression artifacts python, jpeg artifacts detection opencv, compression artifact detection python, image quality compression python, blockiness detection opencv">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/blog/detect-jpeg-compression-artifacts-python.html" />
+    <meta property="og:title" content="How to Detect JPEG Compression Artifacts in Python" />
+    <meta property="og:description" content="Detect JPEG blockiness and compression artifacts in Python using OpenCV — with code and thresholds." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://www.changeimageto.com/blog/detect-jpeg-compression-artifacts-python.html" />
+    <link rel="preload" as="style" href="../styles.css?v=20250921-1">
+    <link rel="stylesheet" href="../styles.css?v=20250921-1">
+    <style>
+      body, .main, main.container.main, .blog-content, .blog-content p, .blog-content li, .blog-content h2, .blog-content h3, .blog-content strong, .blog-content em { color: #ffffff; }
+      .blog-content a { color: #9ccfff; } .blog-content a:hover { text-decoration: underline; }
+      .header h1 { color: #ffffff; } .header p { color: var(--muted); } .top-nav a { color: #ffffff; }
+      .blog-content { max-width: 800px; margin: 0 auto; line-height: 1.7; }
+      .article-meta { display: flex; gap: 16px; margin-bottom: 24px; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
+      .article-intro { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; }
+      .blog-content h2 { font-size: 1.5rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+      .blog-content h3 { font-size: 1.15rem; margin: 1.5rem 0 0.75rem; color: #9ccfff; }
+      pre { background: #0d1117; border: 1px solid #2d3748; border-radius: 8px; padding: 16px; font-size: 0.83rem; overflow-x: auto; margin: 1rem 0; }
+      code { font-family: 'Fira Code', monospace; font-size: 0.85em; }
+      p code, li code { background: #161b22; padding: 2px 6px; border-radius: 4px; color: #a5d6ff; }
+      .callout { background: #0f1a2a; border-left: 4px solid #9ccfff; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 1.5rem 0; }
+      .imageguard-cta { background: linear-gradient(135deg,#0f1117,#1a1f2e); border: 1px solid #2d3748; border-radius: 12px; padding: 24px 28px; margin: 2rem 0; }
+      .imageguard-cta h3 { color: #56d364; margin: 0 0 8px 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
+      .imageguard-cta a.btn { display: inline-flex; align-items: center; gap: 8px; background: #238636; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; margin-top: 12px; }
+      table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+      th { background: #161b22; padding: 10px 14px; text-align: left; font-weight: 600; border: 1px solid #2d3748; }
+      td { padding: 10px 14px; border: 1px solid #2d3748; }
+      .article-footer { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 32px; color: var(--muted); font-size: 14px; }
+      .article-footer a { color: var(--accent); text-decoration: none; }
+    </style>
+<script>document.addEventListener("DOMContentLoaded",()=>{if(window.location.hash.includes(":~:text")){if(typeof gtag==="function"){gtag("event","ai_overview",{anchor:window.location.hash});}else{const t=setInterval(()=>{if(typeof gtag==="function"){clearInterval(t);gtag("event","ai_overview",{anchor:window.location.hash});}},100);setTimeout(()=>clearInterval(t),10000);}}});</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-D3Q582VFCG');</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4059286158672130" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" class="logo-img" loading="eager" width="200" height="68" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">How to Detect JPEG Compression Artifacts in Python</h1>
+        <nav class="top-nav"><a href="/blog">Blog</a> <a href="/image-quality-checker.html" style="margin-left:16px">Quality Checker</a></nav>
+      </div>
+      <p>Blockiness detection using border energy analysis and FFT in Python</p>
+    </header>
+
+    <main class="container main">
+      <article class="blog-content">
+        <div class="article-meta">
+          <span class="publish-date">Published: April 2026</span>
+          <span class="read-time">Reading time: 8 minutes</span>
+        </div>
+
+        <div class="article-intro">
+          <p>JPEG compression is lossy and creates two distinct types of visible artefacts: <strong>blockiness</strong> (8×8 pixel grid boundaries that become visible at low quality settings) and <strong>ringing</strong> (halo-like distortions around sharp edges). Both harm AI pipelines — blockiness creates false high-frequency signal that confuses CNNs, and ringing creates phantom edge artefacts that mislead segmentation models.</p>
+          <p>This article shows you exactly how to detect these programmatically in Python, what thresholds work in practice, and when to reject an image versus when to accept it despite compression.</p>
+        </div>
+
+        <h2>Why JPEG artefacts cause problems downstream</h2>
+        <p>JPEG splits images into 8×8 blocks and compresses each block independently. At low quality (high compression), the boundaries between blocks become visible as a grid pattern. This is a problem for:</p>
+        <ul>
+          <li><strong>OCR</strong>: Blocking artefacts create fake edges around characters, confusing character segmentation algorithms.</li>
+          <li><strong>Image classification</strong>: Convolutional models can learn to associate blocking artefacts with specific classes if a training class is over-represented by heavily compressed web images.</li>
+          <li><strong>Background removal</strong>: Mask prediction along subject edges is confused by blocking artefacts near the boundary.</li>
+          <li><strong>Image upscaling</strong>: Super-resolution models amplify blocking artefacts rather than reconstructing real detail.</li>
+        </ul>
+
+        <h2>Method 1: Border energy ratio (fast, reliable)</h2>
+        <p>The most direct approach: measure the pixel-difference energy at 8×8 block boundaries and compare it to the energy of differences within blocks. Heavily compressed images have disproportionately high border energy.</p>
+        <pre><code><span style="color:#ff7b72;">import</span> cv2
+<span style="color:#ff7b72;">import</span> numpy <span style="color:#ff7b72;">as</span> np
+
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">compression_score</span>(image_path: str) -> float:
+    <span style="color:#a5d6ff;">"""
+    Returns 0–100 compression quality score.
+    Below 50 indicates heavy JPEG artifacts.
+    """</span>
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    gf = img.astype(np.float64)
+    h, w = gf.shape
+    block = <span style="color:#79c0ff;">8</span>
+
+    <span style="color:#8b949e;"># Energy at vertical block borders</span>
+    vb = sum(
+        float(np.sum(np.abs(gf[:, x - <span style="color:#79c0ff;">1</span>] - gf[:, x % w])))
+        <span style="color:#ff7b72;">for</span> x <span style="color:#ff7b72;">in</span> range(block, w, block)
+    )
+    <span style="color:#8b949e;"># Energy at horizontal block borders</span>
+    hb = sum(
+        float(np.sum(np.abs(gf[y - <span style="color:#79c0ff;">1</span>, :] - gf[y % h, :])))
+        <span style="color:#ff7b72;">for</span> y <span style="color:#ff7b72;">in</span> range(block, h, block)
+    )
+    border_energy = vb + hb
+
+    <span style="color:#8b949e;"># Intra-block energy (all pixel differences)</span>
+    intra = (
+        float(np.sum(np.abs(gf[:, <span style="color:#79c0ff;">1</span>:] - gf[:, :-<span style="color:#79c0ff;">1</span>]))) +
+        float(np.sum(np.abs(gf[<span style="color:#79c0ff;">1</span>:, :] - gf[:-<span style="color:#79c0ff;">1</span>, :]))) +
+        <span style="color:#79c0ff;">1e-6</span>
+    )
+
+    blockiness = border_energy / intra
+    <span style="color:#8b949e;"># 0.12 is the empirical threshold for noticeable blockiness</span>
+    score = max(<span style="color:#79c0ff;">0.0</span>, min(<span style="color:#79c0ff;">100.0</span>, <span style="color:#79c0ff;">100.0</span> - (blockiness / <span style="color:#79c0ff;">0.12</span>) * <span style="color:#79c0ff;">100.0</span>))
+    <span style="color:#ff7b72;">return</span> score</code></pre>
+
+        <div class="callout">
+          <strong>Edge case:</strong> Very flat images (solid colours, logos, simple graphics) have naturally low intra-block energy, which makes the ratio unusually high and gives false positives. Always check the image entropy first — if entropy is below 20/100, skip the compression check and assume quality is fine.
+        </div>
+
+        <h2>Method 2: FFT grid harmonic analysis (more sensitive)</h2>
+        <p>A complementary approach uses the 2D FFT. A blocky image has periodic structure at 8-pixel intervals, which shows up as energy peaks at frequencies corresponding to those harmonics.</p>
+        <pre><code><span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">fft_grid_ratio</span>(gray: np.ndarray) -> float:
+    <span style="color:#a5d6ff;">"""Returns 0–1; above ~0.12 suggests strong grid artefacts."""</span>
+    h, w = gray.shape
+    max_side = <span style="color:#79c0ff;">512</span>
+    scale = max(<span style="color:#79c0ff;">1.0</span>, max(h, w) / max_side)
+    small = cv2.resize(gray.astype(np.float64),
+                       (int(w / scale), int(h / scale)),
+                       interpolation=cv2.INTER_AREA) <span style="color:#ff7b72;">if</span> scale > <span style="color:#79c0ff;">1</span> <span style="color:#ff7b72;">else</span> gray.astype(np.float64)
+
+    mag = np.abs(np.fft.fftshift(np.fft.fft2(small)))
+    sh, sw = small.shape
+    cy, cx = sh // <span style="color:#79c0ff;">2</span>, sw // <span style="color:#79c0ff;">2</span>
+
+    <span style="color:#8b949e;"># Zero out DC and low-freq components</span>
+    yy, xx = np.ogrid[:sh, :sw]
+    mag[((yy - cy)**<span style="color:#79c0ff;">2</span> + (xx - cx)**<span style="color:#79c0ff;">2</span>) <= max(<span style="color:#79c0ff;">3</span>, int(<span style="color:#79c0ff;">0.02</span> * min(sh, sw)))**<span style="color:#79c0ff;">2</span>] = <span style="color:#79c0ff;">0</span>
+
+    band_r = max(<span style="color:#79c0ff;">1</span>, int(<span style="color:#79c0ff;">0.01</span> * min(sh, sw)))
+    grid_e = <span style="color:#79c0ff;">0.0</span>
+    <span style="color:#ff7b72;">for</span> k <span style="color:#ff7b72;">in</span> (<span style="color:#79c0ff;">1</span>, <span style="color:#79c0ff;">2</span>, <span style="color:#79c0ff;">3</span>):
+        <span style="color:#ff7b72;">for</span> bx, by <span style="color:#ff7b72;">in</span> [(int(sw/<span style="color:#79c0ff;">8</span>*k), <span style="color:#79c0ff;">0</span>), (<span style="color:#79c0ff;">0</span>, int(sh/<span style="color:#79c0ff;">8</span>*k))]:
+            <span style="color:#ff7b72;">if</span> bx: grid_e += mag[:, max(<span style="color:#79c0ff;">0</span>,cx-bx-band_r):cx-bx+band_r].sum() + mag[:, cx+bx-band_r:min(sw,cx+bx+band_r)].sum()
+            <span style="color:#ff7b72;">if</span> by: grid_e += mag[max(<span style="color:#79c0ff;">0</span>,cy-by-band_r):cy-by+band_r, :].sum() + mag[cy+by-band_r:min(sh,cy+by+band_r), :].sum()
+
+    <span style="color:#ff7b72;">return</span> float(grid_e) / (float(mag.sum()) + <span style="color:#79c0ff;">1e-6</span>)</code></pre>
+
+        <h2>Interpreting the scores</h2>
+        <table>
+          <thead><tr><th>Score (0–100)</th><th>Quality</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>80–100</td><td>No visible artefacts</td><td>Accept</td></tr>
+            <tr><td>50–79</td><td>Mild compression</td><td>Accept for most tasks; flag for OCR</td></tr>
+            <tr><td>25–49</td><td>Noticeable blockiness</td><td>Reject for OCR/segmentation; flag for classifiers</td></tr>
+            <tr><td>0–24</td><td>Severe artefacts</td><td>Reject for all AI tasks</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Skip the implementation: use imageguard</h2>
+        <p>Both methods above are already implemented and production-hardened in the <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener">imageguard</a> library, with flat-image edge-case handling included. The <code>compression_score</code> and <code>pixelation_score</code> fields in the result cover both border-energy and FFT-based detection.</p>
+
+        <div class="imageguard-cta">
+          <h3>imageguard — compression detection + 5 other quality signals</h3>
+          <p style="color:#a0aec0;margin:0 0 4px 0;">Open-source on <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener" style="color:#9ccfff;">GitHub</a>. Used in production at <a href="/image-quality-checker.html" style="color:#9ccfff;">changeimageto.com</a>.</p>
+          <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener" class="btn">View on GitHub →</a>
+        </div>
+
+        <pre><code><span style="color:#ff7b72;">from</span> imageguard <span style="color:#ff7b72;">import</span> validate
+
+result = validate(<span style="color:#a5d6ff;">"product.jpg"</span>)
+print(result.score)   <span style="color:#8b949e;"># overall 0–1</span>
+print(result.issues)  <span style="color:#8b949e;"># ['compressed'] if heavy artifacts found</span></code></pre>
+
+        <div class="article-footer">
+          <p><strong>Last updated:</strong> April 2026</p>
+          <p><strong>Tags:</strong> <a href="/blog">JPEG Artefacts</a>, <a href="/blog">Python</a>, <a href="/blog">OpenCV</a>, <a href="/blog">Image Quality</a></p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand"><div class="footer-logo"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height:32px;margin-bottom:16px;"></div><p class="footer-description">Free online image editing tools.</p></div>
+          <div class="footer-section"><h3 class="footer-heading">Image Tools</h3><ul class="footer-links"><li><a href="/image-quality-checker.html">Image Quality Checker</a></li><li><a href="/enhance-image.html">Enhance Image</a></li><li><a href="/upscale-image.html">Upscale Image</a></li><li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li></ul></div>
+          <div class="footer-section"><h3 class="footer-heading">Developer Articles</h3><ul class="footer-links"><li><a href="/blog/why-ai-pipelines-fail-on-bad-images.html">Why AI Pipelines Fail on Bad Images</a></li><li><a href="/blog/how-to-filter-blurry-images-before-ocr.html">Filter Blurry Images Before OCR</a></li><li><a href="/blog/python-image-quality-check.html">Python Image Quality Check</a></li><li><a href="/blog/automate-image-quality-checks-cicd.html">Image Quality in CI/CD</a></li></ul></div>
+          <div class="footer-section"><h3 class="footer-heading">Company</h3><ul class="footer-links"><li><a href="/privacy-policy.html">Privacy Policy</a></li><li><a href="/contact.html">Contact Us</a></li><li><a href="/about.html">About</a></li></ul></div>
+        </div>
+        <div class="footer-bottom"><div class="footer-bottom-content"><p class="footer-copyright">© 2026 ChangeImageTo.com. All rights reserved.</p></div></div>
+      </div>
+    </footer>
+  </body>
+</html>

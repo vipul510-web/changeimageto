@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Automate Image Quality Checks in a CI/CD Pipeline</title>
+    <meta name="description" content="Add automated image quality gates to GitHub Actions, GitLab CI, or any Python CI/CD pipeline. Reject blurry, low-res, or corrupted images before they reach production." />
+    <meta name="keywords" content="automate image quality checks, image quality CI CD, github actions image validation, automated image testing python, MLOps image quality gate, image quality automation">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/blog/automate-image-quality-checks-cicd.html" />
+    <meta property="og:title" content="Automate Image Quality Checks in a CI/CD Pipeline" />
+    <meta property="og:description" content="Add image quality gates to GitHub Actions and Python CI/CD. Reject bad images before production." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://www.changeimageto.com/blog/automate-image-quality-checks-cicd.html" />
+    <link rel="preload" as="style" href="../styles.css?v=20250921-1">
+    <link rel="stylesheet" href="../styles.css?v=20250921-1">
+    <style>
+      body, .main, main.container.main, .blog-content, .blog-content p, .blog-content li, .blog-content h2, .blog-content h3, .blog-content strong, .blog-content em { color: #ffffff; }
+      .blog-content a { color: #9ccfff; } .blog-content a:hover { text-decoration: underline; }
+      .header h1 { color: #ffffff; } .header p { color: var(--muted); } .top-nav a { color: #ffffff; }
+      .blog-content { max-width: 800px; margin: 0 auto; line-height: 1.7; }
+      .article-meta { display: flex; gap: 16px; margin-bottom: 24px; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
+      .article-intro { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; }
+      .blog-content h2 { font-size: 1.5rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+      .blog-content h3 { font-size: 1.15rem; margin: 1.5rem 0 0.75rem; color: #9ccfff; }
+      pre { background: #0d1117; border: 1px solid #2d3748; border-radius: 8px; padding: 16px; font-size: 0.83rem; overflow-x: auto; margin: 1rem 0; }
+      code { font-family: 'Fira Code', monospace; font-size: 0.85em; }
+      p code, li code { background: #161b22; padding: 2px 6px; border-radius: 4px; color: #a5d6ff; }
+      .callout { background: #0f1a2a; border-left: 4px solid #9ccfff; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 1.5rem 0; }
+      .imageguard-cta { background: linear-gradient(135deg,#0f1117,#1a1f2e); border: 1px solid #2d3748; border-radius: 12px; padding: 24px 28px; margin: 2rem 0; }
+      .imageguard-cta h3 { color: #56d364; margin: 0 0 8px 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
+      .imageguard-cta a.btn { display: inline-flex; align-items: center; gap: 8px; background: #238636; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; margin-top: 12px; }
+      .article-footer { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 32px; color: var(--muted); font-size: 14px; }
+      .article-footer a { color: var(--accent); text-decoration: none; }
+    </style>
+<script>document.addEventListener("DOMContentLoaded",()=>{if(window.location.hash.includes(":~:text")){if(typeof gtag==="function"){gtag("event","ai_overview",{anchor:window.location.hash});}else{const t=setInterval(()=>{if(typeof gtag==="function"){clearInterval(t);gtag("event","ai_overview",{anchor:window.location.hash});}},100);setTimeout(()=>clearInterval(t),10000);}}});</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-D3Q582VFCG');</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4059286158672130" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" class="logo-img" loading="eager" width="200" height="68" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Automate Image Quality Checks in a CI/CD Pipeline</h1>
+        <nav class="top-nav"><a href="/blog">Blog</a> <a href="/image-quality-checker.html" style="margin-left:16px">Quality Checker</a></nav>
+      </div>
+      <p>Add image quality gates to GitHub Actions, GitLab CI, or any Python pipeline</p>
+    </header>
+
+    <main class="container main">
+      <article class="blog-content">
+        <div class="article-meta">
+          <span class="publish-date">Published: April 2026</span>
+          <span class="read-time">Reading time: 8 minutes</span>
+        </div>
+
+        <div class="article-intro">
+          <p>Image quality validation is usually an afterthought — something you add after a production bug. This guide shows you how to make it a first-class CI/CD gate, so bad images are caught before they ever reach your staging environment, your ML training run, or your users.</p>
+          <p>We'll wire up <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener">imageguard</a> to GitHub Actions, write a pytest-based quality gate, and show how to make it part of an MLOps data validation step.</p>
+        </div>
+
+        <h2>The use cases for image quality in CI/CD</h2>
+        <ul>
+          <li><strong>Static asset validation</strong>: Ensure product images committed to your repo or uploaded to S3 meet minimum quality standards before they go live.</li>
+          <li><strong>ML dataset validation</strong>: Before triggering a training run, validate the new batch of training images — catch bad data before it wastes GPU time.</li>
+          <li><strong>Test fixture validation</strong>: Your test suite uses sample images. Make sure they haven't been accidentally replaced with low-quality versions.</li>
+          <li><strong>Content moderation pre-filter</strong>: Run quality checks before sending images to expensive moderation APIs.</li>
+        </ul>
+
+        <h2>Step 1: Create the validation script</h2>
+        <p>Create <code>scripts/validate_images.py</code>:</p>
+        <pre><code><span style="color:#6e7681;">#!/usr/bin/env python3</span>
+<span style="color:#a5d6ff;">"""CI image quality gate.
+
+Exit 0 if all images pass; exit 1 with report if any fail.
+Usage: python validate_images.py [folder] [--min-score 0.5]
+"""</span>
+<span style="color:#ff7b72;">import</span> argparse, sys
+<span style="color:#ff7b72;">from</span> pathlib <span style="color:#ff7b72;">import</span> Path
+<span style="color:#ff7b72;">from</span> imageguard <span style="color:#ff7b72;">import</span> validate
+
+EXTENSIONS = {<span style="color:#a5d6ff;">".jpg"</span>, <span style="color:#a5d6ff;">".jpeg"</span>, <span style="color:#a5d6ff;">".png"</span>, <span style="color:#a5d6ff;">".webp"</span>}
+
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">main</span>():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(<span style="color:#a5d6ff;">"folder"</span>, help=<span style="color:#a5d6ff;">"Image folder to validate"</span>)
+    parser.add_argument(<span style="color:#a5d6ff;">"--min-score"</span>, type=float, default=<span style="color:#79c0ff;">0.4</span>)
+    args = parser.parse_args()
+
+    images = [p <span style="color:#ff7b72;">for</span> p <span style="color:#ff7b72;">in</span> Path(args.folder).rglob(<span style="color:#a5d6ff;">"*"</span>) <span style="color:#ff7b72;">if</span> p.suffix.lower() <span style="color:#ff7b72;">in</span> EXTENSIONS]
+    failures = []
+
+    <span style="color:#ff7b72;">for</span> img <span style="color:#ff7b72;">in</span> images:
+        result = validate(img)
+        <span style="color:#ff7b72;">if</span> result.score < args.min_score:
+            failures.append((img, result))
+
+    <span style="color:#ff7b72;">if</span> failures:
+        print(f<span style="color:#a5d6ff;">"❌ {len(failures)}/{len(images)} images failed quality check:\n"</span>)
+        <span style="color:#ff7b72;">for</span> path, r <span style="color:#ff7b72;">in</span> failures:
+            print(f<span style="color:#a5d6ff;">"  {path.name}: score={r.score:.2f}  reason={r.reason}  issues={r.issues}"</span>)
+        sys.exit(<span style="color:#79c0ff;">1</span>)
+    <span style="color:#ff7b72;">else</span>:
+        print(f<span style="color:#a5d6ff;">"✅ All {len(images)} images passed (min score: {args.min_score})"</span>)
+
+<span style="color:#ff7b72;">if</span> __name__ == <span style="color:#a5d6ff;">"__main__"</span>:
+    main()</code></pre>
+
+        <h2>Step 2: GitHub Actions workflow</h2>
+        <p>Create <code>.github/workflows/image-quality.yml</code>:</p>
+        <pre><code>name: Image Quality Gate
+
+on:
+  push:
+    paths:
+      - 'assets/images/**'
+      - 'data/images/**'
+  pull_request:
+    paths:
+      - 'assets/images/**'
+
+jobs:
+  validate-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install imageguard
+        run: pip install imageguard
+
+      - name: Run image quality gate
+        run: python scripts/validate_images.py assets/images/ --min-score 0.4</code></pre>
+
+        <div class="callout">
+          <strong>Pro tip:</strong> For ML dataset pipelines, trigger this workflow on pushes to your <code>data/</code> directory path. This way every new data batch is automatically validated before it can be used in a training run.
+        </div>
+
+        <h2>Step 3: pytest integration for test fixtures</h2>
+        <pre><code><span style="color:#8b949e;"># tests/test_image_fixtures.py</span>
+<span style="color:#ff7b72;">import</span> pytest
+<span style="color:#ff7b72;">from</span> pathlib <span style="color:#ff7b72;">import</span> Path
+<span style="color:#ff7b72;">from</span> imageguard <span style="color:#ff7b72;">import</span> validate
+
+FIXTURES_DIR = Path(<span style="color:#a5d6ff;">"tests/fixtures/images"</span>)
+
+@pytest.mark.parametrize(<span style="color:#a5d6ff;">"image_path"</span>, list(FIXTURES_DIR.glob(<span style="color:#a5d6ff;">"*.jpg"</span>)))
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">test_fixture_image_quality</span>(image_path):
+    result = validate(image_path)
+    assert result.ok, (
+        f<span style="color:#a5d6ff;">"Test fixture {image_path.name} has quality issues: "
+        f"{result.reason} (score={result.score:.2f}, issues={result.issues})"</span>
+    )</code></pre>
+
+        <h2>Step 4: MLOps data validation step (DVC / Prefect / Airflow)</h2>
+        <pre><code><span style="color:#8b949e;"># dvc stage or Prefect task</span>
+<span style="color:#ff7b72;">from</span> pathlib <span style="color:#ff7b72;">import</span> Path
+<span style="color:#ff7b72;">from</span> imageguard <span style="color:#ff7b72;">import</span> validate
+
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">validate_dataset_stage</span>(data_dir: str, reject_threshold: float = <span style="color:#79c0ff;">0.45</span>) -> dict:
+    images = list(Path(data_dir).rglob(<span style="color:#a5d6ff;">"*.jpg"</span>))
+    results = {<span style="color:#a5d6ff;">"total"</span>: len(images), <span style="color:#a5d6ff;">"passed"</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">"rejected"</span>: <span style="color:#79c0ff;">0</span>, <span style="color:#a5d6ff;">"rejection_reasons"</span>: {}}
+
+    <span style="color:#ff7b72;">for</span> img <span style="color:#ff7b72;">in</span> images:
+        r = validate(img)
+        <span style="color:#ff7b72;">if</span> r.score >= reject_threshold:
+            results[<span style="color:#a5d6ff;">"passed"</span>] += <span style="color:#79c0ff;">1</span>
+        <span style="color:#ff7b72;">else</span>:
+            results[<span style="color:#a5d6ff;">"rejected"</span>] += <span style="color:#79c0ff;">1</span>
+            results[<span style="color:#a5d6ff;">"rejection_reasons"</span>][r.reason] = results[<span style="color:#a5d6ff;">"rejection_reasons"</span>].get(r.reason, <span style="color:#79c0ff;">0</span>) + <span style="color:#79c0ff;">1</span>
+
+    reject_rate = results[<span style="color:#a5d6ff;">"rejected"</span>] / max(<span style="color:#79c0ff;">1</span>, results[<span style="color:#a5d6ff;">"total"</span>])
+    <span style="color:#ff7b72;">if</span> reject_rate > <span style="color:#79c0ff;">0.20</span>:  <span style="color:#8b949e;"># fail pipeline if more than 20% rejected</span>
+        <span style="color:#ff7b72;">raise</span> ValueError(f<span style="color:#a5d6ff;">"Data quality too low: {reject_rate:.0%} rejected. Reasons: {results['rejection_reasons']}"</span>)
+
+    <span style="color:#ff7b72;">return</span> results</code></pre>
+
+        <div class="imageguard-cta">
+          <h3>imageguard — the validation library behind these examples</h3>
+          <p style="color:#a0aec0;margin:0 0 4px 0;">Open-source Python package. <code style="background:#0d1117;padding:2px 6px;border-radius:4px;">pip install imageguard</code> — no API keys, no cloud dependency. Used in production at <a href="/image-quality-checker.html" style="color:#9ccfff;">changeimageto.com</a>.</p>
+          <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener" class="btn">View on GitHub →</a>
+        </div>
+
+        <div class="article-footer">
+          <p><strong>Last updated:</strong> April 2026</p>
+          <p><strong>Tags:</strong> <a href="/blog">CI/CD</a>, <a href="/blog">MLOps</a>, <a href="/blog">GitHub Actions</a>, <a href="/blog">Image Quality</a>, <a href="/blog">Python</a></p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand"><div class="footer-logo"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height:32px;margin-bottom:16px;"></div><p class="footer-description">Free online image editing tools.</p></div>
+          <div class="footer-section"><h3 class="footer-heading">Image Tools</h3><ul class="footer-links"><li><a href="/image-quality-checker.html">Image Quality Checker</a></li><li><a href="/enhance-image.html">Enhance Image</a></li><li><a href="/upscale-image.html">Upscale Image</a></li><li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li></ul></div>
+          <div class="footer-section"><h3 class="footer-heading">Developer Articles</h3><ul class="footer-links"><li><a href="/blog/why-ai-pipelines-fail-on-bad-images.html">Why AI Pipelines Fail on Bad Images</a></li><li><a href="/blog/how-to-filter-blurry-images-before-ocr.html">Filter Blurry Images Before OCR</a></li><li><a href="/blog/image-validation-for-machine-learning-datasets.html">Image Validation for ML Datasets</a></li><li><a href="/blog/python-image-quality-check.html">Python Image Quality Check</a></li></ul></div>
+          <div class="footer-section"><h3 class="footer-heading">Company</h3><ul class="footer-links"><li><a href="/privacy-policy.html">Privacy Policy</a></li><li><a href="/contact.html">Contact Us</a></li><li><a href="/about.html">About</a></li></ul></div>
+        </div>
+        <div class="footer-bottom"><div class="footer-bottom-content"><p class="footer-copyright">© 2026 ChangeImageTo.com. All rights reserved.</p></div></div>
+      </div>
+    </footer>
+  </body>
+</html>

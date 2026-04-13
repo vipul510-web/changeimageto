@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Python Image Quality Check: A Practical Guide (OpenCV + scikit-image)</title>
+    <meta name="description" content="A practical guide to checking image quality in Python using OpenCV and scikit-image. Covers blur, noise, resolution, exposure, and compression detection with code examples." />
+    <meta name="keywords" content="python image quality check, opencv image quality, check image sharpness python, scikit-image blur detection, image quality metrics python, python check image resolution">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/blog/python-image-quality-check.html" />
+    <meta property="og:title" content="Python Image Quality Check: A Practical Guide" />
+    <meta property="og:description" content="Practical guide to image quality checks in Python — blur, noise, resolution, exposure with OpenCV and scikit-image." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://www.changeimageto.com/blog/python-image-quality-check.html" />
+    <link rel="preload" as="style" href="../styles.css?v=20250921-1">
+    <link rel="stylesheet" href="../styles.css?v=20250921-1">
+    <style>
+      body, .main, main.container.main, .blog-content, .blog-content p, .blog-content li, .blog-content h2, .blog-content h3, .blog-content strong, .blog-content em { color: #ffffff; }
+      .blog-content a { color: #9ccfff; } .blog-content a:hover { text-decoration: underline; }
+      .header h1 { color: #ffffff; } .header p { color: var(--muted); } .top-nav a { color: #ffffff; }
+      .blog-content { max-width: 800px; margin: 0 auto; line-height: 1.7; }
+      .article-meta { display: flex; gap: 16px; margin-bottom: 24px; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
+      .article-intro { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; }
+      .blog-content h2 { font-size: 1.5rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+      .blog-content h3 { font-size: 1.15rem; margin: 1.5rem 0 0.75rem; color: #9ccfff; }
+      pre { background: #0d1117; border: 1px solid #2d3748; border-radius: 8px; padding: 16px; font-size: 0.83rem; overflow-x: auto; margin: 1rem 0; }
+      code { font-family: 'Fira Code', monospace; font-size: 0.85em; }
+      p code, li code { background: #161b22; padding: 2px 6px; border-radius: 4px; color: #a5d6ff; }
+      .callout { background: #0f1a2a; border-left: 4px solid #9ccfff; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 1.5rem 0; }
+      .imageguard-cta { background: linear-gradient(135deg,#0f1117,#1a1f2e); border: 1px solid #2d3748; border-radius: 12px; padding: 24px 28px; margin: 2rem 0; }
+      .imageguard-cta h3 { color: #56d364; margin: 0 0 8px 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
+      .imageguard-cta a.btn { display: inline-flex; align-items: center; gap: 8px; background: #238636; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; margin-top: 12px; }
+      table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+      th { background: #161b22; padding: 10px 14px; text-align: left; font-weight: 600; border: 1px solid #2d3748; }
+      td { padding: 10px 14px; border: 1px solid #2d3748; }
+      .article-footer { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 32px; color: var(--muted); font-size: 14px; }
+      .article-footer a { color: var(--accent); text-decoration: none; }
+    </style>
+<script>document.addEventListener("DOMContentLoaded",()=>{if(window.location.hash.includes(":~:text")){if(typeof gtag==="function"){gtag("event","ai_overview",{anchor:window.location.hash});}else{const t=setInterval(()=>{if(typeof gtag==="function"){clearInterval(t);gtag("event","ai_overview",{anchor:window.location.hash});}},100);setTimeout(()=>clearInterval(t),10000);}}});</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-D3Q582VFCG');</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4059286158672130" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" class="logo-img" loading="eager" width="200" height="68" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Python Image Quality Check: A Practical Guide</h1>
+        <nav class="top-nav"><a href="/blog">Blog</a> <a href="/image-quality-checker.html" style="margin-left:16px">Quality Checker</a></nav>
+      </div>
+      <p>Blur, noise, resolution, exposure, and compression — detected in Python</p>
+    </header>
+
+    <main class="container main">
+      <article class="blog-content">
+        <div class="article-meta">
+          <span class="publish-date">Published: April 2026</span>
+          <span class="read-time">Reading time: 10 minutes</span>
+        </div>
+
+        <div class="article-intro">
+          <p>OpenCV is the go-to library for image processing in Python, and scikit-image fills in the gaps for perceptual metrics. Together they can measure every meaningful quality signal — blur, noise, resolution, exposure, and compression — but the code to wire them up properly is non-trivial and easy to get wrong.</p>
+          <p>This guide covers each quality signal, explains the right metric to measure it, and shows working Python code. At the end we'll introduce a library that wraps all of this into a single production-ready call.</p>
+        </div>
+
+        <h2>Setup</h2>
+        <pre><code>pip install opencv-python numpy scikit-image</code></pre>
+
+        <h2>1. Checking for blur</h2>
+        <p>The standard technique is the <strong>Laplacian variance</strong>. The Laplacian is a second-derivative edge detector — blurry images have weak edges and therefore low Laplacian variance.</p>
+        <pre><code><span style="color:#ff7b72;">import</span> cv2
+<span style="color:#ff7b72;">import</span> numpy <span style="color:#ff7b72;">as</span> np
+
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">blur_score</span>(gray: np.ndarray) -> float:
+    <span style="color:#a5d6ff;">"""Returns 0–100; below ~40 is likely blurry."""</span>
+    gf = gray.astype(np.float64)
+    texture_var = float(np.var(gf)) + <span style="color:#79c0ff;">1e-6</span>
+    lap_norm = float(cv2.Laplacian(gf, cv2.CV_64F).var()) / texture_var
+    sx = cv2.Sobel(gf, cv2.CV_64F, <span style="color:#79c0ff;">1</span>, <span style="color:#79c0ff;">0</span>, ksize=<span style="color:#79c0ff;">3</span>)
+    sy = cv2.Sobel(gf, cv2.CV_64F, <span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">1</span>, ksize=<span style="color:#79c0ff;">3</span>)
+    ten_norm = float(np.hypot(sx, sy).var()) / texture_var
+    index = <span style="color:#79c0ff;">0.5</span> * lap_norm + <span style="color:#79c0ff;">0.5</span> * ten_norm
+    <span style="color:#ff7b72;">return</span> max(<span style="color:#79c0ff;">0.0</span>, min(<span style="color:#79c0ff;">100.0</span>, (index / <span style="color:#79c0ff;">1.2</span>) * <span style="color:#79c0ff;">100.0</span>))</code></pre>
+        <div class="callout">
+          Dividing by <code>texture_var</code> normalises the score across images of different sizes and content types — a blank white sheet won't be falsely flagged as blurry.
+        </div>
+
+        <h2>2. Checking for noise</h2>
+        <p>Noise detection uses a high-pass filter to isolate the residual signal on flat (non-textured) image regions. Real texture has structure; noise is random. The signal-to-noise ratio (SNR) quantifies this.</p>
+        <pre><code><span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">noise_score</span>(gray: np.ndarray) -> float:
+    <span style="color:#a5d6ff;">"""Returns 0–100; below ~30 indicates noisy image."""</span>
+    gf = gray.astype(np.float64)
+    mean, std = float(np.mean(gf)), float(np.std(gf))
+    snr = (mean + <span style="color:#79c0ff;">1e-6</span>) / (std + <span style="color:#79c0ff;">1e-6</span>)
+    snr_score = max(<span style="color:#79c0ff;">0.0</span>, min(<span style="color:#79c0ff;">100.0</span>, (snr / <span style="color:#79c0ff;">10.0</span>) * <span style="color:#79c0ff;">100.0</span>))
+
+    hp = np.array([[-<span style="color:#79c0ff;">1</span>,-<span style="color:#79c0ff;">1</span>,-<span style="color:#79c0ff;">1</span>],[-<span style="color:#79c0ff;">1</span>,<span style="color:#79c0ff;">8</span>,-<span style="color:#79c0ff;">1</span>],[-<span style="color:#79c0ff;">1</span>,-<span style="color:#79c0ff;">1</span>,-<span style="color:#79c0ff;">1</span>]], dtype=np.float64)
+    residual_std = float(np.std(cv2.filter2D(gf, -<span style="color:#79c0ff;">1</span>, hp, borderType=cv2.BORDER_REFLECT)))
+    residual_score = max(<span style="color:#79c0ff;">0.0</span>, min(<span style="color:#79c0ff;">100.0</span>, (<span style="color:#79c0ff;">1.0</span> - residual_std / <span style="color:#79c0ff;">50.0</span>) * <span style="color:#79c0ff;">100.0</span>))
+    <span style="color:#ff7b72;">return</span> <span style="color:#79c0ff;">0.7</span> * snr_score + <span style="color:#79c0ff;">0.3</span> * residual_score</code></pre>
+
+        <h2>3. Checking resolution</h2>
+        <p>Resolution is the simplest check: count pixels and compare to a threshold.</p>
+        <pre><code><span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">resolution_score</span>(height: int, width: int) -> float:
+    total = height * width
+    <span style="color:#ff7b72;">if</span> total < <span style="color:#79c0ff;">100_000</span>:   <span style="color:#8b949e;"># below ~316×316</span>
+        <span style="color:#ff7b72;">return</span> max(<span style="color:#79c0ff;">0.0</span>, (total / <span style="color:#79c0ff;">100_000</span>) * <span style="color:#79c0ff;">100.0</span>)
+    <span style="color:#ff7b72;">elif</span> total < <span style="color:#79c0ff;">400_000</span>:  <span style="color:#8b949e;"># below ~632×632</span>
+        <span style="color:#ff7b72;">return</span> <span style="color:#79c0ff;">80.0</span>
+    <span style="color:#ff7b72;">return</span> <span style="color:#79c0ff;">100.0</span></code></pre>
+
+        <h2>4. Checking exposure</h2>
+        <p>Exposure analysis uses the pixel histogram. A well-exposed image has most pixels in the mid-tones (85–170), not crushed to black (&lt;85) or blown out to white (&gt;170).</p>
+        <pre><code><span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">exposure_score</span>(gray: np.ndarray) -> float:
+    hist, _ = np.histogram(gray, bins=<span style="color:#79c0ff;">256</span>, range=(<span style="color:#79c0ff;">0</span>, <span style="color:#79c0ff;">256</span>))
+    hist = hist.astype(np.float64) / (hist.sum() + <span style="color:#79c0ff;">1e-6</span>)
+    dark = float(np.sum(hist[:<span style="color:#79c0ff;">85</span>]))
+    bright = float(np.sum(hist[<span style="color:#79c0ff;">170</span>:]))
+    <span style="color:#ff7b72;">if</span> dark > <span style="color:#79c0ff;">0.60</span>:
+        <span style="color:#ff7b72;">return</span> max(<span style="color:#79c0ff;">0.0</span>, <span style="color:#79c0ff;">100.0</span> - (dark - <span style="color:#79c0ff;">0.50</span>) * <span style="color:#79c0ff;">200.0</span>)
+    <span style="color:#ff7b72;">if</span> bright > <span style="color:#79c0ff;">0.60</span>:
+        <span style="color:#ff7b72;">return</span> max(<span style="color:#79c0ff;">0.0</span>, <span style="color:#79c0ff;">100.0</span> - (bright - <span style="color:#79c0ff;">0.50</span>) * <span style="color:#79c0ff;">200.0</span>)
+    <span style="color:#ff7b72;">return</span> <span style="color:#79c0ff;">100.0</span></code></pre>
+
+        <h2>5. Checking for JPEG compression artefacts</h2>
+        <p>JPEG compression creates blockiness at 8×8 pixel boundaries. Measure the energy difference across those boundaries versus within blocks:</p>
+        <pre><code><span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">compression_score</span>(gray: np.ndarray) -> float:
+    gf = gray.astype(np.float64)
+    h, w = gray.shape
+    border_e = sum(
+        float(np.sum(np.abs(gf[:, x-<span style="color:#79c0ff;">1</span>] - gf[:, x % w])))
+        <span style="color:#ff7b72;">for</span> x <span style="color:#ff7b72;">in</span> range(<span style="color:#79c0ff;">8</span>, w, <span style="color:#79c0ff;">8</span>)
+    ) + sum(
+        float(np.sum(np.abs(gf[y-<span style="color:#79c0ff;">1</span>, :] - gf[y % h, :])))
+        <span style="color:#ff7b72;">for</span> y <span style="color:#ff7b72;">in</span> range(<span style="color:#79c0ff;">8</span>, h, <span style="color:#79c0ff;">8</span>)
+    )
+    intra = float(np.sum(np.abs(gf[:, <span style="color:#79c0ff;">1</span>:] - gf[:, :-<span style="color:#79c0ff;">1</span>]))) + float(np.sum(np.abs(gf[<span style="color:#79c0ff;">1</span>:, :] - gf[:-<span style="color:#79c0ff;">1</span>, :]))) + <span style="color:#79c0ff;">1e-6</span>
+    ratio = border_e / intra
+    <span style="color:#ff7b72;">return</span> max(<span style="color:#79c0ff;">0.0</span>, min(<span style="color:#79c0ff;">100.0</span>, <span style="color:#79c0ff;">100.0</span> - (ratio / <span style="color:#79c0ff;">0.12</span>) * <span style="color:#79c0ff;">100.0</span>))</code></pre>
+
+        <h2>Skip the boilerplate: use imageguard</h2>
+        <p>If you don't want to maintain all five functions, the <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener">imageguard</a> library packages them — plus pixelation detection — into a single production-ready call, with proper edge-case handling for tiny images, flat backgrounds, white-background product photos, and depth-of-field images.</p>
+
+        <div class="imageguard-cta">
+          <h3>imageguard — all five checks in one call</h3>
+          <p style="color:#a0aec0;margin:0 0 4px 0;">Powers the <a href="/image-quality-checker.html" style="color:#9ccfff;">image quality checker</a> on this site. Open-source on <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener" style="color:#9ccfff;">GitHub</a>.</p>
+          <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener" class="btn">View on GitHub →</a>
+        </div>
+
+        <pre><code><span style="color:#ff7b72;">from</span> imageguard <span style="color:#ff7b72;">import</span> validate
+
+result = validate(<span style="color:#a5d6ff;">"photo.jpg"</span>)
+print(result.score)   <span style="color:#8b949e;"># 0.0–1.0</span>
+print(result.issues)  <span style="color:#8b949e;"># ['blurry', 'noisy']</span>
+print(result.reason)  <span style="color:#8b949e;"># 'blurry'</span></code></pre>
+
+        <h2>Putting it all together: a complete quality check function</h2>
+        <pre><code><span style="color:#ff7b72;">import</span> cv2
+<span style="color:#ff7b72;">from</span> pathlib <span style="color:#ff7b72;">import</span> Path
+
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">quick_quality_check</span>(image_path: str) -> dict:
+    img = cv2.imread(image_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    h, w = gray.shape
+    <span style="color:#ff7b72;">return</span> {
+        <span style="color:#a5d6ff;">"blur"</span>: blur_score(gray),
+        <span style="color:#a5d6ff;">"noise"</span>: noise_score(gray),
+        <span style="color:#a5d6ff;">"resolution"</span>: resolution_score(h, w),
+        <span style="color:#a5d6ff;">"exposure"</span>: exposure_score(gray),
+        <span style="color:#a5d6ff;">"compression"</span>: compression_score(gray),
+    }
+
+scores = quick_quality_check(<span style="color:#a5d6ff;">"product.jpg"</span>)
+ok = all(v >= <span style="color:#79c0ff;">40</span> <span style="color:#ff7b72;">for</span> v <span style="color:#ff7b72;">in</span> scores.values())
+print(<span style="color:#a5d6ff;">"Pass"</span> <span style="color:#ff7b72;">if</span> ok <span style="color:#ff7b72;">else</span> <span style="color:#a5d6ff;">"Fail"</span>, scores)</code></pre>
+
+        <div class="article-footer">
+          <p><strong>Last updated:</strong> April 2026</p>
+          <p><strong>Tags:</strong> <a href="/blog">Python</a>, <a href="/blog">OpenCV</a>, <a href="/blog">Image Quality</a>, <a href="/blog">scikit-image</a></p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand"><div class="footer-logo"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height:32px;margin-bottom:16px;"></div><p class="footer-description">Free online image editing tools.</p></div>
+          <div class="footer-section"><h3 class="footer-heading">Image Tools</h3><ul class="footer-links"><li><a href="/image-quality-checker.html">Image Quality Checker</a></li><li><a href="/enhance-image.html">Enhance Image</a></li><li><a href="/upscale-image.html">Upscale Image</a></li><li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li></ul></div>
+          <div class="footer-section"><h3 class="footer-heading">Developer Articles</h3><ul class="footer-links"><li><a href="/blog/why-ai-pipelines-fail-on-bad-images.html">Why AI Pipelines Fail on Bad Images</a></li><li><a href="/blog/how-to-filter-blurry-images-before-ocr.html">Filter Blurry Images Before OCR</a></li><li><a href="/blog/image-validation-for-machine-learning-datasets.html">Image Validation for ML Datasets</a></li><li><a href="/blog/detect-jpeg-compression-artifacts-python.html">Detect JPEG Artefacts in Python</a></li></ul></div>
+          <div class="footer-section"><h3 class="footer-heading">Company</h3><ul class="footer-links"><li><a href="/privacy-policy.html">Privacy Policy</a></li><li><a href="/contact.html">Contact Us</a></li><li><a href="/about.html">About</a></li></ul></div>
+        </div>
+        <div class="footer-bottom"><div class="footer-bottom-content"><p class="footer-copyright">© 2026 ChangeImageTo.com. All rights reserved.</p></div></div>
+      </div>
+    </footer>
+  </body>
+</html>

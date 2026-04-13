@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image Preprocessing Checklist Before Sending to an AI API</title>
+    <meta name="description" content="A practical checklist for validating and preprocessing images before calling AI APIs — GPT-4o Vision, Google Vision, AWS Rekognition, Azure AI. Reduce errors and costs." />
+    <meta name="keywords" content="image preprocessing AI API, validate image before API, image quality check before API, preprocess image python, AI API image requirements, image validation checklist">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.changeimageto.com/blog/image-preprocessing-checklist-for-ai-api.html" />
+    <meta property="og:title" content="Image Preprocessing Checklist Before Sending to an AI API" />
+    <meta property="og:description" content="Validate and preprocess images before AI API calls. Reduce errors, costs, and silent failures." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://www.changeimageto.com/blog/image-preprocessing-checklist-for-ai-api.html" />
+    <link rel="preload" as="style" href="../styles.css?v=20250921-1">
+    <link rel="stylesheet" href="../styles.css?v=20250921-1">
+    <style>
+      body, .main, main.container.main, .blog-content, .blog-content p, .blog-content li, .blog-content h2, .blog-content h3, .blog-content strong, .blog-content em { color: #ffffff; }
+      .blog-content a { color: #9ccfff; } .blog-content a:hover { text-decoration: underline; }
+      .header h1 { color: #ffffff; } .header p { color: var(--muted); } .top-nav a { color: #ffffff; }
+      .blog-content { max-width: 800px; margin: 0 auto; line-height: 1.7; }
+      .article-meta { display: flex; gap: 16px; margin-bottom: 24px; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
+      .article-intro { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; }
+      .blog-content h2 { font-size: 1.5rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+      .blog-content h3 { font-size: 1.15rem; margin: 1.5rem 0 0.75rem; color: #9ccfff; }
+      pre { background: #0d1117; border: 1px solid #2d3748; border-radius: 8px; padding: 16px; font-size: 0.83rem; overflow-x: auto; margin: 1rem 0; }
+      code { font-family: 'Fira Code', monospace; font-size: 0.85em; }
+      p code, li code { background: #161b22; padding: 2px 6px; border-radius: 4px; color: #a5d6ff; }
+      .checklist { list-style: none; padding: 0; }
+      .checklist li { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
+      .checklist li:last-child { border-bottom: none; }
+      .check { color: #56d364; font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+      .imageguard-cta { background: linear-gradient(135deg,#0f1117,#1a1f2e); border: 1px solid #2d3748; border-radius: 12px; padding: 24px 28px; margin: 2rem 0; }
+      .imageguard-cta h3 { color: #56d364; margin: 0 0 8px 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
+      .imageguard-cta a.btn { display: inline-flex; align-items: center; gap: 8px; background: #238636; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; margin-top: 12px; }
+      table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+      th { background: #161b22; padding: 10px 14px; text-align: left; font-weight: 600; border: 1px solid #2d3748; }
+      td { padding: 10px 14px; border: 1px solid #2d3748; }
+      .article-footer { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 32px; color: var(--muted); font-size: 14px; }
+      .article-footer a { color: var(--accent); text-decoration: none; }
+    </style>
+<script>document.addEventListener("DOMContentLoaded",()=>{if(window.location.hash.includes(":~:text")){if(typeof gtag==="function"){gtag("event","ai_overview",{anchor:window.location.hash});}else{const t=setInterval(()=>{if(typeof gtag==="function"){clearInterval(t);gtag("event","ai_overview",{anchor:window.location.hash});}},100);setTimeout(()=>clearInterval(t),10000);}}});</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q582VFCG"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-D3Q582VFCG');</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4059286158672130" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <header class="container header">
+      <a href="/" class="logo-link"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" class="logo-img" loading="eager" width="200" height="68" /></a>
+      <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%">
+        <h1 style="margin:0">Image Preprocessing Checklist Before Sending to an AI API</h1>
+        <nav class="top-nav"><a href="/blog">Blog</a> <a href="/image-quality-checker.html" style="margin-left:16px">Quality Checker</a></nav>
+      </div>
+      <p>Stop wasting API credits on images that will fail</p>
+    </header>
+
+    <main class="container main">
+      <article class="blog-content">
+        <div class="article-meta">
+          <span class="publish-date">Published: April 2026</span>
+          <span class="read-time">Reading time: 7 minutes</span>
+        </div>
+
+        <div class="article-intro">
+          <p>Every call to a vision AI API — GPT-4o Vision, Google Cloud Vision, AWS Rekognition, Azure Computer Vision — costs money and takes time. When you send a bad image, you still pay, you still wait, and you get a bad result. In high-volume pipelines, that waste adds up quickly.</p>
+          <p>This checklist covers everything you should validate before making the API call. It applies to any vision AI service and can be automated in Python in about 10 lines of code.</p>
+        </div>
+
+        <h2>The checklist</h2>
+        <ul class="checklist">
+          <li><span class="check">✓</span><div><strong>Image loads without error</strong> — Check that the file can be decoded. Corrupted files, truncated uploads, and wrong extensions are more common than you'd think. Use <code>cv2.imread()</code> or PIL and verify the result is not <code>None</code>.</div></li>
+          <li><span class="check">✓</span><div><strong>Correct format</strong> — Most APIs accept JPEG, PNG, and WebP. GIF, TIFF, BMP, and HEIC may or may not be supported. Convert to JPEG before the call if in doubt.</div></li>
+          <li><span class="check">✓</span><div><strong>File size within limit</strong> — GPT-4o Vision: 20 MB. Google Vision: 10 MB. AWS Rekognition: 15 MB. Larger files should be compressed or resized first.</div></li>
+          <li><span class="check">✓</span><div><strong>Minimum resolution</strong> — Anything below 100×100 will give poor results from most vision models. OCR needs at least 300×300. Face recognition needs at least 160×160.</div></li>
+          <li><span class="check">✓</span><div><strong>Not blurry</strong> — A blurry image gives blurry API results. OCR engines will miss characters; object detectors will miss objects; face detectors may not detect at all.</div></li>
+          <li><span class="check">✓</span><div><strong>Properly exposed</strong> — Overexposed (all white) and underexposed (all black) regions contain no usable information. Check that the image isn't more than 60% pure darks or lights.</div></li>
+          <li><span class="check">✓</span><div><strong>No severe compression artefacts</strong> — Heavily re-compressed JPEG images look worse than they appear on screen. For OCR especially, blockiness at 8×8 boundaries confuses character segmentation.</div></li>
+          <li><span class="check">✓</span><div><strong>Aspect ratio is reasonable</strong> — Extreme panoramas (&gt; 3:1 ratio) and tall slivers confuse many models. Crop or pad to a reasonable aspect ratio if needed.</div></li>
+        </ul>
+
+        <h2>Automate the checklist in Python</h2>
+        <pre><code><span style="color:#ff7b72;">from</span> imageguard <span style="color:#ff7b72;">import</span> validate
+<span style="color:#ff7b72;">import</span> os
+
+<span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">preprocess_for_api</span>(image_path: str, api: str = <span style="color:#a5d6ff;">"general"</span>) -> str | <span style="color:#79c0ff;">None</span>:
+    <span style="color:#a5d6ff;">"""Validate image and return path if ready, None if rejected."""</span>
+    <span style="color:#8b949e;"># File-level checks</span>
+    <span style="color:#ff7b72;">if not</span> os.path.exists(image_path):
+        <span style="color:#ff7b72;">return None</span>
+    <span style="color:#ff7b72;">if</span> os.path.getsize(image_path) > <span style="color:#79c0ff;">10</span> * <span style="color:#79c0ff;">1024</span> * <span style="color:#79c0ff;">1024</span>:  <span style="color:#8b949e;"># 10 MB</span>
+        <span style="color:#ff7b72;">return None</span>
+
+    <span style="color:#8b949e;"># Quality checks</span>
+    thresholds = {
+        <span style="color:#a5d6ff;">"ocr"</span>: {<span style="color:#a5d6ff;">"blur_score"</span>: <span style="color:#79c0ff;">60.0</span>, <span style="color:#a5d6ff;">"resolution_score"</span>: <span style="color:#79c0ff;">70.0</span>},
+        <span style="color:#a5d6ff;">"face"</span>: {<span style="color:#a5d6ff;">"blur_score"</span>: <span style="color:#79c0ff;">50.0</span>, <span style="color:#a5d6ff;">"resolution_score"</span>: <span style="color:#79c0ff;">65.0</span>},
+        <span style="color:#a5d6ff;">"general"</span>: {},  <span style="color:#8b949e;"># use defaults</span>
+    }.get(api, {})
+
+    result = validate(image_path, thresholds=thresholds)
+    <span style="color:#ff7b72;">return</span> image_path <span style="color:#ff7b72;">if</span> result.ok <span style="color:#ff7b72;">else None</span>
+
+
+<span style="color:#8b949e;"># Usage</span>
+ready = preprocess_for_api(<span style="color:#a5d6ff;">"scan.jpg"</span>, api=<span style="color:#a5d6ff;">"ocr"</span>)
+<span style="color:#ff7b72;">if</span> ready:
+    response = ocr_api.call(ready)   <span style="color:#8b949e;"># safe to proceed</span>
+<span style="color:#ff7b72;">else</span>:
+    log_skipped(<span style="color:#a5d6ff;">"scan.jpg"</span>, reason=<span style="color:#a5d6ff;">"quality_check_failed"</span>)</code></pre>
+
+        <h2>Per-API minimum requirements</h2>
+        <table>
+          <thead><tr><th>API</th><th>Min resolution</th><th>Max file size</th><th>Formats</th></tr></thead>
+          <tbody>
+            <tr><td>GPT-4o Vision</td><td>No hard minimum</td><td>20 MB</td><td>JPEG, PNG, WEBP, GIF</td></tr>
+            <tr><td>Google Cloud Vision</td><td>No hard minimum</td><td>10 MB</td><td>JPEG, PNG, WEBP, BMP, GIF</td></tr>
+            <tr><td>AWS Rekognition</td><td>80×80 (faces)</td><td>15 MB (S3: no limit)</td><td>JPEG, PNG</td></tr>
+            <tr><td>Azure Computer Vision</td><td>50×50</td><td>4 MB (free); 20 MB (paid)</td><td>JPEG, PNG, BMP, TIFF</td></tr>
+            <tr><td>Tesseract OCR (local)</td><td>300 DPI recommended</td><td>No limit</td><td>JPEG, PNG, TIFF, BMP</td></tr>
+          </tbody>
+        </table>
+
+        <h2>The cost of skipping validation</h2>
+        <p>In a pipeline processing 10,000 images per day at $0.001 per API call, a 10% bad-image rate costs $1/day in wasted credits — but worse, it costs you the time to debug the downstream failures those bad results create.</p>
+        <p>Validation with imageguard runs in ~20–50ms per image. At 10,000 images/day that's less than 10 minutes of compute — a negligible price to eliminate an entire class of production bugs.</p>
+
+        <div class="imageguard-cta">
+          <h3>imageguard — automated image validation in Python</h3>
+          <p style="color:#a0aec0;margin:0 0 4px 0;">One call checks blur, noise, resolution, exposure, compression, and pixelation. Returns a simple pass/fail with reason. Open-source on <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener" style="color:#9ccfff;">GitHub</a>.</p>
+          <a href="https://github.com/vipul510-web/imageguard" target="_blank" rel="noopener" class="btn">View on GitHub →</a>
+        </div>
+
+        <div class="article-footer">
+          <p><strong>Last updated:</strong> April 2026</p>
+          <p><strong>Tags:</strong> <a href="/blog">AI API</a>, <a href="/blog">Image Preprocessing</a>, <a href="/blog">Python</a>, <a href="/blog">Image Validation</a></p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="comprehensive-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand"><div class="footer-logo"><img src="/logo.png?v=20250921-1" alt="ChangeImageTo" style="height:32px;margin-bottom:16px;"></div><p class="footer-description">Free online image editing tools.</p></div>
+          <div class="footer-section"><h3 class="footer-heading">Image Tools</h3><ul class="footer-links"><li><a href="/image-quality-checker.html">Image Quality Checker</a></li><li><a href="/enhance-image.html">Enhance Image</a></li><li><a href="/upscale-image.html">Upscale Image</a></li><li><a href="/bulk-image-resizer.html">Bulk Image Resizer</a></li></ul></div>
+          <div class="footer-section"><h3 class="footer-heading">Developer Articles</h3><ul class="footer-links"><li><a href="/blog/why-ai-pipelines-fail-on-bad-images.html">Why AI Pipelines Fail on Bad Images</a></li><li><a href="/blog/how-to-filter-blurry-images-before-ocr.html">Filter Blurry Images Before OCR</a></li><li><a href="/blog/image-validation-for-machine-learning-datasets.html">Image Validation for ML Datasets</a></li><li><a href="/blog/python-image-quality-check.html">Python Image Quality Check</a></li></ul></div>
+          <div class="footer-section"><h3 class="footer-heading">Company</h3><ul class="footer-links"><li><a href="/privacy-policy.html">Privacy Policy</a></li><li><a href="/contact.html">Contact Us</a></li><li><a href="/about.html">About</a></li></ul></div>
+        </div>
+        <div class="footer-bottom"><div class="footer-bottom-content"><p class="footer-copyright">© 2026 ChangeImageTo.com. All rights reserved.</p></div></div>
+      </div>
+    </footer>
+  </body>
+</html>
