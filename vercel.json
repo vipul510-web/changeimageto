@@ -7,10 +7,9 @@
   "redirects": [
     { "source": "/index.html", "destination": "/", "permanent": true }
   ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/api/(.*)", "dest": "https://bgremover-backend-121350814881.us-central1.run.app/api/$1" },
-    { "src": "/blog/(.*\\.html)", "dest": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/api/$1" },
+    { "source": "/blog/(.*\\.html)", "destination": "https://bgremover-backend-121350814881.us-central1.run.app/blog/$1" }
   ],
   "headers": [
     {
